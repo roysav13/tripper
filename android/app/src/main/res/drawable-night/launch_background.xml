@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tripper splash, dark mode — plain bg.paper_dark (#15181A), no glyph.
+     Icon/splash mark reverted 2026-07-23 pending a design we're happy
+     with (SPEC §4.6); see docs/plans/M4-polish.md. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/tripper_splash_paper_dark" />
+</layer-list>

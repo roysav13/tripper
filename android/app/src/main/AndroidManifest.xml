@@ -1,0 +1,93 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only ever declared in src/debug/AndroidManifest.xml before, which
+         Flutter adds for hot reload — so every network feature (map tiles,
+         places search, Maps short-links, currency rates) worked in debug
+         and would have silently failed in a release build. Declared here
+         now so it applies to all build types. Local data still works with
+         no connection at all (CLAUDE.md hard rule 4). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Stock Google Maps chrome: my-location button/blue dot on the places map. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Local notifications (M5.1): expiry/countdown/check-in reminders.
+         Runtime-requested on Android 13+, handled in NotificationService.
+         Deliberately NOT requesting SCHEDULE_EXACT_ALARM — these are
+         day-scale reminders, not minute-precision alarms, so inexact
+         scheduling (AndroidScheduleMode.inexactAllowWhileIdle) avoids that
+         sensitive permission entirely. Also no RECEIVE_BOOT_COMPLETED: we
+         resync pending notifications from local data on app launch instead
+         of a boot receiver (simpler, works the same across OEMs that clear
+         exact alarms differently on reboot). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <application
+        android:label="tripper"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Share target (SPEC §3.1): PDFs and images into the vault. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="application/pdf"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
+            <!-- Airline/hotel confirmations saved as HTML (M5.4 ext). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/html"/>
+            </intent-filter>
+            <!-- Google Maps links shared as text become places (M3). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
+        </activity>
+        <!-- Injected from android/local.properties (gitignored). -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

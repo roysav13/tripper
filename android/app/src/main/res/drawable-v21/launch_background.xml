@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tripper splash — plain bg.paper (#F7F4EE), no glyph. Explicit color
+     rather than ?android:colorBackground so this matches the app's paper
+     tone regardless of what the OS theme's default happens to be. Icon/
+     splash mark reverted 2026-07-23 pending a design we're happy with
+     (SPEC §4.6); see docs/plans/M4-polish.md. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/tripper_splash_paper" />
+</layer-list>

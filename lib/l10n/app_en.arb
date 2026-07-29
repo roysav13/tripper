@@ -1,0 +1,282 @@
+{
+  "@@locale": "en",
+  "appTitle": "Tripper",
+  "tabTrips": "Trips",
+  "tabVault": "Vault",
+  "tabPlaces": "Places",
+  "tripsEmptyTitle": "Plan your first trip",
+  "tripsEmptyBody": "Dates, documents, and places — all in one pocket.",
+  "tripsEmptyCta": "Create trip",
+  "backupReminderBody": "Your trips live only on this device. Back them up so a lost phone doesn't mean a lost trip.",
+  "backupReminderCta": "Back up now",
+  "errorStateTitle": "Something went wrong loading this",
+  "errorStateBody": "Your data is still safe on this device. Try again.",
+  "errorStateRetry": "Retry",
+  "vaultEmptyTitle": "Your documents, ready anywhere",
+  "vaultEmptyBody": "Passport, tickets, bookings — stored only on this device.",
+  "vaultEmptyCta": "Add document",
+  "placesEmptyTitle": "Where to next?",
+  "placesEmptyBody": "Keep a list of places you want to see, and the ones you already have.",
+  "placesEmptyCta": "Add place",
+  "comingSoon": "Coming soon",
+  "sectionActive": "Active now",
+  "sectionUpcoming": "Upcoming",
+  "sectionPlanned": "Planned",
+  "sectionPast": "Past",
+  "sectionArchived": "Archived",
+  "datesTbd": "Dates TBD",
+  "fromDate": "From {date}",
+  "@fromDate": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "tripDayOpen": "Day {n}",
+  "@tripDayOpen": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "themeToggleTooltip": "Switch theme",
+  "tripDayCount": "Day {n} of {m}",
+  "@tripDayCount": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "m": { "type": "int" }
+    }
+  },
+  "tripFormTitleNew": "New trip",
+  "tripFormTitleEdit": "Edit trip",
+  "tripFormName": "Trip name",
+  "tripFormDestinations": "Destinations",
+  "tripFormAddDestination": "Add destination",
+  "tripFormAddDestinationHint": "Krabi",
+  "tripFormDates": "Dates",
+  "tripFormDatesHint": "Optional — leave empty while planning, or set only a start for one-way trips.",
+  "tripFormStartDate": "Start date",
+  "tripFormEndDate": "End date",
+  "errEndWithoutStart": "Set a start date first",
+  "save": "Save",
+  "cancel": "Cancel",
+  "errNameRequired": "Give the trip a name",
+  "errNoDestination": "Add at least one destination",
+  "errDatesRequired": "Pick valid start and end dates",
+  "menuEdit": "Edit",
+  "menuArchive": "Archive",
+  "menuUnarchive": "Unarchive",
+  "menuDelete": "Delete",
+  "deleteTripTitle": "Delete this trip?",
+  "deleteTripBody": "The trip is removed. Documents and places linked to it are kept.",
+  "tabDocuments": "Documents",
+  "tabPlacesInTrip": "Places",
+  "tabExpenses": "Spend",
+  "expensesEmptyTitle": "Track what this trip costs",
+  "expensesEmptyBody": "Add what you spend as you go — the total and a category breakdown build up here.",
+  "expensesEmptyCta": "Add an expense",
+  "expensesTotal": "Total",
+  "expensesConvertedTotal": "≈ {amount} {currency}",
+  "@expensesConvertedTotal": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "currency": { "type": "String" }
+    }
+  },
+  "expensesConversionPending": "{count, plural, one{1 expense not converted yet} other{{count} expenses not converted yet}}",
+  "@expensesConversionPending": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "expensesConversionOffHint": "Set a home currency in Settings to see one combined total.",
+  "expensesRatesAsOf": "Rates from {date}",
+  "@expensesRatesAsOf": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "settingsHomeCurrency": "Home currency",
+  "settingsHomeCurrencyHint": "Converts mixed-currency trip totals into one figure. Needs a connection the first time; converted amounts are then stored and work offline. Leave empty to just list each currency.",
+  "settingsHomeCurrencyOff": "Off",
+  "currencyPickerSearch": "Search currency",
+  "currencyPickerOffHint": "Show each currency separately, no conversion.",
+  "currencyPickerNoMatch": "No currency matches that.",
+  "expenseFormTitle": "Add expense",
+  "expenseFormEditTitle": "Edit expense",
+  "expenseFormAmount": "Amount",
+  "expenseFormCurrency": "Currency",
+  "expenseFormNotes": "Note (optional)",
+  "expenseFormDate": "Date",
+  "errAmountRequired": "Enter an amount like 12.30",
+  "errCurrencyRequired": "Use a 3-letter code, e.g. ILS",
+  "expenseDeleted": "Expense deleted.",
+  "catFood": "Food",
+  "catActivities": "Activities",
+  "catShopping": "Shopping",
+  "tripDocsEmptyTitle": "No documents linked",
+  "tripDocsEmptyBody": "Flights, stays, and tickets for this trip will live here.",
+  "vaultPinnedSection": "Pinned · quick access",
+  "vaultAllSection": "All documents",
+  "catPassport": "Passport / ID",
+  "catVisa": "Visa",
+  "catFlight": "Flight",
+  "catStay": "Stay",
+  "catInsurance": "Insurance",
+  "catTransport": "Transport",
+  "catOther": "Other",
+  "manualRecord": "Manual",
+  "expiryShort": "Exp {date}",
+  "@expiryShort": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "docFormTitle": "Add document",
+  "docFormName": "Document name",
+  "docFormAttachFile": "Attach file",
+  "docFormExpiry": "Expiry date",
+  "docFormGlobal": "Keep in global vault",
+  "docFormGlobalHint": "For documents that outlive trips — passport, license, insurance.",
+  "fieldFlightNumber": "Flight number",
+  "fieldConfirmationCode": "Confirmation code",
+  "docFormDepartureTime": "Departure time",
+  "docFormDepartureTimeHint": "Powers the check-in-opens reminder (M5.3) — optional.",
+  "docOcrPrefilled": "Filled in from the photo — double-check before saving.",
+  "docTitleFlight": "Flight {number}",
+  "@docTitleFlight": {
+    "placeholders": { "number": { "type": "String" } }
+  },
+  "fieldBookingRef": "Booking reference",
+  "fieldDocumentNumber": "Document number",
+  "docActionOpen": "Open",
+  "showCodeAction": "Show at gate",
+  "showCodeFileMissing": "This document's file is missing. Re-attach it from the vault.",
+  "showCodePdfFallback": "Couldn't display this PDF here. Open it in a viewer instead.",
+  "docActionPin": "Pin for quick access",
+  "docActionUnpin": "Unpin",
+  "docActionLink": "Link to trips",
+  "pinLimitReached": "Up to 4 documents can be pinned. Unpin one first.",
+  "noTripsToLink": "No trips yet — create one first.",
+  "docLinksUpdated": "Trip links updated.",
+  "docLinksUpdateFailed": "Couldn't update trip links. Try again.",
+  "vaultLockedTitle": "Vault locked",
+  "vaultLockedBody": "Your documents are protected by your device lock.",
+  "unlockCta": "Unlock",
+  "unlockReason": "Unlock your document vault",
+  "unlockSettingsReason": "Unlock Tripper settings",
+  "settingsLockedTitle": "Settings locked",
+  "settingsLockedBody": "Backup and security options are protected by your device lock.",
+  "deleteDocTitle": "Delete this document?",
+  "deleteDocBody": "The document and its file are removed from this device.",
+  "expiryTripWarning": "{title} expires too close to this trip's end. Check entry requirements.",
+  "@expiryTripWarning": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+  "tripPlacesEmptyTitle": "No places yet",
+  "tripPlacesEmptyBody": "Track what you want to see on this trip.",
+  "placesWantSection": "Want to go",
+  "placesBeenSection": "Been there",
+  "placeMarkVisited": "Mark as visited",
+  "placeViewOnMap": "View on map",
+  "placeUnvisit": "Move back to wishlist",
+  "visitedOn": "Visited {date}",
+  "@visitedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "statsCountries": "Countries",
+  "statsPlacesVisited": "Places visited",
+  "statsDaysTraveled": "Days away",
+  "placeFormTitle": "Add place",
+  "placeFormName": "Place name",
+  "placeFormCity": "City",
+  "placeFormCountry": "Country",
+  "placeFormTrip": "Link to a trip",
+  "mapViewToggle": "Map view",
+  "listViewToggle": "List view",
+  "pickOnMap": "Pick on map",
+  "pickOnMapTitle": "Drop a pin",
+  "pickOnMapHint": "Search above, or long-press the map to place the pin",
+  "mapSearchHint": "Search for a place",
+  "mapSearchNoResults": "No results — try a different spelling.",
+  "mapSearchOffline": "Search needs a connection. Long-press the map instead.",
+  "mapLayersButton": "Map layers",
+  "mapLayerNormal": "Default",
+  "mapLayerSatellite": "Satellite",
+  "mapLayerTerrain": "Terrain",
+  "addWithoutLocation": "Add \"{query}\" without a location",
+  "@addWithoutLocation": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "noLocationChip": "No location",
+  "editPlaceTitle": "Edit place",
+  "deletePlaceTitle": "Delete this place?",
+  "deletePlaceBody": "The place is removed from your lists and the map.",
+  "tripCompleteTitle": "Trip finished — update your map?",
+  "tripCompleteBody": "{trip} is over. Mark the places you got to as visited:",
+  "@tripCompleteBody": {
+    "placeholders": {
+      "trip": { "type": "String" }
+    }
+  },
+  "tripCompleteConfirm": "Mark visited",
+  "tripCompleteSkip": "Not now",
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystem": "System",
+  "settingsSecurity": "Security",
+  "settingsVaultLock": "Lock the vault",
+  "settingsVaultLockHint": "Ask for your fingerprint before opening documents.",
+  "settingsBackup": "Backup",
+  "settingsBackupHint": "Everything lives on this device only. Export a backup you can restore after a reinstall or on a new phone.",
+  "settingsExport": "Export backup",
+  "settingsExportShareText": "Tripper backup",
+  "settingsExportFailed": "Couldn't create the backup. Try again.",
+  "settingsImport": "Restore backup",
+  "settingsImportTitle": "Restore from a backup?",
+  "settingsImportWarning": "This replaces every trip, document, and place on this device with the backup's contents.",
+  "settingsImportDone": "Backup restored. Restart Tripper to see it.",
+  "settingsImportCorrupt": "That file isn't a valid Tripper backup.",
+  "settingsImportTooNew": "That backup came from a newer version of Tripper.",
+  "settingsNotifications": "Notifications",
+  "settingsExpiryNoticeHint": "How far ahead of a document's expiry date counts as coming up.",
+  "settingsExpiryNoticeOff": "Off",
+  "docExpiryNotificationTitle": "{title} expires soon",
+  "@docExpiryNotificationTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "docExpiryNotificationBody": "Expires {date}.",
+  "@docExpiryNotificationBody": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "tripCountdownNotificationTitle": "{name} starts soon",
+  "@tripCountdownNotificationTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "tripCountdownNotificationBodyClear": "{days, plural, one{Starts in 1 day} other{Starts in {days} days}} — everything's in order.",
+  "@tripCountdownNotificationBodyClear": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "tripCountdownNotificationBodyWithIssues": "{days, plural, one{Starts in 1 day} other{Starts in {days} days}} — {count, plural, one{1 document needs} other{{count} documents need}} attention.",
+  "@tripCountdownNotificationBodyWithIssues": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "count": { "type": "int" }
+    }
+  },
+  "checkInNotificationTitle": "Check-in opens for {title}",
+  "@checkInNotificationTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "checkInNotificationBody": "Check-in usually opens 24 hours before departure. Airlines vary this 24–48h, so double-check with yours.",
+  "placeFormNoTrip": "No trip",
+  "tripPlacesProgress": "{visited} of {total} visited",
+  "@tripPlacesProgress": {
+    "placeholders": {
+      "visited": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  }
+}

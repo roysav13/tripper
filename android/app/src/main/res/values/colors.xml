@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash-screen colors only (SPEC §4.2 bg.paper / dark-mode paper).
+     App UI itself never reads these — Flutter draws the real theme;
+     this is purely what shows during the native window before the
+     Flutter engine's first frame. -->
+<resources>
+    <color name="tripper_splash_paper">#F7F4EE</color>
+    <color name="tripper_splash_paper_dark">#15181A</color>
+</resources>

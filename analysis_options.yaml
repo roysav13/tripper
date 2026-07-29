@@ -1,0 +1,25 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "lib/l10n/generated/**"
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    always_declare_return_types: true
+    unawaited_futures: true
+    avoid_dynamic_calls: true
+    prefer_final_locals: true
+    require_trailing_commas: true
+
+# Project rules enforced in review (no lint exists):
+# - No Color(0xFF...) outside lib/core/theme/app_colors.dart
+# - No DateTime.now() in domain code — inject via clockProvider
+# - No user-facing string literals — everything through AppLocalizations
+# - EdgeInsetsDirectional / start-end alignment only (RTL-safe)
