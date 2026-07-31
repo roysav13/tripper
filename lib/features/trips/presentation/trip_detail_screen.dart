@@ -50,6 +50,9 @@ class TripDetailScreen extends ConsumerWidget {
     final today = ref.watch(clockProvider)();
     final status = bucketTrip(trip, today);
 
+    final accent = tripCardAccent(colors, trip, status);
+    final onAccent = colors.onColor(accent);
+
     return DefaultTabController(
       length: _tabCount,
       // While a trip is under way, spend is what you open the app for —
@@ -59,18 +62,7 @@ class TripDetailScreen extends ConsumerWidget {
       initialIndex: status == TripStatus.active ? _expensesTabIndex : 0,
       child: Scaffold(
         appBar: AppBar(
-          title: Hero(
-            tag: 'trip-name-${trip.id}',
-            child: Material(
-              type: MaterialType.transparency,
-              child: Text(
-                trip.name,
-                style: AppTextStyles.title.copyWith(color: colors.inkPrimary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
+          backgroundColor: Colors.transparent,
           actions: [
             PopupMenuButton<String>(
               onSelected: (action) => _onMenu(context, ref, trip, action),
@@ -96,14 +88,43 @@ class TripDetailScreen extends ConsumerWidget {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpacing.lg,
-              ),
-              child: MonoText(
-                '${TripDateFormatter.line(l10n, trip)}'
-                ' · ${trip.destinations.join(' → ')}'
-                '${status == TripStatus.active ? ' · ${activeDayLabel(l10n, trip, today)}' : ''}',
+            // The screen's one hero moment (SPEC §4.3): the trip's name at
+            // AppTextStyles.hero size, on a full-bleed band of its own
+            // identity color — the boarding-pass-stripe read that the old
+            // small AppBar title didn't have room for. Flies in from
+            // TripCard's compact title via the shared Hero tag.
+            ColoredBox(
+              color: accent,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Hero(
+                      tag: 'trip-name-${trip.id}',
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Text(
+                          trip.name,
+                          style: AppTextStyles.hero.copyWith(color: onAccent),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    MonoText(
+                      '${TripDateFormatter.line(l10n, trip)}'
+                      ' · ${trip.destinations.join(' → ')}'
+                      '${status == TripStatus.active ? ' · ${activeDayLabel(l10n, trip, today)}' : ''}',
+                      color: onAccent,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),

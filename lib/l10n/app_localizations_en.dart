@@ -107,6 +107,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String tripStubOfCount(int m) {
+    return 'of $m';
+  }
+
+  @override
   String get tripFormTitleNew => 'New trip';
 
   @override
@@ -114,6 +119,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tripFormName => 'Trip name';
+
+  @override
+  String get tripFormColorLabel => 'Trip color';
+
+  @override
+  String tripColorSemanticLabel(int n) {
+    return 'Trip color option $n';
+  }
 
   @override
   String get tripFormDestinations => 'Destinations';

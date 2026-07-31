@@ -268,6 +268,12 @@ abstract class AppLocalizations {
   /// **'Day {n} of {m}'**
   String tripDayCount(int n, int m);
 
+  /// No description provided for @tripStubOfCount.
+  ///
+  /// In en, this message translates to:
+  /// **'of {m}'**
+  String tripStubOfCount(int m);
+
   /// No description provided for @tripFormTitleNew.
   ///
   /// In en, this message translates to:
@@ -285,6 +291,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trip name'**
   String get tripFormName;
+
+  /// No description provided for @tripFormColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip color'**
+  String get tripFormColorLabel;
+
+  /// No description provided for @tripColorSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip color option {n}'**
+  String tripColorSemanticLabel(int n);
 
   /// No description provided for @tripFormDestinations.
   ///

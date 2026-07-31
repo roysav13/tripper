@@ -269,7 +269,9 @@ class TripListScreen extends ConsumerWidget {
       ),
       for (final trip in trips)
         Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+          // Ticket cards want a bit more air than the old flat hairline
+          // cards did — AppSpacing.md instead of .sm (M7 restyle).
+          padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.md),
           child: TripCard(
             trip: trip,
             status: status,

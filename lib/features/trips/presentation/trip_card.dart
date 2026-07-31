@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
-import '../../../core/widgets/paper_card.dart';
+import '../../../core/widgets/ticket_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/trip.dart';
 
@@ -36,6 +36,17 @@ String activeDayLabel(AppLocalizations l10n, Trip trip, DateTime today) {
       : l10n.tripDayCount(day, length);
 }
 
+/// A past trip's identity color recedes toward paper instead of standing
+/// out — mirrors the old `PaperCard(recessed: true)` treatment, now applied
+/// to [TicketCard]'s accent instead of swapping the surface tone. Shared
+/// between [TripCard] and the trip detail header so a trip reads
+/// consistently faded everywhere it appears once it's over.
+Color tripCardAccent(AppColors colors, Trip trip, TripStatus status) {
+  final base = colors.tripAccent(trip.colorTag);
+  if (status != TripStatus.past) return base;
+  return Color.lerp(base, colors.paper, 0.6)!;
+}
+
 class TripCard extends StatelessWidget {
   const TripCard({
     super.key,
@@ -56,59 +67,42 @@ class TripCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isPast = status == TripStatus.past;
     final ink = isPast ? colors.inkSecondary : colors.inkPrimary;
+    // The card is one atomic tappable unit for accessibility — see
+    // TicketCard's class doc for why this can't be left to automatic
+    // semantics merging once this many paint layers sit in between.
+    final dateAndPlaces =
+        '${TripDateFormatter.line(l10n, trip)}. ${trip.destinations.join(', ')}';
+    final semanticLabel = status == TripStatus.active
+        ? '${trip.name}. $dateAndPlaces. ${activeDayLabel(l10n, trip, today)}'
+        : '${trip.name}. $dateAndPlaces';
 
-    return PaperCard(
-      recessed: isPast,
+    return TicketCard(
+      accentColor: tripCardAccent(colors, trip, status),
       onTap: onTap,
-      child: Column(
+      semanticLabel: semanticLabel,
+      stub: _TripStub(trip: trip, status: status, today: today, l10n: l10n),
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Expanded(
-                // Shares a tag with the AppBar title in TripDetailScreen —
-                // M4.4's "Hero the trip name list→detail". Both routes sit
-                // in the same shell-branch Navigator, so this flies on the
-                // default push transition with no extra wiring.
-                child: Hero(
-                  tag: 'trip-name-${trip.id}',
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: Text(
-                      trip.name,
-                      style: AppTextStyles.title
-                          .copyWith(fontSize: 17, color: ink),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
+          // Shares a tag with the AppBar title in TripDetailScreen —
+          // M4.4's "Hero the trip name list→detail", now flying into the
+          // M7 hero header instead of a small AppBar title. Both routes
+          // sit in the same shell-branch Navigator, so this flies on the
+          // default push transition with no extra wiring.
+          Hero(
+            tag: 'trip-name-${trip.id}',
+            child: Material(
+              type: MaterialType.transparency,
+              child: Text(
+                trip.name,
+                style: AppTextStyles.title.copyWith(fontSize: 18, color: ink),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              if (status == TripStatus.active) ...[
-                const SizedBox(width: AppSpacing.sm),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colors.accent,
-                    borderRadius: BorderRadius.circular(AppShape.radius),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 2,
-                    ),
-                    child: Text(
-                      activeDayLabel(l10n, trip, today),
-                      style: AppTextStyles.sectionLabel.copyWith(
-                        color: colors.surface,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           MonoText(
             '${TripDateFormatter.line(l10n, trip)}'
             ' · ${trip.destinations.join(' → ')}',
@@ -117,5 +111,51 @@ class TripCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// The colored stub's content: a big day-count for an active trip, a
+/// status icon otherwise. Text/icon color comes from [TicketCard]'s
+/// ambient `DefaultTextStyle`/`IconTheme` (already contrast-resolved via
+/// `AppColors.onColor`), so nothing here sets color explicitly.
+class _TripStub extends StatelessWidget {
+  const _TripStub({
+    required this.trip,
+    required this.status,
+    required this.today,
+    required this.l10n,
+  });
+
+  final Trip trip;
+  final TripStatus status;
+  final DateTime today;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == TripStatus.active) {
+      final day = trip.dayNumber(today)!;
+      final length = trip.lengthInDays;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('$day', style: AppTextStyles.statValue.copyWith(fontSize: 28)),
+          if (length != null)
+            Text(
+              l10n.tripStubOfCount(length).toUpperCase(),
+              style: AppTextStyles.sectionLabel.copyWith(letterSpacing: 0.6),
+              maxLines: 1,
+            ),
+        ],
+      );
+    }
+    final icon = switch (status) {
+      TripStatus.active => Icons.today_outlined, // unreachable, see above
+      TripStatus.upcoming => Icons.event_outlined,
+      TripStatus.planned => Icons.explore_outlined,
+      TripStatus.past => Icons.check_circle_outline,
+    };
+    return Icon(icon, size: 26);
   }
 }

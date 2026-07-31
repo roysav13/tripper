@@ -10,8 +10,10 @@ abstract final class AppTheme {
 
   static ThemeData _build(AppColors c, Brightness brightness) {
     final textTheme = TextTheme(
+      displayLarge: AppTextStyles.hero.copyWith(color: c.inkPrimary),
       displaySmall: AppTextStyles.display.copyWith(color: c.inkPrimary),
       titleLarge: AppTextStyles.title.copyWith(color: c.inkPrimary),
+      headlineLarge: AppTextStyles.statValue.copyWith(color: c.inkPrimary),
       bodyMedium: AppTextStyles.body.copyWith(color: c.inkPrimary),
       labelLarge: AppTextStyles.label.copyWith(color: c.inkPrimary),
       labelSmall: AppTextStyles.sectionLabel.copyWith(color: c.inkMuted),
@@ -52,11 +54,15 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: c.surface,
-        elevation: 0,
+        // Shadow, not a hairline border, separates a card from the page
+        // now (SPEC §4.4, revised) — PaperCard/TicketCard both draw their
+        // own elevation directly, this is the fallback for a bare
+        // Flutter `Card` used incidentally somewhere.
+        elevation: AppElevation.card(brightness),
+        shadowColor: AppElevation.shadowColor(brightness),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppShape.radius),
-          side: BorderSide(color: c.hairline, width: AppShape.hairlineWidth),
         ),
       ),
       dividerTheme: DividerThemeData(

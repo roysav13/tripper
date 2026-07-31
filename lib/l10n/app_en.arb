@@ -45,9 +45,22 @@
       "m": { "type": "int" }
     }
   },
+  "tripStubOfCount": "of {m}",
+  "@tripStubOfCount": {
+    "placeholders": {
+      "m": { "type": "int" }
+    }
+  },
   "tripFormTitleNew": "New trip",
   "tripFormTitleEdit": "Edit trip",
   "tripFormName": "Trip name",
+  "tripFormColorLabel": "Trip color",
+  "tripColorSemanticLabel": "Trip color option {n}",
+  "@tripColorSemanticLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
   "tripFormDestinations": "Destinations",
   "tripFormAddDestination": "Add destination",
   "tripFormAddDestinationHint": "Krabi",
