@@ -3151,6 +3151,15 @@ class $JournalEntriesTable extends JournalEntries
   late final GeneratedColumn<String> placeName = GeneratedColumn<String>(
       'place_name', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _placeIdMeta =
+      const VerificationMeta('placeId');
+  @override
+  late final GeneratedColumn<String> placeId = GeneratedColumn<String>(
+      'place_id', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES places (id) ON DELETE SET NULL'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -3159,7 +3168,7 @@ class $JournalEntriesTable extends JournalEntries
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, tripId, summary, loggedAt, lat, lng, placeName, createdAt];
+      [id, tripId, summary, loggedAt, lat, lng, placeName, placeId, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3205,6 +3214,10 @@ class $JournalEntriesTable extends JournalEntries
       context.handle(_placeNameMeta,
           placeName.isAcceptableOrUnknown(data['place_name']!, _placeNameMeta));
     }
+    if (data.containsKey('place_id')) {
+      context.handle(_placeIdMeta,
+          placeId.isAcceptableOrUnknown(data['place_id']!, _placeIdMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -3234,6 +3247,8 @@ class $JournalEntriesTable extends JournalEntries
           .read(DriftSqlType.double, data['${effectivePrefix}lng']),
       placeName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}place_name']),
+      placeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}place_id']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3257,6 +3272,14 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
   final double? lng;
   final String? placeName;
 
+  /// Links this entry to the Place it corresponds to, if any — set when
+  /// the entry's location was picked from (or created as) one of the
+  /// trip's Places, or when the entry was auto-created because a Place
+  /// was marked visited from the Places tab. SET NULL, not cascade:
+  /// deleting the place must never delete the entry (entries are user
+  /// content — text, photos — only ever removed by explicit user action).
+  final String? placeId;
+
   /// Immutable audit stamp — never shown or edited.
   final DateTime createdAt;
   const JournalEntryRow(
@@ -3267,6 +3290,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
       this.lat,
       this.lng,
       this.placeName,
+      this.placeId,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3284,6 +3308,9 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
     if (!nullToAbsent || placeName != null) {
       map['place_name'] = Variable<String>(placeName);
     }
+    if (!nullToAbsent || placeId != null) {
+      map['place_id'] = Variable<String>(placeId);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3299,6 +3326,9 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
       placeName: placeName == null && nullToAbsent
           ? const Value.absent()
           : Value(placeName),
+      placeId: placeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeId),
       createdAt: Value(createdAt),
     );
   }
@@ -3314,6 +3344,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
       lat: serializer.fromJson<double?>(json['lat']),
       lng: serializer.fromJson<double?>(json['lng']),
       placeName: serializer.fromJson<String?>(json['placeName']),
+      placeId: serializer.fromJson<String?>(json['placeId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3328,6 +3359,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
       'lat': serializer.toJson<double?>(lat),
       'lng': serializer.toJson<double?>(lng),
       'placeName': serializer.toJson<String?>(placeName),
+      'placeId': serializer.toJson<String?>(placeId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3340,6 +3372,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
           Value<double?> lat = const Value.absent(),
           Value<double?> lng = const Value.absent(),
           Value<String?> placeName = const Value.absent(),
+          Value<String?> placeId = const Value.absent(),
           DateTime? createdAt}) =>
       JournalEntryRow(
         id: id ?? this.id,
@@ -3349,6 +3382,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
         lat: lat.present ? lat.value : this.lat,
         lng: lng.present ? lng.value : this.lng,
         placeName: placeName.present ? placeName.value : this.placeName,
+        placeId: placeId.present ? placeId.value : this.placeId,
         createdAt: createdAt ?? this.createdAt,
       );
   JournalEntryRow copyWithCompanion(JournalEntriesCompanion data) {
@@ -3360,6 +3394,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
       lat: data.lat.present ? data.lat.value : this.lat,
       lng: data.lng.present ? data.lng.value : this.lng,
       placeName: data.placeName.present ? data.placeName.value : this.placeName,
+      placeId: data.placeId.present ? data.placeId.value : this.placeId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3374,6 +3409,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
           ..write('lat: $lat, ')
           ..write('lng: $lng, ')
           ..write('placeName: $placeName, ')
+          ..write('placeId: $placeId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3381,7 +3417,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
 
   @override
   int get hashCode => Object.hash(
-      id, tripId, summary, loggedAt, lat, lng, placeName, createdAt);
+      id, tripId, summary, loggedAt, lat, lng, placeName, placeId, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3393,6 +3429,7 @@ class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
           other.lat == this.lat &&
           other.lng == this.lng &&
           other.placeName == this.placeName &&
+          other.placeId == this.placeId &&
           other.createdAt == this.createdAt);
 }
 
@@ -3404,6 +3441,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
   final Value<double?> lat;
   final Value<double?> lng;
   final Value<String?> placeName;
+  final Value<String?> placeId;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const JournalEntriesCompanion({
@@ -3414,6 +3452,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
     this.lat = const Value.absent(),
     this.lng = const Value.absent(),
     this.placeName = const Value.absent(),
+    this.placeId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3425,6 +3464,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
     this.lat = const Value.absent(),
     this.lng = const Value.absent(),
     this.placeName = const Value.absent(),
+    this.placeId = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -3440,6 +3480,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
     Expression<double>? lat,
     Expression<double>? lng,
     Expression<String>? placeName,
+    Expression<String>? placeId,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3451,6 +3492,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
       if (placeName != null) 'place_name': placeName,
+      if (placeId != null) 'place_id': placeId,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3464,6 +3506,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
       Value<double?>? lat,
       Value<double?>? lng,
       Value<String?>? placeName,
+      Value<String?>? placeId,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
     return JournalEntriesCompanion(
@@ -3474,6 +3517,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
       placeName: placeName ?? this.placeName,
+      placeId: placeId ?? this.placeId,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3503,6 +3547,9 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
     if (placeName.present) {
       map['place_name'] = Variable<String>(placeName.value);
     }
+    if (placeId.present) {
+      map['place_id'] = Variable<String>(placeId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3522,6 +3569,7 @@ class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
           ..write('lat: $lat, ')
           ..write('lng: $lng, ')
           ..write('placeName: $placeName, ')
+          ..write('placeId: $placeId, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3893,6 +3941,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('journal_entries', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('places',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('journal_entries', kind: UpdateKind.update),
             ],
           ),
           WritePropagation(
@@ -5525,6 +5580,20 @@ final class $$PlacesTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$JournalEntriesTable, List<JournalEntryRow>>
+      _journalEntriesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.journalEntries,
+              aliasName: 'places__id__journal_entries__place_id');
+
+  $$JournalEntriesTableProcessedTableManager get journalEntriesRefs {
+    final manager = $$JournalEntriesTableTableManager($_db, $_db.journalEntries)
+        .filter((f) => f.placeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_journalEntriesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$PlacesTableFilterComposer
@@ -5599,6 +5668,27 @@ class $$PlacesTableFilterComposer
             $$ItineraryItemsTableFilterComposer(
               $db: $db,
               $table: $db.itineraryItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> journalEntriesRefs(
+      Expression<bool> Function($$JournalEntriesTableFilterComposer f) f) {
+    final $$JournalEntriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.placeId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableFilterComposer(
+              $db: $db,
+              $table: $db.journalEntries,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -5747,6 +5837,27 @@ class $$PlacesTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> journalEntriesRefs<T extends Object>(
+      Expression<T> Function($$JournalEntriesTableAnnotationComposer a) f) {
+    final $$JournalEntriesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.placeId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$PlacesTableTableManager extends RootTableManager<
@@ -5760,7 +5871,8 @@ class $$PlacesTableTableManager extends RootTableManager<
     $$PlacesTableUpdateCompanionBuilder,
     (PlaceRow, $$PlacesTableReferences),
     PlaceRow,
-    PrefetchHooks Function({bool tripId, bool itineraryItemsRefs})> {
+    PrefetchHooks Function(
+        {bool tripId, bool itineraryItemsRefs, bool journalEntriesRefs})> {
   $$PlacesTableTableManager(_$AppDatabase db, $PlacesTable table)
       : super(TableManagerState(
           db: db,
@@ -5832,11 +5944,14 @@ class $$PlacesTableTableManager extends RootTableManager<
                   (e.readTable(table), $$PlacesTableReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {tripId = false, itineraryItemsRefs = false}) {
+              {tripId = false,
+              itineraryItemsRefs = false,
+              journalEntriesRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (itineraryItemsRefs) db.itineraryItems
+                if (itineraryItemsRefs) db.itineraryItems,
+                if (journalEntriesRefs) db.journalEntries
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -5877,6 +5992,19 @@ class $$PlacesTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.placeId == item.id),
+                        typedResults: items),
+                  if (journalEntriesRefs)
+                    await $_getPrefetchedData<PlaceRow, $PlacesTable,
+                            JournalEntryRow>(
+                        currentTable: table,
+                        referencedTable: $$PlacesTableReferences
+                            ._journalEntriesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$PlacesTableReferences(db, table, p0)
+                                .journalEntriesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.placeId == item.id),
                         typedResults: items)
                 ];
               },
@@ -5896,7 +6024,8 @@ typedef $$PlacesTableProcessedTableManager = ProcessedTableManager<
     $$PlacesTableUpdateCompanionBuilder,
     (PlaceRow, $$PlacesTableReferences),
     PlaceRow,
-    PrefetchHooks Function({bool tripId, bool itineraryItemsRefs})>;
+    PrefetchHooks Function(
+        {bool tripId, bool itineraryItemsRefs, bool journalEntriesRefs})>;
 typedef $$ExpensesTableCreateCompanionBuilder = ExpensesCompanion Function({
   required String id,
   required String tripId,
@@ -6683,6 +6812,7 @@ typedef $$JournalEntriesTableCreateCompanionBuilder = JournalEntriesCompanion
   Value<double?> lat,
   Value<double?> lng,
   Value<String?> placeName,
+  Value<String?> placeId,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -6695,6 +6825,7 @@ typedef $$JournalEntriesTableUpdateCompanionBuilder = JournalEntriesCompanion
   Value<double?> lat,
   Value<double?> lng,
   Value<String?> placeName,
+  Value<String?> placeId,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -6713,6 +6844,20 @@ final class $$JournalEntriesTableReferences extends BaseReferences<
     final manager = $$TripsTableTableManager($_db, $_db.trips)
         .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_tripIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $PlacesTable _placeIdTable(_$AppDatabase db) =>
+      db.places.createAlias('journal_entries__place_id__places__id');
+
+  $$PlacesTableProcessedTableManager? get placeId {
+    final $_column = $_itemColumn<String>('place_id');
+    if ($_column == null) return null;
+    final manager = $$PlacesTableTableManager($_db, $_db.places)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_placeIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
@@ -6775,6 +6920,26 @@ class $$JournalEntriesTableFilterComposer
             $$TripsTableFilterComposer(
               $db: $db,
               $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$PlacesTableFilterComposer get placeId {
+    final $$PlacesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableFilterComposer(
+              $db: $db,
+              $table: $db.places,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -6854,6 +7019,26 @@ class $$JournalEntriesTableOrderingComposer
             ));
     return composer;
   }
+
+  $$PlacesTableOrderingComposer get placeId {
+    final $$PlacesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableOrderingComposer(
+              $db: $db,
+              $table: $db.places,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$JournalEntriesTableAnnotationComposer
@@ -6906,6 +7091,26 @@ class $$JournalEntriesTableAnnotationComposer
     return composer;
   }
 
+  $$PlacesTableAnnotationComposer get placeId {
+    final $$PlacesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.places,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
   Expression<T> journalPhotosRefs<T extends Object>(
       Expression<T> Function($$JournalPhotosTableAnnotationComposer a) f) {
     final $$JournalPhotosTableAnnotationComposer composer = $composerBuilder(
@@ -6939,7 +7144,8 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
     $$JournalEntriesTableUpdateCompanionBuilder,
     (JournalEntryRow, $$JournalEntriesTableReferences),
     JournalEntryRow,
-    PrefetchHooks Function({bool tripId, bool journalPhotosRefs})> {
+    PrefetchHooks Function(
+        {bool tripId, bool placeId, bool journalPhotosRefs})> {
   $$JournalEntriesTableTableManager(
       _$AppDatabase db, $JournalEntriesTable table)
       : super(TableManagerState(
@@ -6959,6 +7165,7 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
             Value<double?> lat = const Value.absent(),
             Value<double?> lng = const Value.absent(),
             Value<String?> placeName = const Value.absent(),
+            Value<String?> placeId = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6970,6 +7177,7 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
             lat: lat,
             lng: lng,
             placeName: placeName,
+            placeId: placeId,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -6981,6 +7189,7 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
             Value<double?> lat = const Value.absent(),
             Value<double?> lng = const Value.absent(),
             Value<String?> placeName = const Value.absent(),
+            Value<String?> placeId = const Value.absent(),
             required DateTime createdAt,
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6992,6 +7201,7 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
             lat: lat,
             lng: lng,
             placeName: placeName,
+            placeId: placeId,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -7001,7 +7211,8 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
                     $$JournalEntriesTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({tripId = false, journalPhotosRefs = false}) {
+          prefetchHooksCallback: (
+              {tripId = false, placeId = false, journalPhotosRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
@@ -7028,6 +7239,16 @@ class $$JournalEntriesTableTableManager extends RootTableManager<
                         $$JournalEntriesTableReferences._tripIdTable(db),
                     referencedColumn:
                         $$JournalEntriesTableReferences._tripIdTable(db).id,
+                  ) as T;
+                }
+                if (placeId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.placeId,
+                    referencedTable:
+                        $$JournalEntriesTableReferences._placeIdTable(db),
+                    referencedColumn:
+                        $$JournalEntriesTableReferences._placeIdTable(db).id,
                   ) as T;
                 }
 
@@ -7066,7 +7287,8 @@ typedef $$JournalEntriesTableProcessedTableManager = ProcessedTableManager<
     $$JournalEntriesTableUpdateCompanionBuilder,
     (JournalEntryRow, $$JournalEntriesTableReferences),
     JournalEntryRow,
-    PrefetchHooks Function({bool tripId, bool journalPhotosRefs})>;
+    PrefetchHooks Function(
+        {bool tripId, bool placeId, bool journalPhotosRefs})>;
 typedef $$JournalPhotosTableCreateCompanionBuilder = JournalPhotosCompanion
     Function({
   required String id,

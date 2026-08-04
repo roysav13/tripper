@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../places/data/place_tables.dart';
 import '../../trips/data/trip_tables.dart';
 
 @DataClassName('JournalEntryRow')
@@ -15,6 +16,15 @@ class JournalEntries extends Table {
   RealColumn get lat => real().nullable()();
   RealColumn get lng => real().nullable()();
   TextColumn get placeName => text().nullable()();
+
+  /// Links this entry to the Place it corresponds to, if any — set when
+  /// the entry's location was picked from (or created as) one of the
+  /// trip's Places, or when the entry was auto-created because a Place
+  /// was marked visited from the Places tab. SET NULL, not cascade:
+  /// deleting the place must never delete the entry (entries are user
+  /// content — text, photos — only ever removed by explicit user action).
+  TextColumn get placeId =>
+      text().nullable().references(Places, #id, onDelete: KeyAction.setNull)();
 
   /// Immutable audit stamp — never shown or edited.
   DateTimeColumn get createdAt => dateTime()();

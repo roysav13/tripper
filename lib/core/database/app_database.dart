@@ -25,6 +25,7 @@ part 'app_database.g.dart';
 ///   v8 — Expenses conversion columns (M5.5b)
 ///   v9 — ItineraryItems (M5.7, feature since withdrawn — see below)
 ///   v10 — JournalEntries + JournalPhotos (Journal feature)
+///   v11 — JournalEntries.placeId (Place<->JournalEntry correlation)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -51,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +99,8 @@ class AppDatabase extends _$AppDatabase {
           if (from < 10) {
             await m.createTable(journalEntries);
             await m.createTable(journalPhotos);
+          } else if (from < 11) {
+            await m.addColumn(journalEntries, journalEntries.placeId);
           }
         },
         beforeOpen: (details) async {

@@ -5,7 +5,8 @@ import 'package:tripper/core/database/app_database.dart';
 
 /// Schema-bump rule (testing conventions): every schema bump ships a
 /// migration test in the same commit. v10 added JournalEntries +
-/// JournalPhotos (Journal feature). Mirrors expenses_migration_test.dart.
+/// JournalPhotos (Journal feature). v11 added JournalEntries.placeId
+/// (Place<->JournalEntry correlation). Mirrors expenses_migration_test.dart.
 void main() {
   late AppDatabase db;
 
@@ -15,6 +16,19 @@ void main() {
   const insertTrip = 'INSERT INTO trips (id, name, color_tag, archived, '
       'completion_prompt_shown, created_at) '
       "VALUES ('t1', 'Thailand', 0, 0, 0, 0)";
+
+  /// The v10 journal_entries shape — before place_id existed.
+  const createV10JournalEntries = '''
+CREATE TABLE journal_entries (
+  id TEXT NOT NULL PRIMARY KEY,
+  trip_id TEXT NOT NULL REFERENCES trips (id) ON DELETE CASCADE,
+  summary TEXT NOT NULL,
+  logged_at INTEGER NOT NULL,
+  lat REAL,
+  lng REAL,
+  place_name TEXT,
+  created_at INTEGER NOT NULL
+)''';
 
   test(
       'v9 -> v10 creates journal_entries and journal_photos, preserves '
@@ -32,7 +46,45 @@ void main() {
     expect(trips.single.read<String>('name'), 'Thailand');
   });
 
-  test('v1 -> v10 in one jump survives', () async {
+  test(
+      'v10 -> v11 adds place_id to an existing table, null (unlinked), '
+      'keeping existing entries', () async {
+    await db.customStatement('DROP TABLE journal_photos');
+    await db.customStatement('DROP TABLE journal_entries');
+    await db.customStatement(createV10JournalEntries);
+    await db.customStatement(insertTrip);
+    await db.customStatement(
+      'INSERT INTO journal_entries (id, trip_id, summary, logged_at, '
+      'created_at) '
+      "VALUES ('j1', 't1', 'Arrived', 0, 0)",
+    );
+
+    await db.migration.onUpgrade(Migrator(db), 10, 11);
+
+    final rows = await db
+        .customSelect('SELECT summary, place_id FROM journal_entries')
+        .get();
+    expect(rows.single.read<String>('summary'), 'Arrived');
+    expect(rows.single.read<String?>('place_id'), isNull);
+  });
+
+  test(
+      'v9 -> v11 in one jump does NOT try to add place_id to a table it '
+      'just created (regression: crashed with "duplicate column name" for '
+      'anyone skipping a version)', () async {
+    await db.customStatement('DROP TABLE journal_photos');
+    await db.customStatement('DROP TABLE journal_entries');
+    await db.customStatement(insertTrip);
+
+    await expectLater(
+      db.migration.onUpgrade(Migrator(db), 9, 11),
+      completes,
+    );
+    // The freshly created table already has the v11 shape.
+    await db.customSelect('SELECT place_id FROM journal_entries').get();
+  });
+
+  test('v1 -> v11 in one jump survives', () async {
     await db.customStatement('DROP TABLE journal_photos');
     await db.customStatement('DROP TABLE journal_entries');
     await db.customStatement('DROP TABLE itinerary_items');
@@ -41,10 +93,11 @@ void main() {
     await db.customStatement('DROP TABLE trips');
 
     await expectLater(
-      db.migration.onUpgrade(Migrator(db), 1, 10),
+      db.migration.onUpgrade(Migrator(db), 1, 11),
       completes,
     );
     await db.customSelect('SELECT COUNT(*) FROM journal_entries').getSingle();
+    await db.customSelect('SELECT place_id FROM journal_entries').get();
     await db.customSelect('SELECT completion_prompt_shown FROM trips').get();
   });
 
@@ -85,5 +138,33 @@ void main() {
         .customSelect('SELECT COUNT(*) AS c FROM journal_photos')
         .getSingle();
     expect(remaining.read<int>('c'), 0);
+  });
+
+  test(
+      'deleting a place unlinks (not deletes) its journal entry '
+      '(place_id SET NULL)', () async {
+    await db.customStatement(insertTrip);
+    await db.customStatement(
+      'INSERT INTO places (id, name, status, trip_id, created_at) '
+      "VALUES ('p1', 'Krabi', 1, 't1', 0)",
+    );
+    await db.customStatement(
+      'INSERT INTO journal_entries (id, trip_id, summary, logged_at, '
+      'place_id, created_at) '
+      "VALUES ('j1', 't1', 'Arrived', 0, 'p1', 0)",
+    );
+
+    await db.customStatement("DELETE FROM places WHERE id = 'p1'");
+
+    final row = await db
+        .customSelect(
+          "SELECT place_id FROM journal_entries WHERE id = 'j1'",
+        )
+        .getSingle();
+    expect(row.data['place_id'], isNull);
+    final remaining = await db
+        .customSelect('SELECT COUNT(*) AS c FROM journal_entries')
+        .getSingle();
+    expect(remaining.read<int>('c'), 1);
   });
 }
