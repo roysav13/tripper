@@ -46,6 +46,7 @@ class FakeJournalRepository implements JournalRepository {
     double? lat,
     double? lng,
     String? placeName,
+    String? placeId,
     List<String> photoSourcePaths = const [],
   }) async {
     final id = 'fake-${_entries.length}';
@@ -59,6 +60,7 @@ class FakeJournalRepository implements JournalRepository {
       lat: lat,
       lng: lng,
       placeName: placeName,
+      placeId: placeId,
       photos: [
         for (final path in photoSourcePaths)
           JournalPhoto(id: 'fake-photo-$path', filePath: path),
@@ -93,4 +95,8 @@ class FakeJournalRepository implements JournalRepository {
   Future<void> deleteEntry(String id) async {
     emit([..._entries.where((e) => e.id != id)]);
   }
+
+  @override
+  Future<bool> hasEntryForPlace(String placeId) async =>
+      _entries.any((e) => e.placeId == placeId);
 }

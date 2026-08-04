@@ -12,7 +12,8 @@ abstract interface class JournalRepository {
   Future<JournalEntry?> getById(String id);
 
   /// [photoSourcePaths] are copied into the vault; loggedAt defaults to
-  /// clock() when null — never DateTime.now().
+  /// clock() when null — never DateTime.now(). [placeId] links this entry
+  /// to a Place (Place<->JournalEntry correlation).
   Future<String> createEntry({
     required String tripId,
     required String summary,
@@ -20,6 +21,7 @@ abstract interface class JournalRepository {
     double? lat,
     double? lng,
     String? placeName,
+    String? placeId,
     List<String> photoSourcePaths = const [],
   });
 
@@ -33,6 +35,9 @@ abstract interface class JournalRepository {
 
   /// Deletes the entry row (photos cascade) and their vault files.
   Future<void> deleteEntry(String id);
+
+  /// Whether any entry is already linked to [placeId].
+  Future<bool> hasEntryForPlace(String placeId);
 }
 
 class DriftJournalRepository implements JournalRepository {
@@ -61,6 +66,7 @@ class DriftJournalRepository implements JournalRepository {
     double? lat,
     double? lng,
     String? placeName,
+    String? placeId,
     List<String> photoSourcePaths = const [],
   }) async {
     final id = _idGen();
@@ -78,6 +84,7 @@ class DriftJournalRepository implements JournalRepository {
         lat: lat,
         lng: lng,
         placeName: placeName,
+        placeId: placeId,
         createdAt: _clock(),
       ),
       photos,
@@ -109,6 +116,7 @@ class DriftJournalRepository implements JournalRepository {
         lat: Value(entry.lat),
         lng: Value(entry.lng),
         placeName: Value(entry.placeName),
+        placeId: Value(entry.placeId),
       ),
       [...kept, ...imported],
     );
@@ -129,6 +137,10 @@ class DriftJournalRepository implements JournalRepository {
       await _files.delete(photo.filePath);
     }
   }
+
+  @override
+  Future<bool> hasEntryForPlace(String placeId) =>
+      _dao.hasEntryForPlace(placeId);
 
   Future<List<JournalPhotoRow>> _importPhotos(
     List<String> sourcePaths, {
@@ -159,6 +171,7 @@ class DriftJournalRepository implements JournalRepository {
         lat: row.entry.lat,
         lng: row.entry.lng,
         placeName: row.entry.placeName,
+        placeId: row.entry.placeId,
         photos: [
           for (final p in row.photos)
             JournalPhoto(id: p.id, filePath: p.filePath),

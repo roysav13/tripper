@@ -13,6 +13,7 @@ class JournalEntry {
     this.lat,
     this.lng,
     this.placeName,
+    this.placeId,
     this.photos = const [],
   });
 
@@ -29,6 +30,13 @@ class JournalEntry {
   final double? lat;
   final double? lng;
   final String? placeName;
+
+  /// The Place this entry corresponds to, if any (Place<->JournalEntry
+  /// correlation) — set when the entry's location was picked from an
+  /// existing Place, or when this entry was auto-created because a Place
+  /// was marked visited.
+  final String? placeId;
+
   final List<JournalPhoto> photos;
 
   bool get hasLocation => lat != null && lng != null;
@@ -40,6 +48,7 @@ class JournalEntry {
     double? Function()? lat,
     double? Function()? lng,
     String? Function()? placeName,
+    String? Function()? placeId,
     List<JournalPhoto>? photos,
   }) {
     return JournalEntry(
@@ -51,6 +60,7 @@ class JournalEntry {
       lat: lat == null ? this.lat : lat(),
       lng: lng == null ? this.lng : lng(),
       placeName: placeName == null ? this.placeName : placeName(),
+      placeId: placeId == null ? this.placeId : placeId(),
       photos: photos ?? this.photos,
     );
   }
@@ -66,6 +76,7 @@ class JournalEntry {
       other.lat == lat &&
       other.lng == lng &&
       other.placeName == placeName &&
+      other.placeId == placeId &&
       listEquals(other.photos, photos);
 
   @override
@@ -78,6 +89,7 @@ class JournalEntry {
         lat,
         lng,
         placeName,
+        placeId,
         Object.hashAll(photos),
       );
 }

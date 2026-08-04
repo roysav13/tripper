@@ -46,6 +46,17 @@ class JournalDao extends DatabaseAccessor<AppDatabase> with _$JournalDaoMixin {
     return grouped.isEmpty ? null : grouped.single;
   }
 
+  /// Whether any entry is already linked to [placeId] — used to make
+  /// "mark place visited creates a stub entry" idempotent across
+  /// visited/un-visited toggling.
+  Future<bool> hasEntryForPlace(String placeId) async {
+    final row = await (select(journalEntries)
+          ..where((e) => e.placeId.equals(placeId))
+          ..limit(1))
+        .getSingleOrNull();
+    return row != null;
+  }
+
   Future<void> insertEntry(
     JournalEntryRow entry,
     List<JournalPhotoRow> photos,

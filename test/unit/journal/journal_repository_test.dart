@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/app_database.dart';
 import 'package:tripper/core/files/file_vault_service.dart';
 import 'package:tripper/features/journal/data/journal_repository.dart';
+import 'package:tripper/features/places/data/place_repository.dart';
 import 'package:tripper/features/trips/data/trip_repository.dart';
 
 // Runs against an in-memory SQLite DB. No mocks — real queries.
@@ -13,6 +14,7 @@ void main() {
   late Directory tempDir;
   late DriftJournalRepository repo;
   late DriftTripRepository tripRepo;
+  late DriftPlaceRepository placeRepo;
   var idCounter = 0;
 
   setUp(() async {
@@ -26,6 +28,7 @@ void main() {
       () => 'entry-${idCounter++}',
     );
     tripRepo = DriftTripRepository(db.tripsDao, () => DateTime(2026, 7, 19));
+    placeRepo = DriftPlaceRepository(db.placesDao, () => DateTime(2026, 7, 19));
   });
 
   tearDown(() async {
@@ -84,6 +87,45 @@ void main() {
     expect(entry.lat, 8.0863);
     expect(entry.lng, 98.9063);
     expect(entry.placeName, 'Krabi');
+  });
+
+  test('placeId roundtrips through create and read', () async {
+    final tripId = await createTrip();
+    final placeId = await placeRepo.createPlace(
+      name: 'Test Place',
+      tripId: tripId,
+    );
+    final id = await repo.createEntry(
+      tripId: tripId,
+      summary: 'Linked to a place',
+      placeId: placeId,
+    );
+    final entry = await repo.getById(id);
+    expect(entry!.placeId, placeId);
+  });
+
+  test('hasEntryForPlace is true only once an entry links that place',
+      () async {
+    final tripId = await createTrip();
+    final place1Id = await placeRepo.createPlace(
+      name: 'Place 1',
+      tripId: tripId,
+    );
+    final place2Id = await placeRepo.createPlace(
+      name: 'Place 2',
+      tripId: tripId,
+    );
+
+    expect(await repo.hasEntryForPlace(place1Id), isFalse);
+
+    await repo.createEntry(
+      tripId: tripId,
+      summary: 'Linked to a place',
+      placeId: place1Id,
+    );
+
+    expect(await repo.hasEntryForPlace(place1Id), isTrue);
+    expect(await repo.hasEntryForPlace(place2Id), isFalse);
   });
 
   test('photos are imported into the vault, preserving order', () async {
