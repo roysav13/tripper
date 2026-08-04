@@ -40,7 +40,7 @@ Not a booking engine (no flight/hotel search), not a social network, not a group
 - Attach files to a specific trip: PDFs, images, or manually-entered records (flight number, confirmation code, dates)
 - Categories: Passport/ID, Visa, Flight, Hotel/Stay, Insurance, Transport ticket, Other — each category has its own card layout (mirrors Omio's reservation-card pattern) so a flight looks different from a passport scan at a glance
 - A **global vault** view independent of any trip, for documents that outlive a single trip (passport, driver's license, insurance card, vaccination record) — these can be linked into multiple trips without duplicating the file
-- Quick-access / pinned documents for airport-gate situations — must open in under two taps from app launch. Pinned cards stay light (paper/surface base, no inverted dark blocks) — *"teal accents" revised M7*: each pinned card now carries its document category's identity color (`documentCategoryAccent`, §4.2) on a compact `TicketCard` stub, the same mechanism every other document card uses, rather than a single teal border. The "stays light, never inverts to a dark block" constraint itself is unchanged.
+- Quick-access / pinned documents for airport-gate situations — must open in under two taps from app launch. Pinned cards stay light (paper/surface with teal accents), consistent with the rest of the UI — no inverted dark blocks.
 - Everything stored on-device; files live in app-private storage, DB only stores metadata + file path
 - Expiry tracking: passport/visa expiry date surfaces a warning if it expires before or shortly after a trip's end date
 - **Android share target**: share a PDF/image from Gmail or any app → Tripper opens a "save to vault" sheet (pick trip + category). The friction-killer for getting documents in.
@@ -141,66 +141,36 @@ The biggest lift in Phase 2, isolated deliberately because it's the one feature 
 ## 4. Design system
 
 ### 4.1 Direction
-
-**"Wallet & Ticket"** (M7 restyle, 2026-07 — supersedes the original field-journal/boarding-pass read below). The core metaphor sharpened: instead of *evoking* a boarding pass through typography and hairlines alone, a trip, document, or reservation now renders as an actual physical travel object — a ticket, a boarding pass, a luggage tag — complete with a die-cut silhouette (perforated tear-seam, notched edges) and a colored stub. Color stopped being purely restrained: each trip carries an identity color from an 8-hue palette, applied consistently everywhere that trip appears (its cards, its header, its map pins), while warnings/errors/confirmations keep their own reserved colors so identity color is never mistaken for system meaning. Density still comes from layout and type hierarchy (Citymapper's approach, kept from the original direction) — the change is that hierarchy now has more room to be dramatic (a real hero moment per screen) instead of being flattened to a handful of sizes.
-
-*Original direction, kept for history:* "Classic, not much color, full of information, great UX" — a field-journal/boarding-pass aesthetic of warm paper, near-black ink, one restrained teal accent, typography doing color's job. M0–M5 were built to this. M7 keeps the warm paper/ink base and the typographic discipline; it deliberately drops the single-accent and hairline-only rules.
+"Classic, not much color, full of information, great UX" — plus your reference photo: natural light, sea and rock tones, no filters, nothing loud. The read on that combination is a **field-journal / boarding-pass aesthetic**: warm paper background, near-black ink for text, one restrained accent color, and typography doing the work that color usually does. Density comes from layout and type hierarchy (Citymapper's approach), not from packing in bright UI chrome.
 
 ### 4.2 Color tokens
 
-Two tiers, defined in `lib/core/theme/app_colors.dart` (`AppColors`):
-
-**Neutrals + semantic (unchanged from M0–M5):**
-
-| Token | Value (light) | Use |
+| Token | Value | Use |
 |---|---|---|
-| `paper` | `#F7F4EE` | App background — warm off-white, not pure white |
-| `surface` | `#FFFFFF` | Cards, sheets |
-| `inkPrimary` | `#1C2422` | Primary text — near-black, slightly warm |
-| `inkSecondary` | `#5B6462` | Secondary text, timestamps, metadata |
-| `inkMuted` | `#666D68` | Placeholder text, disabled state (WCAG-AA-fixed post-M4 audit) |
-| `hairline` | `#DEDACD` | Simple dividers only now (see §4.4) |
-| `accent` | `#2B6E6B` | Deep teal — the default/neutral action color: primary buttons, the "want to go" wishlist state, anything not tied to one trip's identity |
-| `warning` | `#B5562D` | Rust — warnings only (document expiry). Never a trip identity color. |
-| `error` | `#A23B2E` | Real errors/validation only |
-| `success` | `#3F7A52` | Confirmations only |
+| `bg.paper` | `#F7F4EE` | App background — warm off-white, not pure white |
+| `bg.surface` | `#FFFFFF` | Cards, sheets |
+| `ink.primary` | `#1C2422` | Primary text — near-black, slightly warm |
+| `ink.secondary` | `#5B6462` | Secondary text, timestamps, metadata |
+| `ink.muted` | `#8C948F` | Placeholder text, disabled state |
+| `line.hairline` | `#DEDACD` | Dividers, card borders |
+| `accent.primary` | `#2B6E6B` | Deep teal — primary actions, active states, "want to go" pins (evokes the sea in your reference shots) |
+| `accent.secondary` | `#B5562D` | Rust/terracotta — warnings only (document expiry, destructive-adjacent emphasis). Not used for place states. |
+| `status.error` | `#A23B2E` | Real errors/validation only |
+| `status.success` | `#3F7A52` | Confirmations only |
 
-Dark mode is a considered inversion, not a naive one (paper → `#1B1F21`, ink → `#EDEAE2`, etc.) — see `AppColors.dark`.
-
-**`tripPalette` — 8 "stamp ink" hues for identity (new in M7):**
-
-| # | Name | Light | Dark | Notes |
-|---|---|---|---|---|
-| 0 | Harbor teal | `#2B6E6B` | `#5AA6A2` | The sea; default trip color, same hue as the old single accent |
-| 1 | Marigold | `#E0B24A` | `#E8BE63` | Deliberately the one pale hue — its `onColor()` resolves to ink text, not white |
-| 2 | Berry | `#A63D63` | `#C97A97` | Warm but pinker/cooler than `warning`/`error`'s rust, so a trip tag never reads as an alert |
-| 3 | Indigo | `#3E5490` | `#8098D4` | Night flights |
-| 4 | Moss | `#5B7A3A` | `#8FAE68` | Olive-green, kept distinct from `success`'s blue-green |
-| 5 | Plum | `#6B4E8E` | `#A587C4` | Dusk |
-| 6 | Cobalt | `#2E6E9E` | `#6BA3CC` | Deep water, more blue than harbor teal |
-| 7 | Slate | `#52677A` | `#8CA0B2` | Overcast coastal town |
-
-`Trip.colorTag` (already existed as a stored `int`, previously unused visually) indexes into this list mod its length, via `AppColors.tripAccent(colorTag)` — safe against any stored value. **Rule: append, never reorder or resize** — the index is persisted, so changing position 3's meaning silently re-colors every saved trip. `AppColors.onColor(background)` picks legible ink-or-surface text/icon color for whichever hue lands on a stub.
-
-Document vault cards use the same mechanism per category (passport, visa, flight, hotel, insurance, transport, other) rather than per trip — see M7.3.
+Rule: **two accent colors, total, in the entire app.** Everything else is ink-on-paper plus weight/size. Dark mode is a straight inversion (paper → `#15181A`, ink → `#EDEAE2`) — build it from day one since Android users expect it, not bolted on later.
 
 ### 4.3 Typography
-
-Three families (unchanged), now **7 sizes instead of 5** — the old scale read flat on a screen's one hero moment (`lib/core/theme/app_typography.dart`, `AppTypeScale`/`AppTextStyles`):
-
-- **Headings:** Fraunces (serif) — `hero` (40, one per screen: a trip's name on its own detail header, a landing empty state) sits above the original `display`/`title`
-- **Body/UI:** IBM Plex Sans — `body`/`label`/`sectionLabel`, unchanged
-- **Data/codes:** IBM Plex Mono — `mono` (unchanged, dates/codes/coordinates) plus the new `statValue` (34, tabular figures) for the big number in a stats tile (countries visited, days traveled) — this is what makes M3.3.2's stats header feel like a payoff instead of another data row
-- Weight (regular/medium/semibold) still carries hierarchy more than size alone, but size now has more range to work with on hero moments specifically — not license to add a size per screen
+- **Headings:** a serif (e.g. `Fraunces` or `Source Serif 4`) — gives the "journal/passport" feel without looking decorative
+- **Body/UI:** a clean grotesk sans (e.g. `Inter` or `IBM Plex Sans`) for everything interactive and dense
+- **Data/codes:** a monospace (`IBM Plex Mono` or `JetBrains Mono`) for confirmation codes, flight numbers, dates, coordinates — this is what makes dense data screens (Citymapper-style) feel authoritative rather than cluttered
+- Type scale: stick to 5 sizes total (display, title, body, label, caption). Weight (regular/medium/semibold) carries hierarchy more than size does.
 
 ### 4.4 Component principles
-
-- **Cards separate with soft elevation, not a flat hairline border** (`AppElevation` tokens — reversed from the original M0–M5 rule). Hairlines remain for simple row dividers and the tab bar rule only.
-- **`TicketCard`** (`lib/core/widgets/ticket_card.dart`) is the primitive for anything that represents a real travel object: a colored stub (trip/category identity color) separated from the body by a perforated tear-seam, with semicircular notches bitten out of the long edges at that seam — cut via `TicketNotchClipper` and elevated with `PhysicalShape` so the shadow correctly follows the concave notch, not a box around them. The seam position reads `Directionality.of(context)` so it's on the correct physical edge in RTL.
-- **`PaperCard`** remains for anything that *isn't* a travel object — plain list rows, forms, settings tiles — now drawn with shadow instead of a border, but no ticket geometry.
-- Icons: outline style only, single weight; ink-colored except on a `TicketCard` stub (where they resolve via `onColor` against that stub's identity color) or the two pin/document states.
-- No gradients. Corner radius is a design token (`AppShape.radius` for plain surfaces, `AppShape.ticketRadius`/`ticketNotchRadius` for tickets), not per-component guessing.
-- Empty states are illustrated sparingly with line art, not stock photography — kept from the original direction; still true even with more color elsewhere.
+- Cards use hairline borders, not shadows, for separation (shadows read as "app-y"; hairlines read as "printed")
+- Icons: outline style only, single weight, ink-colored (not accent-colored) except when indicating the two pin/document states
+- No gradients, no rounded-pill buttons everywhere — corner radius is modest and consistent (design token, not per-component guessing)
+- Empty states are illustrated sparingly with line art, not stock photography — keeps it consistent with the low-color direction
 
 ## 5. Technical architecture
 

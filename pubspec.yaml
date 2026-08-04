@@ -28,6 +28,8 @@ dependencies:
   pdfx: ^2.6.0
   google_maps_flutter: ^2.9.0
   latlong2: ^0.9.1
+  flutter_earth_globe: ^2.2.1
+  image_picker: ^1.2.0
   http: ^1.2.0
   shared_preferences: ^2.3.2
   archive: ^3.6.1
@@ -46,6 +48,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+
+  # Journal globe texture — bundled, never fetched at runtime (offline
+  # rule, SPEC §3.1.2). See assets/globe/README for provenance.
+  assets:
+    - assets/globe/
 
   # Bundled, never fetched at runtime (offline rule, SPEC §3.1.2).
   # Fraunces ships only 400/600 as statics — styles map to those exactly so

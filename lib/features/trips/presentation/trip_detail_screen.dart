@@ -9,19 +9,21 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../expenses/presentation/trip_expenses_tab.dart';
+import '../../journal/presentation/trip_journal_tab.dart';
 import '../../places/presentation/trip_places_tab.dart';
 import '../../vault/presentation/trip_documents_tab.dart';
 import '../domain/trip.dart';
 import 'trip_card.dart';
 import 'trip_providers.dart';
 
-/// Tab order is Documents, Places, Spend — keep these in sync with the
-/// `tabs:`/`TabBarView` children below.
+/// Tab order is Documents, Places, Spend, Journal — keep these in sync
+/// with the `tabs:`/`TabBarView` children below.
 ///
-/// A fourth "Plan" tab (the day-by-day itinerary) lived here until
+/// A "Plan" tab (the day-by-day itinerary) lived in this fourth slot until
 /// 2026-07-26 and was withdrawn as "currently won't do"; see
-/// `docs/adr/ADR-001-itinerary-redesign.md`.
-const _tabCount = 3;
+/// `docs/adr/ADR-001-itinerary-redesign.md`. Journal is unrelated new work
+/// that happens to reuse the freed slot.
+const _tabCount = 4;
 const _expensesTabIndex = 2;
 
 class TripDetailScreen extends ConsumerWidget {
@@ -50,9 +52,6 @@ class TripDetailScreen extends ConsumerWidget {
     final today = ref.watch(clockProvider)();
     final status = bucketTrip(trip, today);
 
-    final accent = tripCardAccent(colors, trip, status);
-    final onAccent = colors.onColor(accent);
-
     return DefaultTabController(
       length: _tabCount,
       // While a trip is under way, spend is what you open the app for —
@@ -62,7 +61,18 @@ class TripDetailScreen extends ConsumerWidget {
       initialIndex: status == TripStatus.active ? _expensesTabIndex : 0,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          title: Hero(
+            tag: 'trip-name-${trip.id}',
+            child: Material(
+              type: MaterialType.transparency,
+              child: Text(
+                trip.name,
+                style: AppTextStyles.title.copyWith(color: colors.inkPrimary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
           actions: [
             PopupMenuButton<String>(
               onSelected: (action) => _onMenu(context, ref, trip, action),
@@ -88,43 +98,14 @@ class TripDetailScreen extends ConsumerWidget {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // The screen's one hero moment (SPEC §4.3): the trip's name at
-            // AppTextStyles.hero size, on a full-bleed band of its own
-            // identity color — the boarding-pass-stripe read that the old
-            // small AppBar title didn't have room for. Flies in from
-            // TripCard's compact title via the shared Hero tag.
-            ColoredBox(
-              color: accent,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.lg,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Hero(
-                      tag: 'trip-name-${trip.id}',
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Text(
-                          trip.name,
-                          style: AppTextStyles.hero.copyWith(color: onAccent),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    MonoText(
-                      '${TripDateFormatter.line(l10n, trip)}'
-                      ' · ${trip.destinations.join(' → ')}'
-                      '${status == TripStatus.active ? ' · ${activeDayLabel(l10n, trip, today)}' : ''}',
-                      color: onAccent,
-                    ),
-                  ],
-                ),
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpacing.lg,
+              ),
+              child: MonoText(
+                '${TripDateFormatter.line(l10n, trip)}'
+                ' · ${trip.destinations.join(' → ')}'
+                '${status == TripStatus.active ? ' · ${activeDayLabel(l10n, trip, today)}' : ''}',
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -139,14 +120,20 @@ class TripDetailScreen extends ConsumerWidget {
                 Tab(text: l10n.tabDocuments),
                 Tab(text: l10n.tabPlacesInTrip),
                 Tab(text: l10n.tabExpenses),
+                Tab(text: l10n.tabJournal),
               ],
             ),
             Expanded(
               child: TabBarView(
+                // Journal's globe needs full ownership of horizontal drags
+                // to rotate — a swipeable TabBarView competes for the same
+                // gesture and wins, so tabs are tap-only everywhere.
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   TripDocumentsTab(trip: trip),
                   TripPlacesTab(trip: trip),
                   TripExpensesTab(trip: trip),
+                  TripJournalTab(trip: trip),
                 ],
               ),
             ),

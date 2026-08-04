@@ -45,22 +45,9 @@
       "m": { "type": "int" }
     }
   },
-  "tripStubOfCount": "of {m}",
-  "@tripStubOfCount": {
-    "placeholders": {
-      "m": { "type": "int" }
-    }
-  },
   "tripFormTitleNew": "New trip",
   "tripFormTitleEdit": "Edit trip",
   "tripFormName": "Trip name",
-  "tripFormColorLabel": "Trip color",
-  "tripColorSemanticLabel": "Trip color option {n}",
-  "@tripColorSemanticLabel": {
-    "placeholders": {
-      "n": { "type": "int" }
-    }
-  },
   "tripFormDestinations": "Destinations",
   "tripFormAddDestination": "Add destination",
   "tripFormAddDestinationHint": "Krabi",
@@ -291,5 +278,34 @@
       "visited": { "type": "int" },
       "total": { "type": "int" }
     }
-  }
+  },
+  "tabJournal": "Journal",
+  "journalEmptyTitle": "No journal entries yet",
+  "journalEmptyBody": "Log a note from the road — where you went and what happened.",
+  "journalAddEntryCta": "Add entry",
+  "journalEntryFormTitle": "New entry",
+  "journalEntryFormEditTitle": "Edit entry",
+  "journalFieldSummary": "What happened?",
+  "errJournalSummaryRequired": "Enter a summary",
+  "journalAddPhoto": "Add photo",
+  "journalPhotoSourceCamera": "Camera",
+  "journalPhotoSourceGallery": "Gallery",
+  "journalRemovePhoto": "Remove photo",
+  "journalAddLocation": "Add location",
+  "journalClearLocation": "Clear location",
+  "journalDeleteEntryTitle": "Delete this entry?",
+  "journalDeleteEntryBody": "This removes its text and any photos. This can't be undone.",
+  "journalMapLocationHint": "Entries without a location won't appear here.",
+  "journalStatsLine": "{entries} entries · {places} places visited",
+  "@journalStatsLine": {
+    "placeholders": {
+      "entries": { "type": "int" },
+      "places": { "type": "int" }
+    }
+  },
+  "journalPickNow": "Now",
+  "journalPickToday": "Today",
+  "journalPickYesterday": "Yesterday",
+  "journalTripLocations": "This trip's locations",
+  "journalNewLocation": "New location"
 }

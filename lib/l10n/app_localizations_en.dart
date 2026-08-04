@@ -107,11 +107,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String tripStubOfCount(int m) {
-    return 'of $m';
-  }
-
-  @override
   String get tripFormTitleNew => 'New trip';
 
   @override
@@ -119,14 +114,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tripFormName => 'Trip name';
-
-  @override
-  String get tripFormColorLabel => 'Trip color';
-
-  @override
-  String tripColorSemanticLabel(int n) {
-    return 'Trip color option $n';
-  }
 
   @override
   String get tripFormDestinations => 'Destinations';
@@ -702,4 +689,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String tripPlacesProgress(int visited, int total) {
     return '$visited of $total visited';
   }
+
+  @override
+  String get tabJournal => 'Journal';
+
+  @override
+  String get journalEmptyTitle => 'No journal entries yet';
+
+  @override
+  String get journalEmptyBody =>
+      'Log a note from the road — where you went and what happened.';
+
+  @override
+  String get journalAddEntryCta => 'Add entry';
+
+  @override
+  String get journalEntryFormTitle => 'New entry';
+
+  @override
+  String get journalEntryFormEditTitle => 'Edit entry';
+
+  @override
+  String get journalFieldSummary => 'What happened?';
+
+  @override
+  String get errJournalSummaryRequired => 'Enter a summary';
+
+  @override
+  String get journalAddPhoto => 'Add photo';
+
+  @override
+  String get journalPhotoSourceCamera => 'Camera';
+
+  @override
+  String get journalPhotoSourceGallery => 'Gallery';
+
+  @override
+  String get journalRemovePhoto => 'Remove photo';
+
+  @override
+  String get journalAddLocation => 'Add location';
+
+  @override
+  String get journalClearLocation => 'Clear location';
+
+  @override
+  String get journalDeleteEntryTitle => 'Delete this entry?';
+
+  @override
+  String get journalDeleteEntryBody =>
+      'This removes its text and any photos. This can\'t be undone.';
+
+  @override
+  String get journalMapLocationHint =>
+      'Entries without a location won\'t appear here.';
+
+  @override
+  String journalStatsLine(int entries, int places) {
+    return '$entries entries · $places places visited';
+  }
+
+  @override
+  String get journalPickNow => 'Now';
+
+  @override
+  String get journalPickToday => 'Today';
+
+  @override
+  String get journalPickYesterday => 'Yesterday';
+
+  @override
+  String get journalTripLocations => 'This trip\'s locations';
+
+  @override
+  String get journalNewLocation => 'New location';
 }

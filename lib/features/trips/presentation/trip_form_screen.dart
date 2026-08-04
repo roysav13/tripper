@@ -27,7 +27,6 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   late final TextEditingController _name;
   late final TextEditingController _destinationInput;
   late List<String> _destinations;
-  late int _colorTag;
   DateTime? _start;
   DateTime? _end;
   List<TripValidationError> _errors = const [];
@@ -39,7 +38,6 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     _name = TextEditingController(text: t?.name ?? '');
     _destinationInput = TextEditingController();
     _destinations = [...?t?.destinations];
-    _colorTag = t?.colorTag ?? 0;
     _start = t?.startDate;
     _end = t?.endDate;
   }
@@ -76,13 +74,6 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
                   ? l10n.errNameRequired
                   : null,
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(l10n.tripFormColorLabel),
-          const SizedBox(height: AppSpacing.xs),
-          _ColorSwatchPicker(
-            selected: _colorTag,
-            onChanged: (i) => setState(() => _colorTag = i),
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(l10n.tripFormDestinations),
@@ -234,7 +225,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
         destinations: _destinations,
         startDate: _start,
         endDate: _end,
-        colorTag: _colorTag,
+        colorTag: widget.initial?.colorTag ?? 0,
       );
     } else {
       await repo.updateTrip(
@@ -243,95 +234,10 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
           destinations: _destinations,
           startDate: () => _start,
           endDate: () => _end,
-          colorTag: _colorTag,
         ),
       );
     }
     if (mounted) context.pop();
-  }
-}
-
-/// The trip's identity color (SPEC §4.2 — `AppColors.tripPalette`), picked
-/// once at creation and free to change later. Not a hairline swatch strip:
-/// each option gets a full 48dp tap target (`androidTapTargetGuideline`
-/// covers this screen too) even though the visible dot is smaller.
-class _ColorSwatchPicker extends StatelessWidget {
-  const _ColorSwatchPicker({required this.selected, required this.onChanged});
-
-  final int selected;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final l10n = AppLocalizations.of(context)!;
-    return Wrap(
-      children: [
-        for (var i = 0; i < colors.tripPalette.length; i++)
-          _ColorSwatch(
-            color: colors.tripPalette[i],
-            isSelected: i == selected,
-            semanticLabel: l10n.tripColorSemanticLabel(i + 1),
-            onTap: () => onChanged(i),
-          ),
-      ],
-    );
-  }
-}
-
-class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({
-    required this.color,
-    required this.isSelected,
-    required this.semanticLabel,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool isSelected;
-  final String semanticLabel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Semantics(
-      label: semanticLabel,
-      selected: isSelected,
-      button: true,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Center(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: isSelected ? 36 : 28,
-                height: isSelected ? 36 : 28,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? Border.all(color: colors.inkPrimary, width: 2)
-                      : null,
-                ),
-                child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        size: 16,
-                        color: colors.onColor(color),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

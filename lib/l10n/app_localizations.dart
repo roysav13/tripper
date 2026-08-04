@@ -268,12 +268,6 @@ abstract class AppLocalizations {
   /// **'Day {n} of {m}'**
   String tripDayCount(int n, int m);
 
-  /// No description provided for @tripStubOfCount.
-  ///
-  /// In en, this message translates to:
-  /// **'of {m}'**
-  String tripStubOfCount(int m);
-
   /// No description provided for @tripFormTitleNew.
   ///
   /// In en, this message translates to:
@@ -291,18 +285,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trip name'**
   String get tripFormName;
-
-  /// No description provided for @tripFormColorLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Trip color'**
-  String get tripFormColorLabel;
-
-  /// No description provided for @tripColorSemanticLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Trip color option {n}'**
-  String tripColorSemanticLabel(int n);
 
   /// No description provided for @tripFormDestinations.
   ///
@@ -1287,6 +1269,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{visited} of {total} visited'**
   String tripPlacesProgress(int visited, int total);
+
+  /// No description provided for @tabJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get tabJournal;
+
+  /// No description provided for @journalEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No journal entries yet'**
+  String get journalEmptyTitle;
+
+  /// No description provided for @journalEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a note from the road — where you went and what happened.'**
+  String get journalEmptyBody;
+
+  /// No description provided for @journalAddEntryCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add entry'**
+  String get journalAddEntryCta;
+
+  /// No description provided for @journalEntryFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New entry'**
+  String get journalEntryFormTitle;
+
+  /// No description provided for @journalEntryFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit entry'**
+  String get journalEntryFormEditTitle;
+
+  /// No description provided for @journalFieldSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened?'**
+  String get journalFieldSummary;
+
+  /// No description provided for @errJournalSummaryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a summary'**
+  String get errJournalSummaryRequired;
+
+  /// No description provided for @journalAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get journalAddPhoto;
+
+  /// No description provided for @journalPhotoSourceCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get journalPhotoSourceCamera;
+
+  /// No description provided for @journalPhotoSourceGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get journalPhotoSourceGallery;
+
+  /// No description provided for @journalRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get journalRemovePhoto;
+
+  /// No description provided for @journalAddLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Add location'**
+  String get journalAddLocation;
+
+  /// No description provided for @journalClearLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear location'**
+  String get journalClearLocation;
+
+  /// No description provided for @journalDeleteEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this entry?'**
+  String get journalDeleteEntryTitle;
+
+  /// No description provided for @journalDeleteEntryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes its text and any photos. This can\'t be undone.'**
+  String get journalDeleteEntryBody;
+
+  /// No description provided for @journalMapLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries without a location won\'t appear here.'**
+  String get journalMapLocationHint;
+
+  /// No description provided for @journalStatsLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{entries} entries · {places} places visited'**
+  String journalStatsLine(int entries, int places);
+
+  /// No description provided for @journalPickNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get journalPickNow;
+
+  /// No description provided for @journalPickToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get journalPickToday;
+
+  /// No description provided for @journalPickYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get journalPickYesterday;
+
+  /// No description provided for @journalTripLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'This trip\'s locations'**
+  String get journalTripLocations;
+
+  /// No description provided for @journalNewLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'New location'**
+  String get journalNewLocation;
 }
 
 class _AppLocalizationsDelegate

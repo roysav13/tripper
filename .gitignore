@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Claude Code brainstorming visual companion (local scratch, not for review)
+.superpowers/

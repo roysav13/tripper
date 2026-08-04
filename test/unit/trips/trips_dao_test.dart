@@ -119,9 +119,9 @@ void main() {
     expect((await repo.getTrip(id))!.completionPromptShown, isTrue);
   });
 
-  test('fresh database opens at schema v9 with every table queryable',
+  test('fresh database opens at schema v10 with every table queryable',
       () async {
-    expect(db.schemaVersion, 9);
+    expect(db.schemaVersion, 10);
     for (final table in [
       'trips',
       'trip_destinations',
@@ -132,6 +132,8 @@ void main() {
       // v9 (M5.7). The Plan feature was withdrawn, but the table stays
       // so upgraded devices never face a destructive migration.
       'itinerary_items',
+      'journal_entries', // v10 (Journal feature)
+      'journal_photos',
     ]) {
       await db.customSelect('SELECT COUNT(*) FROM $table').getSingle();
     }

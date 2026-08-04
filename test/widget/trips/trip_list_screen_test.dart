@@ -113,11 +113,7 @@ void main() {
     expect(find.text('UPCOMING'), findsOneWidget);
     expect(find.text('PAST'), findsOneWidget);
     expect(find.text('Active trip'), findsOneWidget);
-    // M7 restyle: the "Day 4 of 12" pill became the ticket stub's big
-    // day-count number plus a small "of 12" line (trip_card_test.dart
-    // covers this in detail) — check both pieces landed here too.
-    expect(find.text('4'), findsOneWidget);
-    expect(find.text('OF 12'), findsOneWidget);
+    expect(find.text('Day 4 of 12'), findsOneWidget);
   });
 
   testWidgets('dateless trip lands in PLANNED with dates TBD', (tester) async {

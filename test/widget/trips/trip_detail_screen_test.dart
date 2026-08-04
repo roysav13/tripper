@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
+import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_detail_screen.dart';
@@ -14,6 +15,7 @@ import 'package:tripper/l10n/app_localizations.dart';
 
 import '../../helpers/fake_document_repository.dart';
 import '../../helpers/fake_expense_repository.dart';
+import '../../helpers/fake_journal_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 import '../../helpers/test_preferences.dart';
@@ -37,6 +39,7 @@ Future<Widget> _app(Trip trip) async => ProviderScope(
             .overrideWithValue(FakeDocumentRepository([])),
         placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
+        journalRepositoryProvider.overrideWithValue(FakeJournalRepository([])),
         clockProvider.overrideWithValue(() => _today),
       ],
       child: MaterialApp(
@@ -103,7 +106,7 @@ void main() {
     expect(find.text('Track what this trip costs'), findsNothing);
   });
 
-  testWidgets('all three tabs are reachable from an active trip',
+  testWidgets('all four tabs are reachable from an active trip',
       (tester) async {
     final trip = _trip(
       start: DateTime(2026, 7, 16),
@@ -112,7 +115,7 @@ void main() {
     await tester.pumpWidget(await _app(trip));
     await tester.pumpAndSettle();
 
-    for (final tab in ['Documents', 'Places']) {
+    for (final tab in ['Documents', 'Places', 'Journal']) {
       await tester.tap(find.text(tab));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: tab);
@@ -124,8 +127,8 @@ void main() {
   });
 
   testWidgets(
-      'the withdrawn Plan tab is gone — a stray fourth tab would mean '
-      'the revert was only half applied', (tester) async {
+      'the withdrawn Plan tab stays gone — Journal reuses that slot, not '
+      'a stray fifth tab', (tester) async {
     final trip = _trip(
       start: DateTime(2026, 7, 16),
       end: DateTime(2026, 7, 27),
@@ -133,7 +136,7 @@ void main() {
     await tester.pumpWidget(await _app(trip));
     await tester.pumpAndSettle();
 
-    expect(find.byType(Tab), findsNWidgets(3));
+    expect(find.byType(Tab), findsNWidgets(4));
     expect(find.text('Plan'), findsNothing);
   });
 }

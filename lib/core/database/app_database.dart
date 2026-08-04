@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import '../../features/expenses/data/expense_tables.dart';
 import '../../features/expenses/data/expenses_dao.dart';
 import '../../features/itinerary/data/itinerary_tables.dart';
+import '../../features/journal/data/journal_dao.dart';
+import '../../features/journal/data/journal_tables.dart';
 import '../../features/places/data/place_tables.dart';
 import '../../features/places/data/places_dao.dart';
 import '../../features/trips/data/trip_tables.dart';
@@ -22,6 +24,7 @@ part 'app_database.g.dart';
 ///   v7 — Expenses (M5.5)
 ///   v8 — Expenses conversion columns (M5.5b)
 ///   v9 — ItineraryItems (M5.7, feature since withdrawn — see below)
+///   v10 — JournalEntries + JournalPhotos (Journal feature)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -38,15 +41,17 @@ part 'app_database.g.dart';
     Places,
     Expenses,
     ItineraryItems,
+    JournalEntries,
+    JournalPhotos,
   ],
-  daos: [TripsDao, DocumentsDao, PlacesDao, ExpensesDao],
+  daos: [TripsDao, DocumentsDao, PlacesDao, ExpensesDao, JournalDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Executor is injected so tests can pass NativeDatabase.memory().
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -89,6 +94,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 9) {
             await m.createTable(itineraryItems);
+          }
+          if (from < 10) {
+            await m.createTable(journalEntries);
+            await m.createTable(journalPhotos);
           }
         },
         beforeOpen: (details) async {

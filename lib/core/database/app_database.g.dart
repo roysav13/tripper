@@ -3101,6 +3101,708 @@ class ItineraryItemsCompanion extends UpdateCompanion<ItineraryItemRow> {
   }
 }
 
+class $JournalEntriesTable extends JournalEntries
+    with TableInfo<$JournalEntriesTable, JournalEntryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $JournalEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+      'trip_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES trips (id) ON DELETE CASCADE'));
+  static const VerificationMeta _summaryMeta =
+      const VerificationMeta('summary');
+  @override
+  late final GeneratedColumn<String> summary = GeneratedColumn<String>(
+      'summary', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(
+          minTextLength: 1, maxTextLength: 4000),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _loggedAtMeta =
+      const VerificationMeta('loggedAt');
+  @override
+  late final GeneratedColumn<DateTime> loggedAt = GeneratedColumn<DateTime>(
+      'logged_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+      'lat', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _lngMeta = const VerificationMeta('lng');
+  @override
+  late final GeneratedColumn<double> lng = GeneratedColumn<double>(
+      'lng', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _placeNameMeta =
+      const VerificationMeta('placeName');
+  @override
+  late final GeneratedColumn<String> placeName = GeneratedColumn<String>(
+      'place_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, tripId, summary, loggedAt, lat, lng, placeName, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'journal_entries';
+  @override
+  VerificationContext validateIntegrity(Insertable<JournalEntryRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(_tripIdMeta,
+          tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta));
+    } else if (isInserting) {
+      context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('summary')) {
+      context.handle(_summaryMeta,
+          summary.isAcceptableOrUnknown(data['summary']!, _summaryMeta));
+    } else if (isInserting) {
+      context.missing(_summaryMeta);
+    }
+    if (data.containsKey('logged_at')) {
+      context.handle(_loggedAtMeta,
+          loggedAt.isAcceptableOrUnknown(data['logged_at']!, _loggedAtMeta));
+    } else if (isInserting) {
+      context.missing(_loggedAtMeta);
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+          _latMeta, lat.isAcceptableOrUnknown(data['lat']!, _latMeta));
+    }
+    if (data.containsKey('lng')) {
+      context.handle(
+          _lngMeta, lng.isAcceptableOrUnknown(data['lng']!, _lngMeta));
+    }
+    if (data.containsKey('place_name')) {
+      context.handle(_placeNameMeta,
+          placeName.isAcceptableOrUnknown(data['place_name']!, _placeNameMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  JournalEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return JournalEntryRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      tripId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}trip_id'])!,
+      summary: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}summary'])!,
+      loggedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}logged_at'])!,
+      lat: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lat']),
+      lng: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}lng']),
+      placeName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}place_name']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $JournalEntriesTable createAlias(String alias) {
+    return $JournalEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
+  final String id;
+  final String tripId;
+  final String summary;
+
+  /// User-editable log time — never `DateTime.now()`, defaults to
+  /// `clockProvider` at creation (domain rule).
+  final DateTime loggedAt;
+  final double? lat;
+  final double? lng;
+  final String? placeName;
+
+  /// Immutable audit stamp — never shown or edited.
+  final DateTime createdAt;
+  const JournalEntryRow(
+      {required this.id,
+      required this.tripId,
+      required this.summary,
+      required this.loggedAt,
+      this.lat,
+      this.lng,
+      this.placeName,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['trip_id'] = Variable<String>(tripId);
+    map['summary'] = Variable<String>(summary);
+    map['logged_at'] = Variable<DateTime>(loggedAt);
+    if (!nullToAbsent || lat != null) {
+      map['lat'] = Variable<double>(lat);
+    }
+    if (!nullToAbsent || lng != null) {
+      map['lng'] = Variable<double>(lng);
+    }
+    if (!nullToAbsent || placeName != null) {
+      map['place_name'] = Variable<String>(placeName);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  JournalEntriesCompanion toCompanion(bool nullToAbsent) {
+    return JournalEntriesCompanion(
+      id: Value(id),
+      tripId: Value(tripId),
+      summary: Value(summary),
+      loggedAt: Value(loggedAt),
+      lat: lat == null && nullToAbsent ? const Value.absent() : Value(lat),
+      lng: lng == null && nullToAbsent ? const Value.absent() : Value(lng),
+      placeName: placeName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeName),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory JournalEntryRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return JournalEntryRow(
+      id: serializer.fromJson<String>(json['id']),
+      tripId: serializer.fromJson<String>(json['tripId']),
+      summary: serializer.fromJson<String>(json['summary']),
+      loggedAt: serializer.fromJson<DateTime>(json['loggedAt']),
+      lat: serializer.fromJson<double?>(json['lat']),
+      lng: serializer.fromJson<double?>(json['lng']),
+      placeName: serializer.fromJson<String?>(json['placeName']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'tripId': serializer.toJson<String>(tripId),
+      'summary': serializer.toJson<String>(summary),
+      'loggedAt': serializer.toJson<DateTime>(loggedAt),
+      'lat': serializer.toJson<double?>(lat),
+      'lng': serializer.toJson<double?>(lng),
+      'placeName': serializer.toJson<String?>(placeName),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  JournalEntryRow copyWith(
+          {String? id,
+          String? tripId,
+          String? summary,
+          DateTime? loggedAt,
+          Value<double?> lat = const Value.absent(),
+          Value<double?> lng = const Value.absent(),
+          Value<String?> placeName = const Value.absent(),
+          DateTime? createdAt}) =>
+      JournalEntryRow(
+        id: id ?? this.id,
+        tripId: tripId ?? this.tripId,
+        summary: summary ?? this.summary,
+        loggedAt: loggedAt ?? this.loggedAt,
+        lat: lat.present ? lat.value : this.lat,
+        lng: lng.present ? lng.value : this.lng,
+        placeName: placeName.present ? placeName.value : this.placeName,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  JournalEntryRow copyWithCompanion(JournalEntriesCompanion data) {
+    return JournalEntryRow(
+      id: data.id.present ? data.id.value : this.id,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      loggedAt: data.loggedAt.present ? data.loggedAt.value : this.loggedAt,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lng: data.lng.present ? data.lng.value : this.lng,
+      placeName: data.placeName.present ? data.placeName.value : this.placeName,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalEntryRow(')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('summary: $summary, ')
+          ..write('loggedAt: $loggedAt, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('placeName: $placeName, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, tripId, summary, loggedAt, lat, lng, placeName, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is JournalEntryRow &&
+          other.id == this.id &&
+          other.tripId == this.tripId &&
+          other.summary == this.summary &&
+          other.loggedAt == this.loggedAt &&
+          other.lat == this.lat &&
+          other.lng == this.lng &&
+          other.placeName == this.placeName &&
+          other.createdAt == this.createdAt);
+}
+
+class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
+  final Value<String> id;
+  final Value<String> tripId;
+  final Value<String> summary;
+  final Value<DateTime> loggedAt;
+  final Value<double?> lat;
+  final Value<double?> lng;
+  final Value<String?> placeName;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const JournalEntriesCompanion({
+    this.id = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.summary = const Value.absent(),
+    this.loggedAt = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.placeName = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  JournalEntriesCompanion.insert({
+    required String id,
+    required String tripId,
+    required String summary,
+    required DateTime loggedAt,
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.placeName = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        tripId = Value(tripId),
+        summary = Value(summary),
+        loggedAt = Value(loggedAt),
+        createdAt = Value(createdAt);
+  static Insertable<JournalEntryRow> custom({
+    Expression<String>? id,
+    Expression<String>? tripId,
+    Expression<String>? summary,
+    Expression<DateTime>? loggedAt,
+    Expression<double>? lat,
+    Expression<double>? lng,
+    Expression<String>? placeName,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tripId != null) 'trip_id': tripId,
+      if (summary != null) 'summary': summary,
+      if (loggedAt != null) 'logged_at': loggedAt,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (placeName != null) 'place_name': placeName,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  JournalEntriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? tripId,
+      Value<String>? summary,
+      Value<DateTime>? loggedAt,
+      Value<double?>? lat,
+      Value<double?>? lng,
+      Value<String?>? placeName,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return JournalEntriesCompanion(
+      id: id ?? this.id,
+      tripId: tripId ?? this.tripId,
+      summary: summary ?? this.summary,
+      loggedAt: loggedAt ?? this.loggedAt,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      placeName: placeName ?? this.placeName,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (summary.present) {
+      map['summary'] = Variable<String>(summary.value);
+    }
+    if (loggedAt.present) {
+      map['logged_at'] = Variable<DateTime>(loggedAt.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lng.present) {
+      map['lng'] = Variable<double>(lng.value);
+    }
+    if (placeName.present) {
+      map['place_name'] = Variable<String>(placeName.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('summary: $summary, ')
+          ..write('loggedAt: $loggedAt, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('placeName: $placeName, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $JournalPhotosTable extends JournalPhotos
+    with TableInfo<$JournalPhotosTable, JournalPhotoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $JournalPhotosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entryIdMeta =
+      const VerificationMeta('entryId');
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+      'entry_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES journal_entries (id) ON DELETE CASCADE'));
+  static const VerificationMeta _filePathMeta =
+      const VerificationMeta('filePath');
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+      'file_path', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _orderIndexMeta =
+      const VerificationMeta('orderIndex');
+  @override
+  late final GeneratedColumn<int> orderIndex = GeneratedColumn<int>(
+      'order_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, entryId, filePath, orderIndex];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'journal_photos';
+  @override
+  VerificationContext validateIntegrity(Insertable<JournalPhotoRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(_entryIdMeta,
+          entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta));
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(_filePathMeta,
+          filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta));
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('order_index')) {
+      context.handle(
+          _orderIndexMeta,
+          orderIndex.isAcceptableOrUnknown(
+              data['order_index']!, _orderIndexMeta));
+    } else if (isInserting) {
+      context.missing(_orderIndexMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  JournalPhotoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return JournalPhotoRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      entryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entry_id'])!,
+      filePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}file_path'])!,
+      orderIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}order_index'])!,
+    );
+  }
+
+  @override
+  $JournalPhotosTable createAlias(String alias) {
+    return $JournalPhotosTable(attachedDatabase, alias);
+  }
+}
+
+class JournalPhotoRow extends DataClass implements Insertable<JournalPhotoRow> {
+  final String id;
+  final String entryId;
+  final String filePath;
+  final int orderIndex;
+  const JournalPhotoRow(
+      {required this.id,
+      required this.entryId,
+      required this.filePath,
+      required this.orderIndex});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entry_id'] = Variable<String>(entryId);
+    map['file_path'] = Variable<String>(filePath);
+    map['order_index'] = Variable<int>(orderIndex);
+    return map;
+  }
+
+  JournalPhotosCompanion toCompanion(bool nullToAbsent) {
+    return JournalPhotosCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      filePath: Value(filePath),
+      orderIndex: Value(orderIndex),
+    );
+  }
+
+  factory JournalPhotoRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return JournalPhotoRow(
+      id: serializer.fromJson<String>(json['id']),
+      entryId: serializer.fromJson<String>(json['entryId']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      orderIndex: serializer.fromJson<int>(json['orderIndex']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entryId': serializer.toJson<String>(entryId),
+      'filePath': serializer.toJson<String>(filePath),
+      'orderIndex': serializer.toJson<int>(orderIndex),
+    };
+  }
+
+  JournalPhotoRow copyWith(
+          {String? id, String? entryId, String? filePath, int? orderIndex}) =>
+      JournalPhotoRow(
+        id: id ?? this.id,
+        entryId: entryId ?? this.entryId,
+        filePath: filePath ?? this.filePath,
+        orderIndex: orderIndex ?? this.orderIndex,
+      );
+  JournalPhotoRow copyWithCompanion(JournalPhotosCompanion data) {
+    return JournalPhotoRow(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      orderIndex:
+          data.orderIndex.present ? data.orderIndex.value : this.orderIndex,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalPhotoRow(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('filePath: $filePath, ')
+          ..write('orderIndex: $orderIndex')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, entryId, filePath, orderIndex);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is JournalPhotoRow &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.filePath == this.filePath &&
+          other.orderIndex == this.orderIndex);
+}
+
+class JournalPhotosCompanion extends UpdateCompanion<JournalPhotoRow> {
+  final Value<String> id;
+  final Value<String> entryId;
+  final Value<String> filePath;
+  final Value<int> orderIndex;
+  final Value<int> rowid;
+  const JournalPhotosCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.orderIndex = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  JournalPhotosCompanion.insert({
+    required String id,
+    required String entryId,
+    required String filePath,
+    required int orderIndex,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        entryId = Value(entryId),
+        filePath = Value(filePath),
+        orderIndex = Value(orderIndex);
+  static Insertable<JournalPhotoRow> custom({
+    Expression<String>? id,
+    Expression<String>? entryId,
+    Expression<String>? filePath,
+    Expression<int>? orderIndex,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (filePath != null) 'file_path': filePath,
+      if (orderIndex != null) 'order_index': orderIndex,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  JournalPhotosCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? entryId,
+      Value<String>? filePath,
+      Value<int>? orderIndex,
+      Value<int>? rowid}) {
+    return JournalPhotosCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      filePath: filePath ?? this.filePath,
+      orderIndex: orderIndex ?? this.orderIndex,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (orderIndex.present) {
+      map['order_index'] = Variable<int>(orderIndex.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalPhotosCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('filePath: $filePath, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3112,10 +3814,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlacesTable places = $PlacesTable(this);
   late final $ExpensesTable expenses = $ExpensesTable(this);
   late final $ItineraryItemsTable itineraryItems = $ItineraryItemsTable(this);
+  late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
+  late final $JournalPhotosTable journalPhotos = $JournalPhotosTable(this);
   late final TripsDao tripsDao = TripsDao(this as AppDatabase);
   late final DocumentsDao documentsDao = DocumentsDao(this as AppDatabase);
   late final PlacesDao placesDao = PlacesDao(this as AppDatabase);
   late final ExpensesDao expensesDao = ExpensesDao(this as AppDatabase);
+  late final JournalDao journalDao = JournalDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3127,7 +3832,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tripDocuments,
         places,
         expenses,
-        itineraryItems
+        itineraryItems,
+        journalEntries,
+        journalPhotos
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -3179,6 +3886,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('itinerary_items', kind: UpdateKind.update),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('trips',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('journal_entries', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('journal_entries',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('journal_photos', kind: UpdateKind.delete),
             ],
           ),
         ],
@@ -3280,6 +4001,20 @@ final class $$TripsTableReferences
         .filter((f) => f.tripId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_itineraryItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$JournalEntriesTable, List<JournalEntryRow>>
+      _journalEntriesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.journalEntries,
+              aliasName: 'trips__id__journal_entries__trip_id');
+
+  $$JournalEntriesTableProcessedTableManager get journalEntriesRefs {
+    final manager = $$JournalEntriesTableTableManager($_db, $_db.journalEntries)
+        .filter((f) => f.tripId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_journalEntriesRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -3415,6 +4150,27 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
             $$ItineraryItemsTableFilterComposer(
               $db: $db,
               $table: $db.itineraryItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> journalEntriesRefs(
+      Expression<bool> Function($$JournalEntriesTableFilterComposer f) f) {
+    final $$JournalEntriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.tripId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableFilterComposer(
+              $db: $db,
+              $table: $db.journalEntries,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -3596,6 +4352,27 @@ class $$TripsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> journalEntriesRefs<T extends Object>(
+      Expression<T> Function($$JournalEntriesTableAnnotationComposer a) f) {
+    final $$JournalEntriesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.tripId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$TripsTableTableManager extends RootTableManager<
@@ -3614,7 +4391,8 @@ class $$TripsTableTableManager extends RootTableManager<
         bool tripDocumentsRefs,
         bool placesRefs,
         bool expensesRefs,
-        bool itineraryItemsRefs})> {
+        bool itineraryItemsRefs,
+        bool journalEntriesRefs})> {
   $$TripsTableTableManager(_$AppDatabase db, $TripsTable table)
       : super(TableManagerState(
           db: db,
@@ -3678,7 +4456,8 @@ class $$TripsTableTableManager extends RootTableManager<
               tripDocumentsRefs = false,
               placesRefs = false,
               expensesRefs = false,
-              itineraryItemsRefs = false}) {
+              itineraryItemsRefs = false,
+              journalEntriesRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
@@ -3686,7 +4465,8 @@ class $$TripsTableTableManager extends RootTableManager<
                 if (tripDocumentsRefs) db.tripDocuments,
                 if (placesRefs) db.places,
                 if (expensesRefs) db.expenses,
-                if (itineraryItemsRefs) db.itineraryItems
+                if (itineraryItemsRefs) db.itineraryItems,
+                if (journalEntriesRefs) db.journalEntries
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -3751,6 +4531,19 @@ class $$TripsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.tripId == item.id),
+                        typedResults: items),
+                  if (journalEntriesRefs)
+                    await $_getPrefetchedData<TripRow, $TripsTable,
+                            JournalEntryRow>(
+                        currentTable: table,
+                        referencedTable:
+                            $$TripsTableReferences._journalEntriesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TripsTableReferences(db, table, p0)
+                                .journalEntriesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.tripId == item.id),
                         typedResults: items)
                 ];
               },
@@ -3775,7 +4568,8 @@ typedef $$TripsTableProcessedTableManager = ProcessedTableManager<
         bool tripDocumentsRefs,
         bool placesRefs,
         bool expensesRefs,
-        bool itineraryItemsRefs})>;
+        bool itineraryItemsRefs,
+        bool journalEntriesRefs})>;
 typedef $$TripDestinationsTableCreateCompanionBuilder
     = TripDestinationsCompanion Function({
   required String id,
@@ -5880,6 +6674,660 @@ typedef $$ItineraryItemsTableProcessedTableManager = ProcessedTableManager<
     (ItineraryItemRow, $$ItineraryItemsTableReferences),
     ItineraryItemRow,
     PrefetchHooks Function({bool tripId, bool placeId})>;
+typedef $$JournalEntriesTableCreateCompanionBuilder = JournalEntriesCompanion
+    Function({
+  required String id,
+  required String tripId,
+  required String summary,
+  required DateTime loggedAt,
+  Value<double?> lat,
+  Value<double?> lng,
+  Value<String?> placeName,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$JournalEntriesTableUpdateCompanionBuilder = JournalEntriesCompanion
+    Function({
+  Value<String> id,
+  Value<String> tripId,
+  Value<String> summary,
+  Value<DateTime> loggedAt,
+  Value<double?> lat,
+  Value<double?> lng,
+  Value<String?> placeName,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+final class $$JournalEntriesTableReferences extends BaseReferences<
+    _$AppDatabase, $JournalEntriesTable, JournalEntryRow> {
+  $$JournalEntriesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $TripsTable _tripIdTable(_$AppDatabase db) =>
+      db.trips.createAlias('journal_entries__trip_id__trips__id');
+
+  $$TripsTableProcessedTableManager get tripId {
+    final $_column = $_itemColumn<String>('trip_id')!;
+
+    final manager = $$TripsTableTableManager($_db, $_db.trips)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tripIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$JournalPhotosTable, List<JournalPhotoRow>>
+      _journalPhotosRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.journalPhotos,
+              aliasName: 'journal_entries__id__journal_photos__entry_id');
+
+  $$JournalPhotosTableProcessedTableManager get journalPhotosRefs {
+    final manager = $$JournalPhotosTableTableManager($_db, $_db.journalPhotos)
+        .filter((f) => f.entryId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_journalPhotosRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$JournalEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get summary => $composableBuilder(
+      column: $table.summary, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get loggedAt => $composableBuilder(
+      column: $table.loggedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get placeName => $composableBuilder(
+      column: $table.placeName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  $$TripsTableFilterComposer get tripId {
+    final $$TripsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableFilterComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> journalPhotosRefs(
+      Expression<bool> Function($$JournalPhotosTableFilterComposer f) f) {
+    final $$JournalPhotosTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalPhotos,
+        getReferencedColumn: (t) => t.entryId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalPhotosTableFilterComposer(
+              $db: $db,
+              $table: $db.journalPhotos,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$JournalEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get summary => $composableBuilder(
+      column: $table.summary, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get loggedAt => $composableBuilder(
+      column: $table.loggedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+      column: $table.lat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lng => $composableBuilder(
+      column: $table.lng, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get placeName => $composableBuilder(
+      column: $table.placeName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  $$TripsTableOrderingComposer get tripId {
+    final $$TripsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableOrderingComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JournalEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get summary =>
+      $composableBuilder(column: $table.summary, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get loggedAt =>
+      $composableBuilder(column: $table.loggedAt, builder: (column) => column);
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lng =>
+      $composableBuilder(column: $table.lng, builder: (column) => column);
+
+  GeneratedColumn<String> get placeName =>
+      $composableBuilder(column: $table.placeName, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$TripsTableAnnotationComposer get tripId {
+    final $$TripsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> journalPhotosRefs<T extends Object>(
+      Expression<T> Function($$JournalPhotosTableAnnotationComposer a) f) {
+    final $$JournalPhotosTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.journalPhotos,
+        getReferencedColumn: (t) => t.entryId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalPhotosTableAnnotationComposer(
+              $db: $db,
+              $table: $db.journalPhotos,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$JournalEntriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $JournalEntriesTable,
+    JournalEntryRow,
+    $$JournalEntriesTableFilterComposer,
+    $$JournalEntriesTableOrderingComposer,
+    $$JournalEntriesTableAnnotationComposer,
+    $$JournalEntriesTableCreateCompanionBuilder,
+    $$JournalEntriesTableUpdateCompanionBuilder,
+    (JournalEntryRow, $$JournalEntriesTableReferences),
+    JournalEntryRow,
+    PrefetchHooks Function({bool tripId, bool journalPhotosRefs})> {
+  $$JournalEntriesTableTableManager(
+      _$AppDatabase db, $JournalEntriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$JournalEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$JournalEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$JournalEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> tripId = const Value.absent(),
+            Value<String> summary = const Value.absent(),
+            Value<DateTime> loggedAt = const Value.absent(),
+            Value<double?> lat = const Value.absent(),
+            Value<double?> lng = const Value.absent(),
+            Value<String?> placeName = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalEntriesCompanion(
+            id: id,
+            tripId: tripId,
+            summary: summary,
+            loggedAt: loggedAt,
+            lat: lat,
+            lng: lng,
+            placeName: placeName,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String tripId,
+            required String summary,
+            required DateTime loggedAt,
+            Value<double?> lat = const Value.absent(),
+            Value<double?> lng = const Value.absent(),
+            Value<String?> placeName = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalEntriesCompanion.insert(
+            id: id,
+            tripId: tripId,
+            summary: summary,
+            loggedAt: loggedAt,
+            lat: lat,
+            lng: lng,
+            placeName: placeName,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$JournalEntriesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({tripId = false, journalPhotosRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (journalPhotosRefs) db.journalPhotos
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (tripId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.tripId,
+                    referencedTable:
+                        $$JournalEntriesTableReferences._tripIdTable(db),
+                    referencedColumn:
+                        $$JournalEntriesTableReferences._tripIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (journalPhotosRefs)
+                    await $_getPrefetchedData<JournalEntryRow,
+                            $JournalEntriesTable, JournalPhotoRow>(
+                        currentTable: table,
+                        referencedTable: $$JournalEntriesTableReferences
+                            ._journalPhotosRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$JournalEntriesTableReferences(db, table, p0)
+                                .journalPhotosRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.entryId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$JournalEntriesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $JournalEntriesTable,
+    JournalEntryRow,
+    $$JournalEntriesTableFilterComposer,
+    $$JournalEntriesTableOrderingComposer,
+    $$JournalEntriesTableAnnotationComposer,
+    $$JournalEntriesTableCreateCompanionBuilder,
+    $$JournalEntriesTableUpdateCompanionBuilder,
+    (JournalEntryRow, $$JournalEntriesTableReferences),
+    JournalEntryRow,
+    PrefetchHooks Function({bool tripId, bool journalPhotosRefs})>;
+typedef $$JournalPhotosTableCreateCompanionBuilder = JournalPhotosCompanion
+    Function({
+  required String id,
+  required String entryId,
+  required String filePath,
+  required int orderIndex,
+  Value<int> rowid,
+});
+typedef $$JournalPhotosTableUpdateCompanionBuilder = JournalPhotosCompanion
+    Function({
+  Value<String> id,
+  Value<String> entryId,
+  Value<String> filePath,
+  Value<int> orderIndex,
+  Value<int> rowid,
+});
+
+final class $$JournalPhotosTableReferences extends BaseReferences<_$AppDatabase,
+    $JournalPhotosTable, JournalPhotoRow> {
+  $$JournalPhotosTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $JournalEntriesTable _entryIdTable(_$AppDatabase db) =>
+      db.journalEntries
+          .createAlias('journal_photos__entry_id__journal_entries__id');
+
+  $$JournalEntriesTableProcessedTableManager get entryId {
+    final $_column = $_itemColumn<String>('entry_id')!;
+
+    final manager = $$JournalEntriesTableTableManager($_db, $_db.journalEntries)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$JournalPhotosTableFilterComposer
+    extends Composer<_$AppDatabase, $JournalPhotosTable> {
+  $$JournalPhotosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+      column: $table.filePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get orderIndex => $composableBuilder(
+      column: $table.orderIndex, builder: (column) => ColumnFilters(column));
+
+  $$JournalEntriesTableFilterComposer get entryId {
+    final $$JournalEntriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.entryId,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableFilterComposer(
+              $db: $db,
+              $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JournalPhotosTableOrderingComposer
+    extends Composer<_$AppDatabase, $JournalPhotosTable> {
+  $$JournalPhotosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+      column: $table.filePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get orderIndex => $composableBuilder(
+      column: $table.orderIndex, builder: (column) => ColumnOrderings(column));
+
+  $$JournalEntriesTableOrderingComposer get entryId {
+    final $$JournalEntriesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.entryId,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableOrderingComposer(
+              $db: $db,
+              $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JournalPhotosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JournalPhotosTable> {
+  $$JournalPhotosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<int> get orderIndex => $composableBuilder(
+      column: $table.orderIndex, builder: (column) => column);
+
+  $$JournalEntriesTableAnnotationComposer get entryId {
+    final $$JournalEntriesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.entryId,
+        referencedTable: $db.journalEntries,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JournalEntriesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JournalPhotosTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $JournalPhotosTable,
+    JournalPhotoRow,
+    $$JournalPhotosTableFilterComposer,
+    $$JournalPhotosTableOrderingComposer,
+    $$JournalPhotosTableAnnotationComposer,
+    $$JournalPhotosTableCreateCompanionBuilder,
+    $$JournalPhotosTableUpdateCompanionBuilder,
+    (JournalPhotoRow, $$JournalPhotosTableReferences),
+    JournalPhotoRow,
+    PrefetchHooks Function({bool entryId})> {
+  $$JournalPhotosTableTableManager(_$AppDatabase db, $JournalPhotosTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$JournalPhotosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$JournalPhotosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$JournalPhotosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> entryId = const Value.absent(),
+            Value<String> filePath = const Value.absent(),
+            Value<int> orderIndex = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalPhotosCompanion(
+            id: id,
+            entryId: entryId,
+            filePath: filePath,
+            orderIndex: orderIndex,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String entryId,
+            required String filePath,
+            required int orderIndex,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalPhotosCompanion.insert(
+            id: id,
+            entryId: entryId,
+            filePath: filePath,
+            orderIndex: orderIndex,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$JournalPhotosTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({entryId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (entryId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.entryId,
+                    referencedTable:
+                        $$JournalPhotosTableReferences._entryIdTable(db),
+                    referencedColumn:
+                        $$JournalPhotosTableReferences._entryIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$JournalPhotosTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $JournalPhotosTable,
+    JournalPhotoRow,
+    $$JournalPhotosTableFilterComposer,
+    $$JournalPhotosTableOrderingComposer,
+    $$JournalPhotosTableAnnotationComposer,
+    $$JournalPhotosTableCreateCompanionBuilder,
+    $$JournalPhotosTableUpdateCompanionBuilder,
+    (JournalPhotoRow, $$JournalPhotosTableReferences),
+    JournalPhotoRow,
+    PrefetchHooks Function({bool entryId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5898,4 +7346,8 @@ class $AppDatabaseManager {
       $$ExpensesTableTableManager(_db, _db.expenses);
   $$ItineraryItemsTableTableManager get itineraryItems =>
       $$ItineraryItemsTableTableManager(_db, _db.itineraryItems);
+  $$JournalEntriesTableTableManager get journalEntries =>
+      $$JournalEntriesTableTableManager(_db, _db.journalEntries);
+  $$JournalPhotosTableTableManager get journalPhotos =>
+      $$JournalPhotosTableTableManager(_db, _db.journalPhotos);
 }

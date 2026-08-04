@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -16,13 +15,6 @@ import '../domain/document.dart';
 /// brightness forced to max, screen kept awake. Boarding passes are usually
 /// PDFs — the first page is rendered inline. Always light — scanners and
 /// gate agents don't care about dark mode.
-///
-/// This screen's own content is deliberately untouched by the M7 "Wallet &
-/// Ticket" restyle (no ticket chrome, no dark mode) — a gate agent's scanner
-/// needs maximum contrast, not theming. The *arrival* at this screen is
-/// where M7 shows up instead: [open] flips the ticket over via a custom
-/// [PageRouteBuilder] rather than the default slide-up, echoing turning a
-/// physical ticket to its barcode side.
 class ShowCodeScreen extends StatefulWidget {
   const ShowCodeScreen({super.key, required this.doc});
 
@@ -42,61 +34,15 @@ class ShowCodeScreen extends StatefulWidget {
 
   static Future<void> open(BuildContext context, Document doc) {
     return Navigator.of(context, rootNavigator: true).push(
-      PageRouteBuilder<void>(
+      MaterialPageRoute<void>(
         fullscreenDialog: true,
-        opaque: true,
-        transitionDuration: const Duration(milliseconds: 420),
-        reverseTransitionDuration: const Duration(milliseconds: 280),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ShowCodeScreen(doc: doc),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return _TicketFlipTransition(animation: animation, child: child);
-        },
+        builder: (context) => ShowCodeScreen(doc: doc),
       ),
     );
   }
 
   @override
   State<ShowCodeScreen> createState() => _ShowCodeScreenState();
-}
-
-/// A half Y-axis rotation from edge-on to flat, easing out — "turning the
-/// ticket over" — instead of the default fullscreenDialog slide-up.
-/// Content only fades in once the rotation passes the visual midpoint, so
-/// the viewer never sees the destination screen smeared edge-on or
-/// mirrored partway through the turn.
-class _TicketFlipTransition extends StatelessWidget {
-  const _TicketFlipTransition({required this.animation, required this.child});
-
-  final Animation<double> animation;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOutCubic,
-    );
-    return AnimatedBuilder(
-      animation: progress,
-      child: child,
-      builder: (context, child) {
-        final angle = (1 - progress.value) * math.pi / 2;
-        return Opacity(
-          opacity: progress.value < 0.5 ? 0.0 : 1.0,
-          child: Transform(
-            alignment: Alignment.center,
-            // Perspective term — without it rotateY looks like a flat
-            // horizontal squash instead of a believable 3D turn.
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0012)
-              ..rotateY(angle),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _ShowCodeScreenState extends State<ShowCodeScreen> {

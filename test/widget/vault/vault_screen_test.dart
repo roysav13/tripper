@@ -6,7 +6,6 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/theme/app_colors.dart';
 import 'package:tripper/core/theme/app_theme.dart';
-import 'package:tripper/core/widgets/ticket_card.dart';
 import 'package:tripper/features/vault/domain/document.dart';
 import 'package:tripper/features/vault/presentation/document_providers.dart';
 import 'package:tripper/features/vault/presentation/vault_screen.dart';
@@ -17,15 +16,15 @@ import '../../helpers/test_preferences.dart';
 
 final _today = DateTime(2026, 7, 19);
 
-/// True if any document ticket in the tree is showing the rust warning
-/// color on its stub (M5, 2026-07-23: expired-only, not "expiring soon"
-/// too). M7 restyle: this used to be a hairline border color on a
-/// PaperCard; documents are `TicketCard`s now, and a real problem
-/// overrides the category's identity color with `colors.warning` instead
-/// (see `documentCardAccent` in document_widgets.dart).
-bool _hasWarningAccent(WidgetTester tester) {
-  final tickets = tester.widgetList<TicketCard>(find.byType(TicketCard));
-  return tickets.any((t) => t.accentColor == AppColors.light.warning);
+/// True if any card in the tree is currently drawing the rust warning
+/// border (M5, 2026-07-23: expired-only, not "expiring soon" too).
+bool _hasWarningBorder(WidgetTester tester) {
+  final materials = tester.widgetList<Material>(find.byType(Material));
+  return materials.any((m) {
+    final shape = m.shape;
+    return shape is RoundedRectangleBorder &&
+        shape.side.color == AppColors.light.warning;
+  });
 }
 
 Future<Widget> _app(List<Document> docs) async => ProviderScope(
@@ -84,7 +83,7 @@ void main() {
 
   testWidgets(
       'document expiring soon (not yet expired) shows its date but no '
-      'warning accent (M5, 2026-07-23)', (tester) async {
+      'warning border (M5, 2026-07-23)', (tester) async {
     await tester.pumpWidget(
       await _app([
         Document(
@@ -101,10 +100,10 @@ void main() {
     // 'EXP 08/26' substring never actually matched this format; fixed
     // while investigating an unrelated test failure (2026-07-23).
     expect(find.textContaining('EXP 01/08/2026'), findsOneWidget);
-    expect(_hasWarningAccent(tester), isFalse);
+    expect(_hasWarningBorder(tester), isFalse);
   });
 
-  testWidgets('already-expired document gets the warning accent',
+  testWidgets('already-expired document gets the warning border',
       (tester) async {
     await tester.pumpWidget(
       await _app([
@@ -117,7 +116,7 @@ void main() {
       ]),
     );
     await tester.pumpAndSettle();
-    expect(_hasWarningAccent(tester), isTrue);
+    expect(_hasWarningBorder(tester), isTrue);
   });
 
   testWidgets('100+ documents render without overflow or exceptions (M4.2)',

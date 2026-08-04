@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
-import '../../../core/widgets/ticket_card.dart';
+import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
 
@@ -30,38 +30,6 @@ String categoryLabel(AppLocalizations l10n, DocumentCategory category) =>
       DocumentCategory.other => l10n.catOther,
     };
 
-/// Fixed per-category identity color (SPEC §4.2/§4.4, M7 restyle) — the
-/// same `tripPalette` hues trips use, but assigned by real-world
-/// association rather than by raw enum index, so the mapping reads as a
-/// deliberate choice rather than an arbitrary one: passports are
-/// traditionally navy (Indigo), a hotel stay feels warm (Marigold),
-/// insurance reads as safety (Moss), flights read sky-blue (Cobalt). Two
-/// palette entries (Berry, Harbor teal) are shared — Harbor teal doubles
-/// as "Other"/default, matching its role as the app's default trip color.
-Color documentCategoryAccent(AppColors colors, DocumentCategory category) {
-  final index = switch (category) {
-    DocumentCategory.passportId => 3, // Indigo
-    DocumentCategory.visa => 5, // Plum
-    DocumentCategory.flight => 6, // Cobalt
-    DocumentCategory.stay => 1, // Marigold
-    DocumentCategory.insurance => 4, // Moss
-    DocumentCategory.transport => 7, // Slate
-    DocumentCategory.other => 0, // Harbor teal
-  };
-  return colors.tripPalette[index];
-}
-
-/// A document's ticket accent — a real problem (expired) overrides the
-/// category's decorative identity color with the system warning color.
-/// Semantic meaning always wins over decoration (hard rule #1): an
-/// expired passport must never look like just another navy card.
-Color documentCardAccent(
-  AppColors colors,
-  Document doc, {
-  required bool warning,
-}) =>
-    warning ? colors.warning : documentCategoryAccent(colors, doc.category);
-
 String _expiryText(AppLocalizations l10n, DateTime expiry) =>
     l10n.expiryShort(DateFormat('dd/MM/yyyy').format(expiry));
 
@@ -76,11 +44,8 @@ String documentMetaLine(AppLocalizations l10n, Document doc) {
   return parts.join(' · ');
 }
 
-/// One document = one ticket (matches the trips list), used in the vault
-/// and in a trip's Documents tab. The stub carries the category's icon and
-/// identity color — SPEC's "a flight looks different from a passport scan
-/// at a glance" — with the color itself giving a second, faster signal
-/// alongside the icon.
+/// One document = one card (matches the trips list), used in the vault
+/// and in a trip's Documents tab.
 class DocumentRowTile extends StatelessWidget {
   const DocumentRowTile({
     super.key,
@@ -97,20 +62,22 @@ class DocumentRowTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-
-    return TicketCard(
-      accentColor: documentCardAccent(colors, doc, warning: warning),
+    return PaperCard(
       onTap: onTap,
-      semanticLabel: '${doc.title}. ${documentMetaLine(l10n, doc)}',
-      stub: Icon(categoryIcon(doc.category), size: 26),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      borderColor: warning ? colors.warning : null,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
+          Icon(
+            categoryIcon(doc.category),
+            size: 20,
+            color: warning ? colors.warning : colors.inkSecondary,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   doc.title,
                   style: AppTextStyles.body.copyWith(
                     color: colors.inkPrimary,
@@ -119,27 +86,23 @@ class DocumentRowTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              if (doc.isPinned) ...[
-                const SizedBox(width: AppSpacing.xs),
-                Icon(Icons.push_pin_outlined, size: 16, color: colors.accent),
+                const SizedBox(height: AppSpacing.xs),
+                MonoText(
+                  documentMetaLine(l10n, doc),
+                  color: warning ? colors.warning : null,
+                ),
               ],
-            ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          MonoText(
-            documentMetaLine(l10n, doc),
-            color: warning ? colors.warning : null,
-          ),
+          if (doc.isPinned)
+            Icon(Icons.push_pin_outlined, size: 16, color: colors.accent),
         ],
       ),
     );
   }
 }
 
-/// Pinned quick-access tile: the same ticket anatomy as [DocumentRowTile],
-/// scaled down (narrower stub, tighter padding) to fit the 2-column
-/// quick-access grid — one tap from app launch to the gate screen.
+/// Pinned quick-access card: light surface, teal border (revised mockup).
 class PinnedDocumentCard extends StatelessWidget {
   const PinnedDocumentCard({
     super.key,
@@ -156,26 +119,16 @@ class PinnedDocumentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-
-    final subtitle = doc.expiryDate != null
-        ? _expiryText(l10n, doc.expiryDate!)
-        : categoryLabel(l10n, doc.category);
-
-    return TicketCard(
-      accentColor: documentCardAccent(colors, doc, warning: warning),
+    return PaperCard(
+      borderColor: colors.accent,
       onTap: onTap,
-      semanticLabel: '${doc.title}. $subtitle',
-      stubWidth: 56,
-      bodyPadding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.sm,
-      ),
-      stub: Icon(categoryIcon(doc.category), size: 20),
-      body: Column(
+      padding: const EdgeInsetsDirectional.all(AppSpacing.md),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(categoryIcon(doc.category), size: 18, color: colors.accent),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             doc.title,
             style: AppTextStyles.label.copyWith(color: colors.inkPrimary),
@@ -184,7 +137,9 @@ class PinnedDocumentCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           MonoText(
-            subtitle,
+            doc.expiryDate != null
+                ? _expiryText(l10n, doc.expiryDate!)
+                : categoryLabel(l10n, doc.category),
             color: warning ? colors.warning : null,
             muted: !warning,
           ),
