@@ -10,6 +10,7 @@ import '../domain/place.dart';
 import 'add_place_screen.dart';
 import 'place_actions_sheet.dart';
 import 'place_providers.dart';
+import 'place_visit_actions.dart';
 import 'place_widgets.dart';
 
 /// Places tab inside a trip's detail screen (fills the M1 shell).
@@ -52,9 +53,8 @@ class TripPlacesTab extends ConsumerWidget {
             child: PlaceRowCard(
               place: place,
               onTap: () => showPlaceActionsSheet(context, ref, place),
-              onToggleVisited: () => ref
-                  .read(placeRepositoryProvider)
-                  .setVisited(place.id, visited: !place.isVisited),
+              onToggleVisited: () =>
+                  markPlaceVisited(ref, place, visited: !place.isVisited),
             ),
           ),
         const SizedBox(height: AppSpacing.xs),

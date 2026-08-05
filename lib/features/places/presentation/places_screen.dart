@@ -13,6 +13,7 @@ import '../domain/place.dart';
 import 'add_place_screen.dart';
 import 'place_actions_sheet.dart';
 import 'place_providers.dart';
+import 'place_visit_actions.dart';
 import 'place_widgets.dart';
 import 'places_map_view.dart';
 
@@ -161,9 +162,7 @@ class PlacesScreen extends ConsumerWidget {
             // built around; selectionClick (not a heavier impact) matches
             // the "classic, nothing springy" tone.
             HapticFeedback.selectionClick();
-            ref
-                .read(placeRepositoryProvider)
-                .setVisited(place.id, visited: !place.isVisited);
+            markPlaceVisited(ref, place, visited: !place.isVisited);
           },
         ),
       ),

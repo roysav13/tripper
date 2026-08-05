@@ -14,6 +14,7 @@ import '../../../core/widgets/paper_card.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../places/presentation/place_providers.dart';
+import '../../places/presentation/place_visit_actions.dart';
 import '../domain/trip.dart';
 import 'trip_card.dart';
 import 'trip_providers.dart';
@@ -242,9 +243,11 @@ class TripListScreen extends ConsumerWidget {
         ),
       );
       if ((confirmed ?? false) && selected.isNotEmpty) {
-        await ref
-            .read(placeRepositoryProvider)
-            .bulkMarkVisited(selected.toList(), candidate.endDate!);
+        await markPlacesVisited(
+          ref,
+          wishlist.where((p) => selected.contains(p.id)).toList(),
+          candidate.endDate!,
+        );
       }
     } finally {
       ref.read(completionPromptActiveProvider.notifier).state = false;

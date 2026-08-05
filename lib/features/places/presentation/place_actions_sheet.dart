@@ -8,6 +8,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
 import 'place_providers.dart';
+import 'place_visit_actions.dart';
 
 /// Tap a place row or map pin -> actions: toggle visited, edit, delete.
 Future<void> showPlaceActionsSheet(
@@ -79,7 +80,7 @@ class _PlaceActions extends ConsumerWidget {
               ),
               onTap: () async {
                 Navigator.of(context).pop();
-                await repo.setVisited(place.id, visited: !place.isVisited);
+                await markPlaceVisited(ref, place, visited: !place.isVisited);
               },
             ),
             ListTile(
