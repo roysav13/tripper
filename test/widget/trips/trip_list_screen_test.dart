@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
@@ -12,6 +13,7 @@ import 'package:tripper/features/trips/presentation/trip_list_screen.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/fake_journal_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 import '../../helpers/test_preferences.dart';
@@ -61,6 +63,7 @@ Future<Widget> _app(
   List<Trip> trips, {
   bool redirectDone = true,
   FakePlaceRepository? placeRepo,
+  FakeJournalRepository? journalRepo,
   Map<String, Object> prefs = const {},
   FakeTripRepository? tripRepo,
 }) async =>
@@ -71,6 +74,12 @@ Future<Widget> _app(
             .overrideWithValue(tripRepo ?? FakeTripRepository([...trips])),
         placeRepositoryProvider
             .overrideWithValue(placeRepo ?? FakePlaceRepository([])),
+        // Repository-boundary mock (CLAUDE.md rule 5) — the completion
+        // prompt routes through markPlacesVisited, which also reads
+        // journalRepositoryProvider; leaving it unmocked would hit the
+        // real file-backed Drift database via path_provider.
+        journalRepositoryProvider
+            .overrideWithValue(journalRepo ?? FakeJournalRepository([])),
         clockProvider.overrideWithValue(() => _today),
         launchRedirectDoneProvider.overrideWith((ref) => redirectDone),
       ],
@@ -174,10 +183,12 @@ void main() {
     final placeRepo = FakePlaceRepository([
       const Place(id: 'w1', name: 'Railay viewpoint', tripId: 'p'),
     ]);
+    final journalRepo = FakeJournalRepository([]);
     await tester.pumpWidget(
       await _app(
         [_trip('p', 'Past trip', DateTime(2026, 4, 1), DateTime(2026, 4, 5))],
         placeRepo: placeRepo,
+        journalRepo: journalRepo,
       ),
     );
     await tester.pumpAndSettle();
@@ -193,6 +204,14 @@ void main() {
     expect(places.single.visitedAt, DateTime(2026, 4, 5));
     // The prompt never comes back.
     expect(find.text('Trip finished — update your map?'), findsNothing);
+
+    // Bulk-confirming the prompt routes through markPlacesVisited, which
+    // must also leave a linked stub journal entry per newly-visited place.
+    final entries = await journalRepo.watchForTrip('p').first;
+    expect(entries, hasLength(1));
+    expect(entries.single.placeId, 'w1');
+    expect(entries.single.placeName, 'Railay viewpoint');
+    expect(entries.single.loggedAt, DateTime(2026, 4, 5));
   });
 
   testWidgets(
