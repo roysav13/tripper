@@ -3126,7 +3126,7 @@ class $JournalEntriesTable extends JournalEntries
   late final GeneratedColumn<String> summary = GeneratedColumn<String>(
       'summary', aliasedName, false,
       additionalChecks: GeneratedColumn.checkTextLength(
-          minTextLength: 1, maxTextLength: 4000),
+          minTextLength: 0, maxTextLength: 4000),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
   static const VerificationMeta _loggedAtMeta =
@@ -3263,6 +3263,11 @@ class $JournalEntriesTable extends JournalEntries
 class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
   final String id;
   final String tripId;
+
+  /// min: 0, not 1 — entries auto-created by markPlaceVisited (a place
+  /// marked visited outside the journal) start with an empty summary,
+  /// shown as "Not written yet" until the user fills it in. The manual
+  /// entry form enforces non-empty at the UI layer for user-typed entries.
   final String summary;
 
   /// User-editable log time — never `DateTime.now()`, defaults to

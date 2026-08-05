@@ -115,7 +115,8 @@ class TripJournalTab extends ConsumerWidget {
                           tripId: trip.id,
                           existing: entry,
                         ),
-                        onDelete: (entry) => _confirmDelete(context, ref, entry),
+                        onDelete: (entry) =>
+                            _confirmDelete(context, ref, entry),
                       ),
                     ),
                   ],

@@ -110,7 +110,8 @@ void main() {
   testWidgets('markPlacesVisited creates one stub entry per place, once each',
       (tester) async {
     await pump(tester);
-    const third = Place(id: 'p3', name: 'Ao Nang', lat: 2, lng: 2, tripId: 'trip-1');
+    const third =
+        Place(id: 'p3', name: 'Ao Nang', lat: 2, lng: 2, tripId: 'trip-1');
     places.emit([_place, _tripless, third]);
 
     await markPlacesVisited(ref, [_place, third], DateTime(2026, 8, 1));

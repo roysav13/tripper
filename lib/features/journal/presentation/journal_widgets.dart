@@ -69,8 +69,7 @@ class JournalGalleryCard extends StatelessWidget {
                               width: width,
                               height: photoHeight,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  placeholder(colors),
+                              errorBuilder: (_, __, ___) => placeholder(colors),
                             )
                           : placeholder(colors),
                     ),
@@ -412,7 +411,8 @@ Future<void> showJournalDayEntriesSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (context) => _JournalDayEntriesSheet(entries: entries, onEdit: onEdit),
+    builder: (context) =>
+        _JournalDayEntriesSheet(entries: entries, onEdit: onEdit),
   );
 }
 

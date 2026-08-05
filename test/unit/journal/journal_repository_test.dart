@@ -62,6 +62,15 @@ void main() {
     expect(entry.photos, isEmpty);
   });
 
+  test(
+      'createEntry allows an empty summary (stub entries created by '
+      'markPlaceVisited when a place is marked visited)', () async {
+    final tripId = await createTrip();
+    final id = await repo.createEntry(tripId: tripId, summary: '');
+    final entry = await repo.getById(id);
+    expect(entry!.summary, isEmpty);
+  });
+
   test('explicit loggedAt is kept, not overridden by clock()', () async {
     final tripId = await createTrip();
     final id = await repo.createEntry(

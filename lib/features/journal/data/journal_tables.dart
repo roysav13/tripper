@@ -8,7 +8,11 @@ class JournalEntries extends Table {
   TextColumn get id => text()();
   TextColumn get tripId =>
       text().references(Trips, #id, onDelete: KeyAction.cascade)();
-  TextColumn get summary => text().withLength(min: 1, max: 4000)();
+  /// min: 0, not 1 — entries auto-created by markPlaceVisited (a place
+  /// marked visited outside the journal) start with an empty summary,
+  /// shown as "Not written yet" until the user fills it in. The manual
+  /// entry form enforces non-empty at the UI layer for user-typed entries.
+  TextColumn get summary => text().withLength(min: 0, max: 4000)();
 
   /// User-editable log time — never `DateTime.now()`, defaults to
   /// `clockProvider` at creation (domain rule).

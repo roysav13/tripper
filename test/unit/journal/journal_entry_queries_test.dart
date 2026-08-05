@@ -48,8 +48,7 @@ void main() {
       );
     });
 
-    test('connects consecutive located entries in chronological order',
-        () {
+    test('connects consecutive located entries in chronological order', () {
       final entries = [
         _e('c', DateTime(2026, 1, 3), lat: 3, lng: 3),
         _e('a', DateTime(2026, 1, 1), lat: 1, lng: 1),

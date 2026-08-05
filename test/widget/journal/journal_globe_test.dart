@@ -6,8 +6,7 @@ import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/presentation/journal_globe.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
-JournalEntry _e(String id, double lat, double lng) =>
-    JournalEntry(
+JournalEntry _e(String id, double lat, double lng) => JournalEntry(
       id: id,
       tripId: 't1',
       summary: id,
