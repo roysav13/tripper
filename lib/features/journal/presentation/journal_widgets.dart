@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../core/widgets/section_label.dart';
@@ -13,112 +12,98 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
-/// A compact card for the horizontal entry gallery below the globe (design
-/// reference: Wanderlog's journal filmstrip) — photo (or a placeholder)
-/// on top, date + summary below. No existing photo/thumbnail precedent
-/// elsewhere in the codebase — designed fresh on the app's card/hairline
-/// conventions.
+/// A compact card for the horizontal entry gallery below the globe —
+/// photo (or a placeholder) on top, a thin date + place caption below.
+/// Tapping opens the read-only presentation view (never edits directly —
+/// design spec: "tap = view, edit is explicit"), so the card no longer
+/// carries summary text or a delete action; both live in that view now.
 class JournalGalleryCard extends StatelessWidget {
   const JournalGalleryCard({
     super.key,
     required this.entry,
     this.onTap,
-    this.onDelete,
+    this.selected = false,
   });
 
   final JournalEntry entry;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
-  static const width = 148.0;
-  static const photoHeight = 84.0;
+  /// True while this entry is the globe/gallery's shared selection —
+  /// rendered as an accent-colored border in place of the usual hairline.
+  final bool selected;
+
+  static const width = 116.0;
+  static const photoHeight = 88.0;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final placeName = entry.placeName;
 
     return SizedBox(
       width: width,
       child: PaperCard(
         onTap: onTap,
         padding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            // The card has a natural (photo + text) size. FittedBox only
-            // ever shrinks (never grows) to fit whatever the gallery strip
-            // actually gives it — a plain Column would instead throw a
-            // render overflow during a transient squeeze (e.g. a keyboard
-            // animating over the tab shrinks the 30% strip below the
-            // card's natural height).
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.topStart,
-              child: SizedBox(
-                width: width,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppShape.radius - 1),
-                      ),
-                      child: entry.hasPhotos
-                          ? Image.file(
-                              File(entry.photos.first.filePath),
-                              width: width,
-                              height: photoHeight,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => placeholder(colors),
-                            )
-                          : placeholder(colors),
-                    ),
-                    Padding(
-                      padding: const EdgeInsetsDirectional.all(AppSpacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          MonoText(
-                            DateFormat('dd MMM').format(entry.loggedAt),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            entry.summary.isEmpty
-                                ? AppLocalizations.of(context)!
-                                    .journalUntitledEntry
-                                : entry.summary,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.body.copyWith(
-                              fontSize: 12,
-                              color: colors.inkPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+        borderColor: selected ? colors.accent : null,
+        // The card has a natural (photo + caption) size. FittedBox only
+        // ever shrinks (never grows) to fit whatever the gallery strip
+        // actually gives it — a plain Column would instead throw a
+        // render overflow during a transient squeeze (e.g. a keyboard
+        // animating over the tab shrinks the strip below the card's
+        // natural height).
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.topStart,
+          child: SizedBox(
+            width: width,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppShape.radius - 1),
+                  ),
+                  child: entry.hasPhotos
+                      ? Image.file(
+                          File(entry.photos.first.filePath),
+                          width: width,
+                          height: photoHeight,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => placeholder(colors),
+                        )
+                      : placeholder(colors),
                 ),
-              ),
-            ),
-            if (onDelete != null)
-              PositionedDirectional(
-                top: 4,
-                end: 4,
-                child: Material(
-                  color: colors.surface.withValues(alpha: 0.85),
-                  shape: const CircleBorder(),
-                  child: IconButton(
-                    iconSize: 14,
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(),
-                    icon: Icon(Icons.close, color: colors.inkMuted),
-                    onPressed: onDelete,
+                Padding(
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 6,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MonoText(DateFormat('dd MMM').format(entry.loggedAt)),
+                      if (placeName != null && placeName.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          placeName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.accent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -258,22 +243,29 @@ class _DaySlot extends StatelessWidget {
 }
 
 class _GroupedGalleryCard extends StatelessWidget {
-  const _GroupedGalleryCard({required this.day, required this.onOpenDay});
+  const _GroupedGalleryCard({
+    required this.day,
+    required this.onTap,
+    required this.selected,
+  });
 
   final List<JournalEntry> day;
-  final VoidCallback onOpenDay;
+  final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final first = day.first;
     final photoEntry = day.firstWhere((e) => e.hasPhotos, orElse: () => first);
+    final placeName = first.placeName;
 
     return SizedBox(
       width: JournalGalleryCard.width,
       child: PaperCard(
-        onTap: onOpenDay,
+        onTap: onTap,
         padding: EdgeInsets.zero,
+        borderColor: selected ? colors.accent : null,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: AlignmentDirectional.topStart,
@@ -285,7 +277,7 @@ class _GroupedGalleryCard extends StatelessWidget {
               children: [
                 // Extra ~6px of top space for the peeking card-edge slivers
                 // below — accounted for in _DaySlot's Flexible sizing so it
-                // doesn't reintroduce the overflow Task 7 fixed.
+                // doesn't reintroduce a Column-overflow.
                 Padding(
                   padding: const EdgeInsetsDirectional.only(top: 6),
                   child: Stack(
@@ -293,7 +285,7 @@ class _GroupedGalleryCard extends StatelessWidget {
                     children: [
                       // Stacked-photo effect: two thin "card edge" slivers
                       // peeking out above/behind the top photo, evoking a
-                      // fanned stack of photos (design spec §3 Gallery).
+                      // fanned stack of photos.
                       PositionedDirectional(
                         top: -6,
                         start: 10,
@@ -369,24 +361,28 @@ class _GroupedGalleryCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsetsDirectional.all(AppSpacing.sm),
+                  padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 6,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       MonoText(DateFormat('dd MMM').format(first.loggedAt)),
-                      const SizedBox(height: 2),
-                      Text(
-                        first.summary.isEmpty
-                            ? AppLocalizations.of(context)!.journalUntitledEntry
-                            : first.summary,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.body.copyWith(
-                          fontSize: 12,
-                          color: colors.inkPrimary,
+                      if (placeName != null && placeName.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          placeName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.accent,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
