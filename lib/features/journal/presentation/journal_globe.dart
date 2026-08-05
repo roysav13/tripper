@@ -68,10 +68,26 @@ class _JournalGlobeState extends State<JournalGlobe> {
     _maybeFocusLatest();
   }
 
+  // Compares the fields the globe actually renders per entry — id, lat,
+  // lng, and the first photo's path (which decides dot-vs-thumbnail and
+  // which thumbnail) — not just id/order. Journal entries are edited
+  // constantly (unlike the visited Places this replaced, whose coordinates
+  // rarely changed), so an identity-only check would miss a location being
+  // added/moved or a first photo being added to a previously photo-less
+  // entry.
   bool _sameEntryIds(List<JournalEntry> previous) {
     if (previous.length != widget.entries.length) return false;
     for (var i = 0; i < previous.length; i++) {
-      if (previous[i].id != widget.entries[i].id) return false;
+      final prevEntry = previous[i];
+      final nextEntry = widget.entries[i];
+      if (prevEntry.id != nextEntry.id) return false;
+      if (prevEntry.lat != nextEntry.lat) return false;
+      if (prevEntry.lng != nextEntry.lng) return false;
+      final prevPhotoPath =
+          prevEntry.hasPhotos ? prevEntry.photos.first.filePath : null;
+      final nextPhotoPath =
+          nextEntry.hasPhotos ? nextEntry.photos.first.filePath : null;
+      if (prevPhotoPath != nextPhotoPath) return false;
     }
     return true;
   }

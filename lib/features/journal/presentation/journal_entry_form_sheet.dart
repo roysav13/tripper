@@ -340,6 +340,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
       initialLat: _lat,
       initialLng: _lng,
       initialPlaceName: _placeName,
+      initialPlaceId: _placeId,
     );
     if (pick == null || !mounted) return;
     setState(() {

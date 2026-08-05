@@ -284,41 +284,90 @@ class _GroupedGalleryCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppShape.radius - 1),
-                      ),
-                      child: photoEntry.hasPhotos
-                          ? Image.file(
-                              File(photoEntry.photos.first.filePath),
-                              width: JournalGalleryCard.width,
-                              height: JournalGalleryCard.photoHeight,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  JournalGalleryCard.placeholder(colors),
-                            )
-                          : JournalGalleryCard.placeholder(colors),
-                    ),
-                    PositionedDirectional(
-                      top: 6,
-                      end: 6,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors.inkPrimary.withValues(alpha: 0.72),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                // Extra ~6px of top space for the peeking card-edge slivers
+                // below — accounted for in _DaySlot's Flexible sizing so it
+                // doesn't reintroduce the overflow Task 7 fixed.
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 6),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Stacked-photo effect: two thin "card edge" slivers
+                      // peeking out above/behind the top photo, evoking a
+                      // fanned stack of photos (design spec §3 Gallery).
+                      PositionedDirectional(
+                        top: -6,
+                        start: 10,
+                        end: 10,
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            border: Border.all(
+                              color: colors.hairline,
+                              width: AppShape.hairlineWidth,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6),
+                            ),
                           ),
-                          child: MonoText('${day.length}', color: colors.surface),
                         ),
                       ),
-                    ),
-                  ],
+                      PositionedDirectional(
+                        top: -3,
+                        start: 5,
+                        end: 5,
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            border: Border.all(
+                              color: colors.hairline,
+                              width: AppShape.hairlineWidth,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(AppShape.radius - 1),
+                        ),
+                        child: photoEntry.hasPhotos
+                            ? Image.file(
+                                File(photoEntry.photos.first.filePath),
+                                width: JournalGalleryCard.width,
+                                height: JournalGalleryCard.photoHeight,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    JournalGalleryCard.placeholder(colors),
+                              )
+                            : JournalGalleryCard.placeholder(colors),
+                      ),
+                      PositionedDirectional(
+                        top: 6,
+                        end: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: colors.inkPrimary.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            child: MonoText(
+                              '${day.length}',
+                              color: colors.surface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsetsDirectional.all(AppSpacing.sm),
@@ -361,6 +410,7 @@ Future<void> showJournalDayEntriesSheet(
 }) {
   return showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     useSafeArea: true,
     builder: (context) => _JournalDayEntriesSheet(entries: entries, onEdit: onEdit),
   );
@@ -397,34 +447,44 @@ class _JournalDayEntriesSheet extends StatelessWidget {
               ),
             ),
           ),
-          for (final entry in entries)
-            ListTile(
-              leading: entry.hasPhotos
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.file(
-                        File(entry.photos.first.filePath),
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _dayRowPlaceholder(colors),
-                      ),
-                    )
-                  : _dayRowPlaceholder(colors),
-              title: Text(
-                entry.summary.isEmpty ? l10n.journalUntitledEntry : entry.summary,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: MonoText(
-                DateFormat('HH:mm').format(entry.loggedAt),
-                muted: true,
-              ),
-              onTap: () {
-                Navigator.of(context).pop();
-                onEdit(entry);
-              },
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final entry in entries)
+                  ListTile(
+                    leading: entry.hasPhotos
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(
+                              File(entry.photos.first.filePath),
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _dayRowPlaceholder(colors),
+                            ),
+                          )
+                        : _dayRowPlaceholder(colors),
+                    title: Text(
+                      entry.summary.isEmpty
+                          ? l10n.journalUntitledEntry
+                          : entry.summary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: MonoText(
+                      DateFormat('HH:mm').format(entry.loggedAt),
+                      muted: true,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onEdit(entry);
+                    },
+                  ),
+              ],
             ),
+          ),
           const SizedBox(height: AppSpacing.sm),
         ],
       ),

@@ -21,11 +21,11 @@ Future<void> markPlaceVisited(
 }) async {
   final placeRepo = ref.read(placeRepositoryProvider);
   final clock = ref.read(clockProvider);
+  final journalRepo = ref.read(journalRepositoryProvider);
   final visitedOn = visited ? clock() : null;
   await placeRepo.setVisited(place.id, visited: visited, visitedOn: visitedOn);
   if (!visited || place.tripId == null) return;
 
-  final journalRepo = ref.read(journalRepositoryProvider);
   if (await journalRepo.hasEntryForPlace(place.id)) return;
   await journalRepo.createEntry(
     tripId: place.tripId!,
@@ -47,9 +47,9 @@ Future<void> markPlacesVisited(
   DateTime visitedOn,
 ) async {
   final placeRepo = ref.read(placeRepositoryProvider);
+  final journalRepo = ref.read(journalRepositoryProvider);
   await placeRepo.bulkMarkVisited([for (final p in places) p.id], visitedOn);
 
-  final journalRepo = ref.read(journalRepositoryProvider);
   for (final place in places) {
     if (place.tripId == null) continue;
     if (await journalRepo.hasEntryForPlace(place.id)) continue;

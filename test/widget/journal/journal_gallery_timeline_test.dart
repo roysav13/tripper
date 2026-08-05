@@ -50,15 +50,21 @@ void main() {
 
   testWidgets(
       'multi-entry day shows a count badge, tap opens the day list, '
-      'tapping a row edits that entry', (tester) async {
+      'tapping a row edits that entry — and a busy day (6 entries) does '
+      'not overflow the sheet', (tester) async {
     JournalEntry? edited;
+    final entries = [
+      _e('morning', DateTime(2026, 7, 20, 9), summary: 'Woke up early'),
+      _e('brunch', DateTime(2026, 7, 20, 11), summary: 'Brunch on the roof'),
+      _e('museum', DateTime(2026, 7, 20, 13), summary: 'Museum visit'),
+      _e('market', DateTime(2026, 7, 20, 16), summary: 'Night market'),
+      _e('dinner', DateTime(2026, 7, 20, 19), summary: 'Dinner by the pier'),
+      _e('evening', DateTime(2026, 7, 20, 20), summary: 'Sunset walk'),
+    ];
     await tester.pumpWidget(
       _wrap(
         JournalGalleryTimeline(
-          entries: [
-            _e('morning', DateTime(2026, 7, 20, 9), summary: 'Woke up early'),
-            _e('evening', DateTime(2026, 7, 20, 20), summary: 'Sunset walk'),
-          ],
+          entries: entries,
           onEdit: (e) => edited = e,
           onDelete: (_) {},
         ),
@@ -66,7 +72,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('2'), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
     // The grouped card shows the first (earliest) entry's summary as its
     // own label — not each individual entry yet.
     expect(find.text('Woke up early'), findsOneWidget);
@@ -75,15 +81,20 @@ void main() {
     await tester.tap(find.text('Woke up early'));
     await tester.pumpAndSettle();
 
-    // Day-list sheet now shows both — scoped to ListTile since the
+    // No RenderFlex overflow reported for a busy (6-entry) day list.
+    expect(tester.takeException(), isNull);
+
+    // Day-list sheet now shows all six — scoped to ListTile since the
     // grouped card behind the (non-dismissing) modal sheet still has
     // "Woke up early" mounted in the tree too.
-    expect(find.widgetWithText(ListTile, 'Woke up early'), findsOneWidget);
-    expect(find.widgetWithText(ListTile, 'Sunset walk'), findsOneWidget);
+    for (final entry in entries) {
+      expect(find.widgetWithText(ListTile, entry.summary), findsOneWidget);
+    }
 
     await tester.tap(find.widgetWithText(ListTile, 'Sunset walk'));
     await tester.pumpAndSettle();
     expect(edited?.id, 'evening');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('entries on different days each get their own dot and card',

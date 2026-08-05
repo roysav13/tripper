@@ -144,4 +144,87 @@ void main() {
     expect(all.single.tripId, 'trip-1');
     expect(all.single.isVisited, isTrue);
   });
+
+  testWidgets(
+      're-opening the picker on an entry already linked to a visited '
+      'place keeps its placeId on Save even without touching a chip',
+      (tester) async {
+    final places = FakePlaceRepository(
+      [
+        Place(
+          id: 'p1',
+          name: 'Railay Beach',
+          lat: 8.0119,
+          lng: 98.8378,
+          tripId: 'trip-1',
+          status: PlaceStatus.beenThere,
+          visitedAt: DateTime(2020, 1, 1),
+        ),
+      ],
+      clock: DateTime(2026, 7, 19),
+    );
+
+    JournalLocationPick? result;
+    // Driven directly via Navigator.push (not JournalLocationPicker.open,
+    // which always renders a real GoogleMap) so renderMap:false can be
+    // passed while still exercising the real push/pop round trip and
+    // capturing the popped value, matching how .open() itself is used in
+    // journal_entry_form_sheet.dart.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeRepositoryProvider.overrideWithValue(places),
+          geocoderProvider.overrideWithValue(_FakeGeocoder(const [])),
+          clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    result = await Navigator.of(context, rootNavigator: true)
+                        .push<JournalLocationPick?>(
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (context) => const JournalLocationPicker(
+                          tripId: 'trip-1',
+                          initialLat: 8.0119,
+                          initialLng: 98.8378,
+                          initialPlaceName: 'Railay Beach',
+                          initialPlaceId: 'p1',
+                          renderMap: false,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    // Save without touching any chip — the location field already shows
+    // the initial pick from initialLat/initialLng/initialPlaceName.
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNotNull);
+    expect(result!.placeId, 'p1');
+  });
 }

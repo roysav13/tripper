@@ -40,6 +40,7 @@ class JournalLocationPicker extends ConsumerStatefulWidget {
     this.initialLat,
     this.initialLng,
     this.initialPlaceName,
+    this.initialPlaceId,
     this.renderMap = true,
   });
 
@@ -47,6 +48,7 @@ class JournalLocationPicker extends ConsumerStatefulWidget {
   final double? initialLat;
   final double? initialLng;
   final String? initialPlaceName;
+  final String? initialPlaceId;
 
   /// False in widget tests: Google Maps needs a platform view.
   final bool renderMap;
@@ -57,6 +59,7 @@ class JournalLocationPicker extends ConsumerStatefulWidget {
     double? initialLat,
     double? initialLng,
     String? initialPlaceName,
+    String? initialPlaceId,
   }) {
     return Navigator.of(context, rootNavigator: true)
         .push<JournalLocationPick?>(
@@ -67,6 +70,7 @@ class JournalLocationPicker extends ConsumerStatefulWidget {
           initialLat: initialLat,
           initialLng: initialLng,
           initialPlaceName: initialPlaceName,
+          initialPlaceId: initialPlaceId,
         ),
       ),
     );
@@ -102,6 +106,7 @@ class _JournalLocationPickerState extends ConsumerState<JournalLocationPicker> {
       _picked = LatLng(widget.initialLat!, widget.initialLng!);
     }
     _placeName = widget.initialPlaceName;
+    _pickedPlaceId = widget.initialPlaceId;
   }
 
   @override
