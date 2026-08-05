@@ -102,7 +102,7 @@ class TripJournalTab extends ConsumerWidget {
                     Expanded(
                       flex: 7,
                       child: JournalGlobe(
-                        places: visitedPlaces,
+                        entries: entries,
                         renderGlobe: renderGlobe,
                       ),
                     ),

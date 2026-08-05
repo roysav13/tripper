@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/presentation/journal_globe.dart';
-import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
-Place _p(String name, double lat, double lng) => Place(
-      id: name,
-      name: name,
+JournalEntry _e(String id, double lat, double lng) =>
+    JournalEntry(
+      id: id,
+      tripId: 't1',
+      summary: id,
+      loggedAt: DateTime(2026, 7, 19),
+      createdAt: DateTime(2026, 7, 19),
       lat: lat,
       lng: lng,
-      status: PlaceStatus.beenThere,
     );
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -29,31 +32,48 @@ Widget _wrap(Widget child) => MaterialApp(
 void main() {
   // renderGlobe: false — flutter_earth_globe needs a GPU shader surface
   // that widget tests can't create (and we never hit the network here).
-  testWidgets('renders one tappable icon per place, tap fires the callback',
+  testWidgets(
+      'renders one tappable icon per located entry, tap fires the callback',
       (tester) async {
-    Place? tapped;
+    JournalEntry? tapped;
     await tester.pumpWidget(
       _wrap(
         JournalGlobe(
           renderGlobe: false,
-          onPlaceTap: (p) => tapped = p,
-          places: [_p('Railay', 8.0, 98.8), _p('Phi Phi', 7.7, 98.7)],
+          onEntryTap: (e) => tapped = e,
+          entries: [_e('a', 8.0, 98.8), _e('b', 7.7, 98.7)],
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.public), findsNWidgets(2));
+    expect(find.byIcon(Icons.circle), findsNWidgets(2));
 
-    await tester.tap(find.byIcon(Icons.public).first);
+    await tester.tap(find.byIcon(Icons.circle).first);
     await tester.pump();
-    expect(tapped?.name, 'Railay');
+    expect(tapped?.id, 'a');
   });
 
-  testWidgets('zero places renders without crashing', (tester) async {
-    await tester
-        .pumpWidget(_wrap(const JournalGlobe(renderGlobe: false, places: [])));
+  testWidgets('entries without a location render no icon', (tester) async {
+    final unlocated = JournalEntry(
+      id: 'u',
+      tripId: 't1',
+      summary: 'no pin',
+      loggedAt: DateTime(2026, 7, 19),
+      createdAt: DateTime(2026, 7, 19),
+    );
+    await tester.pumpWidget(
+      _wrap(JournalGlobe(renderGlobe: false, entries: [unlocated])),
+    );
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.public), findsNothing);
+    expect(find.byIcon(Icons.circle), findsNothing);
+    expect(find.byIcon(Icons.photo_camera), findsNothing);
+  });
+
+  testWidgets('zero entries renders without crashing', (tester) async {
+    await tester
+        .pumpWidget(_wrap(const JournalGlobe(renderGlobe: false, entries: [])));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.circle), findsNothing);
   });
 }
