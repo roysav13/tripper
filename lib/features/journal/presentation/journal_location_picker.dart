@@ -18,11 +18,13 @@ class JournalLocationPick {
     required this.lat,
     required this.lng,
     this.placeName,
+    this.placeId,
   });
 
   final double lat;
   final double lng;
   final String? placeName;
+  final String? placeId;
 }
 
 /// Full-screen location picker for a journal entry: pick one of this trip's
@@ -416,9 +418,12 @@ class _JournalLocationPickerState extends ConsumerState<JournalLocationPicker> {
   }
 
   /// A brand-new named location (search result, not one of the trip's
-  /// existing Places) is added to the trip's Places on save, so it shows up
-  /// as visited on future pickers, the Places tab, and the globe. A bare
-  /// map pin has no name to give a Place, so it's stored on the entry only.
+  /// existing Places) is added to the trip's Places on save, so it shows
+  /// up as visited on future pickers, the Places tab, and the globe. An
+  /// existing trip Place picked via chip that isn't visited yet is now
+  /// also marked visited here (previously only brand-new places were).
+  /// A bare map pin has no name to give a Place, so it's stored on the
+  /// entry only.
   Future<void> _confirmPick(List<Place> tripPlaces) async {
     final picked = _picked!;
     final name = _placeName;
@@ -427,27 +432,41 @@ class _JournalLocationPickerState extends ConsumerState<JournalLocationPicker> {
         !tripPlaces.any(
           (p) => p.name.trim().toLowerCase() == name.trim().toLowerCase(),
         );
+
+    var placeId = _pickedPlaceId;
     if (isNewNamedPlace) {
       setState(() => _saving = true);
       final places = ref.read(placeRepositoryProvider);
-      final id = await places.createPlace(
+      placeId = await places.createPlace(
         name: name,
         lat: picked.latitude,
         lng: picked.longitude,
         tripId: widget.tripId,
       );
       await places.setVisited(
-        id,
+        placeId,
         visited: true,
         visitedOn: ref.read(clockProvider)(),
       );
+    } else if (placeId != null) {
+      final existing = tripPlaces.firstWhere((p) => p.id == placeId);
+      if (!existing.isVisited) {
+        setState(() => _saving = true);
+        await ref.read(placeRepositoryProvider).setVisited(
+              placeId,
+              visited: true,
+              visitedOn: ref.read(clockProvider)(),
+            );
+      }
     }
+
     if (mounted) {
       Navigator.of(context).pop(
         JournalLocationPick(
           lat: picked.latitude,
           lng: picked.longitude,
           placeName: _placeName,
+          placeId: placeId,
         ),
       );
     }

@@ -64,8 +64,8 @@ Widget _wrap({
 
 void main() {
   testWidgets(
-      'picking one of the trip\'s existing locations does not '
-      'create a duplicate Place', (tester) async {
+      'picking one of the trip\'s existing, not-yet-visited locations '
+      'marks it visited', (tester) async {
     final places = FakePlaceRepository([
       const Place(
         id: 'p1',
@@ -86,6 +86,38 @@ void main() {
 
     final all = await places.watchAll().first;
     expect(all, hasLength(1));
+    expect(all.single.isVisited, isTrue);
+  });
+
+  testWidgets(
+      'picking an already-visited trip place does not re-stamp visitedAt',
+      (tester) async {
+    final originalVisit = DateTime(2020, 1, 1);
+    final places = FakePlaceRepository(
+      [
+        Place(
+          id: 'p1',
+          name: 'Railay Beach',
+          lat: 8.0119,
+          lng: 98.8378,
+          tripId: 'trip-1',
+          status: PlaceStatus.beenThere,
+          visitedAt: originalVisit,
+        ),
+      ],
+      clock: DateTime(2026, 7, 19),
+    );
+    await tester
+        .pumpWidget(_wrap(places: places, geocoder: _FakeGeocoder(const [])));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay Beach'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final all = await places.watchAll().first;
+    expect(all.single.visitedAt, originalVisit);
   });
 
   testWidgets(

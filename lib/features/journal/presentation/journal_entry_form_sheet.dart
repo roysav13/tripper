@@ -62,6 +62,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
   double? _lat;
   double? _lng;
   String? _placeName;
+  String? _placeId;
 
   @override
   void initState() {
@@ -73,6 +74,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
     _lat = existing?.lat;
     _lng = existing?.lng;
     _placeName = existing?.placeName;
+    _placeId = existing?.placeId;
   }
 
   @override
@@ -185,6 +187,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
                   _lat = null;
                   _lng = null;
                   _placeName = null;
+                  _placeId = null;
                 }),
               ),
           ],
@@ -343,6 +346,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
       _lat = pick.lat;
       _lng = pick.lng;
       _placeName = pick.placeName;
+      _placeId = pick.placeId;
     });
   }
 
@@ -390,6 +394,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
         lat: _lat,
         lng: _lng,
         placeName: _placeName,
+        placeId: _placeId,
         photoSourcePaths: _newPhotoPaths,
       );
     } else {
@@ -400,6 +405,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
           lat: () => _lat,
           lng: () => _lng,
           placeName: () => _placeName,
+          placeId: () => _placeId,
         ),
         newPhotoSourcePaths: _newPhotoPaths,
         removedPhotoIds: _removedPhotoIds,
