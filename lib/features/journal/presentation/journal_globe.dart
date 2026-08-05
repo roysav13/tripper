@@ -13,7 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
-const _dotSize = 2.5;
+const _plainDotDiameter = 11.0;
 const _photoDotDiameter = 26.0;
 
 /// flutter_earth_globe renders via GPU fragment shaders, which widget tests
@@ -111,34 +111,42 @@ class _JournalGlobeState extends State<JournalGlobe> {
   }
 
   void _addPoints(FlutterEarthGlobeController controller) {
-    final colors = context.colors;
     for (final entry in widget.entries) {
       if (!entry.hasLocation) continue;
+      final diameter = entry.hasPhotos ? _photoDotDiameter : _plainDotDiameter;
+      final onTap =
+          widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
       controller.addPoint(
         Point(
           id: entry.id,
           coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
           label: entry.placeName ?? entry.summary,
-          // Photo entries render via labelBuilder instead (below) — the
-          // native dot is suppressed (size: 0) so it doesn't peek out
-          // from behind the thumbnail.
-          style: PointStyle(
-            color: colors.accent,
-            size: entry.hasPhotos ? 0 : _dotSize,
-          ),
-          isLabelVisible: entry.hasPhotos,
-          // Centers a _photoDotDiameter-square widget exactly on the
-          // point: the package positions labelBuilder output at
+          // Every point renders entirely through labelBuilder now (below)
+          // — size 0 means the package's own GPU-native dot draws
+          // nothing, so it can never peek out from behind the widget.
+          style: const PointStyle(size: 0),
+          isLabelVisible: true,
+          // Centers a diameter-square widget exactly on the point: the
+          // package positions labelBuilder output at
           // `left = pos.dx - labelOffset.dx - width/2`,
           // `top = pos.dy - labelOffset.dy - height`.
-          labelOffset: const Offset(0, -_photoDotDiameter / 2),
-          labelBuilder: entry.hasPhotos
-              ? (context, point, isHovering, isVisible) =>
-                  _PhotoDot(filePath: entry.photos.first.filePath)
-              : null,
-          onTap: widget.onEntryTap == null
-              ? null
-              : () => widget.onEntryTap!(entry),
+          labelOffset: Offset(0, -diameter / 2),
+          labelBuilder: (context, point, isHovering, isVisible) =>
+              entry.hasPhotos
+                  ? _PhotoDot(
+                      filePath: entry.photos.first.filePath,
+                      onTap: onTap,
+                    )
+                  : _PlainDot(onTap: onTap),
+          // Point.onTap is intentionally left unset. The package's own
+          // globe-level GestureDetector hit-tests taps against each
+          // point's native (now zero-size) hit region separately from
+          // whatever labelBuilder renders, and would call Point.onTap
+          // itself if set — double-firing onEntryTap for any tap that
+          // happens to land within that residual ~8x8px native region,
+          // on top of the tap our own widget's GestureDetector below
+          // already handles. Routing taps only through the widget avoids
+          // this entirely.
         ),
       );
     }
@@ -149,7 +157,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
           start: GlobeCoordinates(start.lat!, start.lng!),
           end: GlobeCoordinates(end.lat!, end.lng!),
           style: PointConnectionStyle(
-            color: colors.accent.withValues(alpha: 0.6),
+            color: context.colors.accent.withValues(alpha: 0.6),
             lineWidth: 1.5,
           ),
         ),
@@ -254,27 +262,64 @@ class _JournalGlobeState extends State<JournalGlobe> {
 
 /// A circular, accent-bordered photo thumbnail rendered at a point's
 /// screen position via Point.labelBuilder (the package has no built-in
-/// image support for points).
+/// image support for points). Wraps itself in a GestureDetector — see
+/// the comment on Point.onTap in _addPoints for why tap handling lives
+/// here instead of on the Point itself.
 class _PhotoDot extends StatelessWidget {
-  const _PhotoDot({required this.filePath});
+  const _PhotoDot({required this.filePath, this.onTap});
 
   final String filePath;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Container(
-      width: _photoDotDiameter,
-      height: _photoDotDiameter,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: colors.accent, width: 1.5),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: _photoDotDiameter,
+        height: _photoDotDiameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: colors.accent, width: 1.5),
+        ),
+        child: ClipOval(
+          child: Image.file(
+            File(filePath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => ColoredBox(color: colors.paper),
+          ),
+        ),
       ),
-      child: ClipOval(
-        child: Image.file(
-          File(filePath),
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => ColoredBox(color: colors.paper),
+    );
+  }
+}
+
+/// A small solid-color dot for a located entry with no photo — same
+/// labelBuilder/GestureDetector technique as _PhotoDot, so it's immune
+/// to the GPU painter's zoom-based size scaling the same way _PhotoDot
+/// already was (see the design spec for why this is the fix, not a
+/// PointStyle.size tweak — the scaling factor is an internal,
+/// undocumented package constant).
+class _PlainDot extends StatelessWidget {
+  const _PlainDot({this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: _plainDotDiameter,
+        height: _plainDotDiameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colors.accent,
+          border: Border.all(color: colors.surface, width: 1.5),
         ),
       ),
     );
