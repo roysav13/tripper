@@ -28,10 +28,17 @@ Widget _wrap(Widget child) => MaterialApp(
       supportedLocales: const [Locale('en')],
     );
 
+/// The color of the card's own hairline/accent border. `Scaffold` wraps
+/// its body in its own `Material` with no `shape` set, and it's an
+/// ancestor of `PaperCard`'s `Material` — so `find.byType(Material).first`
+/// would resolve to Scaffold's, not the card's. Filter for the one whose
+/// `shape` is actually a `RoundedRectangleBorder` (PaperCard always sets
+/// one — see `lib/core/widgets/paper_card.dart`), same pattern as
+/// `test/widget/vault/vault_screen_test.dart`'s `_hasWarningBorder`.
 Color _borderColor(WidgetTester tester) {
-  final material = tester.widget<Material>(find.byType(Material).first);
-  final shape = material.shape! as RoundedRectangleBorder;
-  return shape.side.color;
+  final materials = tester.widgetList<Material>(find.byType(Material));
+  final card = materials.firstWhere((m) => m.shape is RoundedRectangleBorder);
+  return (card.shape! as RoundedRectangleBorder).side.color;
 }
 
 void main() {
