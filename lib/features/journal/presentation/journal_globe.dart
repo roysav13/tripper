@@ -30,11 +30,19 @@ class JournalGlobe extends StatefulWidget {
   const JournalGlobe({
     super.key,
     required this.entries,
+    this.selectedEntryId,
     this.onEntryTap,
     this.renderGlobe = true,
   });
 
   final List<JournalEntry> entries;
+
+  /// Set by the coordinating parent (TripJournalTab) when an entry is
+  /// selected — from tapping this same globe's own dot, or from tapping
+  /// a gallery card. A changed, non-null value takes priority over the
+  /// "focus on the latest entry" default and animates the globe there.
+  final String? selectedEntryId;
+
   final void Function(JournalEntry entry)? onEntryTap;
   final bool renderGlobe;
 
@@ -63,9 +71,14 @@ class _JournalGlobeState extends State<JournalGlobe> {
   @override
   void didUpdateWidget(JournalGlobe oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.renderGlobe || _sameEntryIds(oldWidget.entries)) return;
-    _syncPoints(oldWidget.entries);
-    _maybeFocusLatest();
+    if (!widget.renderGlobe) return;
+    if (widget.selectedEntryId != oldWidget.selectedEntryId) {
+      _maybeFocusSelected();
+    }
+    if (!_sameEntryIds(oldWidget.entries)) {
+      _syncPoints(oldWidget.entries);
+      _maybeFocusLatest();
+    }
   }
 
   // Compares the fields the globe actually renders per entry — id, lat,
@@ -181,9 +194,38 @@ class _JournalGlobeState extends State<JournalGlobe> {
     );
     controller.onLoaded = () {
       _addPoints(controller);
-      _maybeFocusLatest(animate: false);
+      if (widget.selectedEntryId != null) {
+        _maybeFocusSelected();
+      } else {
+        _maybeFocusLatest(animate: false);
+      }
     };
     return controller;
+  }
+
+  /// Focuses on widget.selectedEntryId if it's set, located, and not
+  /// already what the globe is centered on — takes priority over the
+  /// latest-entry auto-focus below, since a selection reflects a
+  /// deliberate tap (this globe's own dot, or a gallery card), not a
+  /// heuristic. Silently does nothing if the selected entry has no
+  /// location — not every entry appears on the globe, and the selection
+  /// still applies normally on the gallery side regardless.
+  void _maybeFocusSelected() {
+    final controller = _controller;
+    final selectedId = widget.selectedEntryId;
+    if (controller == null || !controller.isReady || selectedId == null) {
+      return;
+    }
+    if (selectedId == _focusedEntryId) return;
+    final selected =
+        widget.entries.where((e) => e.id == selectedId).firstOrNull;
+    if (selected == null || !selected.hasLocation) return;
+    _focusedEntryId = selectedId;
+    controller.focusOnCoordinates(
+      GlobeCoordinates(selected.lat!, selected.lng!),
+      animate: true,
+      duration: const Duration(milliseconds: 600),
+    );
   }
 
   /// Opens on the most recent entry rather than a fixed default, and
