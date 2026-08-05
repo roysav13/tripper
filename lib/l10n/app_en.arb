@@ -296,13 +296,6 @@
   "journalDeleteEntryTitle": "Delete this entry?",
   "journalDeleteEntryBody": "This removes its text and any photos. This can't be undone.",
   "journalMapLocationHint": "Entries without a location won't appear here.",
-  "journalDayEntriesTitle": "{count} entries · {date}",
-  "@journalDayEntriesTitle": {
-    "placeholders": {
-      "count": { "type": "int" },
-      "date": { "type": "String" }
-    }
-  },
   "journalUntitledEntry": "Not written yet",
   "journalStatsLine": "{entries} entries · {places} places visited",
   "@journalStatsLine": {

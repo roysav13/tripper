@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
-import 'package:tripper/core/widgets/paper_card.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/presentation/journal_widgets.dart';
 import 'package:tripper/l10n/app_localizations.dart';

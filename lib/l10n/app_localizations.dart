@@ -1372,12 +1372,6 @@ abstract class AppLocalizations {
   /// **'Entries without a location won\'t appear here.'**
   String get journalMapLocationHint;
 
-  /// No description provided for @journalDayEntriesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} entries · {date}'**
-  String journalDayEntriesTitle(int count, String date);
-
   /// No description provided for @journalUntitledEntry.
   ///
   /// In en, this message translates to:

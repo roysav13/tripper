@@ -7,8 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
-import '../../../core/widgets/section_label.dart';
-import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
@@ -122,26 +120,73 @@ class JournalGalleryCard extends StatelessWidget {
 /// hairline track with one dot per calendar day, each day's card hanging
 /// below it on a short stem. A day with more than one entry renders as a
 /// stacked-photo card with a count badge instead of [JournalGalleryCard]
-/// directly; tapping it opens [showJournalDayEntriesSheet].
-class JournalGalleryTimeline extends StatelessWidget {
+/// directly. Tapping any day reports it via [onTapDay] (index 0 for a
+/// grouped day — the compact card can't pick a specific entry, the
+/// presentation view's swipe does that instead). [selectedEntryId] is
+/// the globe/gallery's shared selection: the matching day's card gets an
+/// accent border, and the strip auto-scrolls to bring it into view.
+class JournalGalleryTimeline extends StatefulWidget {
   const JournalGalleryTimeline({
     super.key,
     required this.entries,
-    required this.onEdit,
-    required this.onDelete,
+    required this.selectedEntryId,
+    required this.onTapDay,
   });
 
   final List<JournalEntry> entries;
-  final void Function(JournalEntry entry) onEdit;
-  final void Function(JournalEntry entry) onDelete;
+  final String? selectedEntryId;
+  final void Function(List<JournalEntry> dayEntries, int tappedIndex) onTapDay;
 
   static const _dotSize = 11.0;
   static const _stemHeight = 22.0;
 
   @override
+  State<JournalGalleryTimeline> createState() => _JournalGalleryTimelineState();
+}
+
+class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
+  /// Keyed by each day's first (earliest) entry id — stable across
+  /// rebuilds as long as that entry stays the earliest one for its day,
+  /// which is true unless entries are added/removed within the day.
+  final _slotKeys = <String, GlobalKey>{};
+
+  @override
+  void didUpdateWidget(JournalGalleryTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedEntryId != null &&
+        widget.selectedEntryId != oldWidget.selectedEntryId) {
+      _scrollToSelected();
+    }
+  }
+
+  void _scrollToSelected() {
+    final days = groupEntriesByDay(widget.entries);
+    for (final day in days) {
+      if (!day.any((e) => e.id == widget.selectedEntryId)) continue;
+      final key = _slotKeys[day.first.id];
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final renderContext = key?.currentContext;
+        if (renderContext == null) return;
+        Scrollable.ensureVisible(
+          renderContext,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.5,
+        );
+      });
+      return;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final days = groupEntriesByDay(entries);
+    final days = groupEntriesByDay(widget.entries);
+    final dayIds = {for (final day in days) day.first.id};
+    _slotKeys.removeWhere((id, _) => !dayIds.contains(id));
+    for (final day in days) {
+      _slotKeys.putIfAbsent(day.first.id, GlobalKey.new);
+    }
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -154,23 +199,27 @@ class JournalGalleryTimeline extends StatelessWidget {
           PositionedDirectional(
             start: 0,
             end: 0,
-            top: _dotSize / 2 - 1,
+            top: JournalGalleryTimeline._dotSize / 2 - 1,
             child: Container(height: 2, color: colors.hairline),
           ),
           Padding(
-            padding: const EdgeInsetsDirectional.only(top: _dotSize / 2),
+            padding: const EdgeInsetsDirectional.only(
+              top: JournalGalleryTimeline._dotSize / 2,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (final day in days)
                   Padding(
+                    key: _slotKeys[day.first.id],
                     padding:
                         const EdgeInsetsDirectional.only(end: AppSpacing.sm),
                     child: _DaySlot(
                       day: day,
                       colors: colors,
-                      onEdit: onEdit,
-                      onDelete: onDelete,
+                      selected:
+                          day.any((e) => e.id == widget.selectedEntryId),
+                      onTap: () => widget.onTapDay(day, 0),
                     ),
                   ),
               ],
@@ -186,14 +235,14 @@ class _DaySlot extends StatelessWidget {
   const _DaySlot({
     required this.day,
     required this.colors,
-    required this.onEdit,
-    required this.onDelete,
+    required this.selected,
+    required this.onTap,
   });
 
   final List<JournalEntry> day;
   final AppColors colors;
-  final void Function(JournalEntry entry) onEdit;
-  final void Function(JournalEntry entry) onDelete;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -223,19 +272,8 @@ class _DaySlot extends StatelessWidget {
         // so FittedBox has a real bound to scale down against.
         Flexible(
           child: day.length == 1
-              ? JournalGalleryCard(
-                  entry: first,
-                  onTap: () => onEdit(first),
-                  onDelete: () => onDelete(first),
-                )
-              : _GroupedGalleryCard(
-                  day: day,
-                  onOpenDay: () => showJournalDayEntriesSheet(
-                    context,
-                    entries: day,
-                    onEdit: onEdit,
-                  ),
-                ),
+              ? JournalGalleryCard(entry: first, onTap: onTap, selected: selected)
+              : _GroupedGalleryCard(day: day, onTap: onTap, selected: selected),
         ),
       ],
     );
@@ -395,106 +433,3 @@ class _GroupedGalleryCard extends StatelessWidget {
   }
 }
 
-/// Bottom sheet listing one day's entries — reached by tapping a
-/// multi-entry [JournalGalleryTimeline] card. Tapping a row closes the
-/// sheet and calls [onEdit] for that entry.
-Future<void> showJournalDayEntriesSheet(
-  BuildContext context, {
-  required List<JournalEntry> entries,
-  required void Function(JournalEntry entry) onEdit,
-}) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (context) =>
-        _JournalDayEntriesSheet(entries: entries, onEdit: onEdit),
-  );
-}
-
-class _JournalDayEntriesSheet extends StatelessWidget {
-  const _JournalDayEntriesSheet({required this.entries, required this.onEdit});
-
-  final List<JournalEntry> entries;
-  final void Function(JournalEntry entry) onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colors = context.colors;
-    final day = entries.first.loggedAt;
-
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: SectionLabel(
-              l10n.journalDayEntriesTitle(
-                entries.length,
-                DateFormat('d MMMM').format(day),
-              ),
-            ),
-          ),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                for (final entry in entries)
-                  ListTile(
-                    leading: entry.hasPhotos
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.file(
-                              File(entry.photos.first.filePath),
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _dayRowPlaceholder(colors),
-                            ),
-                          )
-                        : _dayRowPlaceholder(colors),
-                    title: Text(
-                      entry.summary.isEmpty
-                          ? l10n.journalUntitledEntry
-                          : entry.summary,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: MonoText(
-                      DateFormat('HH:mm').format(entry.loggedAt),
-                      muted: true,
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      onEdit(entry);
-                    },
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
-    );
-  }
-
-  Widget _dayRowPlaceholder(AppColors colors) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: colors.paper,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: colors.hairline),
-        ),
-        child: Icon(Icons.edit_note, color: colors.inkMuted),
-      );
-}
