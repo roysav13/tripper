@@ -745,6 +745,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Entries without a location won\'t appear here.';
 
   @override
+  String journalDayEntriesTitle(int count, String date) {
+    return '$count entries · $date';
+  }
+
+  @override
+  String get journalUntitledEntry => 'Not written yet';
+
+  @override
   String journalStatsLine(int entries, int places) {
     return '$entries entries · $places places visited';
   }

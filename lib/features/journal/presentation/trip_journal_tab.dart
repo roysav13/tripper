@@ -108,30 +108,14 @@ class TripJournalTab extends ConsumerWidget {
                     ),
                     Expanded(
                       flex: 3,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.sm,
+                      child: JournalGalleryTimeline(
+                        entries: entries,
+                        onEdit: (entry) => showJournalEntryFormSheet(
+                          context,
+                          tripId: trip.id,
+                          existing: entry,
                         ),
-                        children: [
-                          for (final entry in entries)
-                            Padding(
-                              padding: const EdgeInsetsDirectional.only(
-                                end: AppSpacing.sm,
-                              ),
-                              child: JournalGalleryCard(
-                                entry: entry,
-                                onTap: () => showJournalEntryFormSheet(
-                                  context,
-                                  tripId: trip.id,
-                                  existing: entry,
-                                ),
-                                onDelete: () =>
-                                    _confirmDelete(context, ref, entry),
-                              ),
-                            ),
-                        ],
+                        onDelete: (entry) => _confirmDelete(context, ref, entry),
                       ),
                     ),
                   ],
