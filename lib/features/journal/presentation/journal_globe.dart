@@ -77,7 +77,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
     }
     if (!_sameEntryIds(oldWidget.entries)) {
       _syncPoints(oldWidget.entries);
-      _maybeFocusLatest();
+      if (widget.selectedEntryId == null) _maybeFocusLatest();
     }
   }
 

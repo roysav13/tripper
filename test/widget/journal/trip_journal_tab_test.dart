@@ -153,6 +153,64 @@ void main() {
     expect(selectedCards, isNotEmpty);
   });
 
+  testWidgets(
+      'swiping the presentation sheet to a new entry updates the gallery '
+      'selection after the sheet closes', (tester) async {
+    await _pump(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Morning market',
+          loggedAt: DateTime(2026, 7, 20, 9),
+          createdAt: DateTime(2026, 7, 20, 9),
+        ),
+        JournalEntry(
+          id: 'e2',
+          tripId: 'trip-1',
+          summary: 'Evening at the pier',
+          loggedAt: DateTime(2026, 7, 20, 19),
+          createdAt: DateTime(2026, 7, 20, 19),
+        ),
+      ],
+    );
+
+    // Two same-day entries render as one grouped card with a count badge —
+    // tapping it opens the presentation sheet at index 0 (the earliest
+    // entry).
+    expect(find.text('2'), findsOneWidget);
+    await tester.tap(find.text('2'));
+    await tester.pumpAndSettle();
+    expect(find.text('Morning market'), findsOneWidget);
+
+    // Swipe the sheet's PageView to the second entry — TripJournalTab's
+    // onPageChanged wiring should follow this into _selectedEntryId.
+    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Evening at the pier'), findsOneWidget);
+    expect(find.text('Morning market'), findsNothing);
+
+    // Dismiss the sheet by tapping the barrier above it (isDismissible
+    // defaults to true for showModalBottomSheet).
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Evening at the pier'), findsNothing); // sheet closed
+
+    // The gallery's grouped card for this day should still carry the
+    // accent-bordered "selected" state, proving the swipe -> tab state ->
+    // gallery seam survived the round trip back from the sheet. Same
+    // technique as the globe-tap coordination test above: PaperCard only
+    // sets a 1.0-width Material border when borderColor is non-null (the
+    // selected state) — the default hairline path uses 0.5 instead.
+    final selectedCards = tester
+        .widgetList<Material>(find.byType(Material))
+        .where((m) => m.shape is RoundedRectangleBorder)
+        .where((m) => (m.shape as RoundedRectangleBorder).side.width == 1.0)
+        .toList();
+    expect(selectedCards, isNotEmpty);
+  });
+
   testWidgets('"Add entry" opens the entry form sheet', (tester) async {
     await _pump(tester);
     await tester.tap(find.text('Add entry'));

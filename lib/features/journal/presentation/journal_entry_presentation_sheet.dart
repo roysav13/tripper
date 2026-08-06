@@ -81,7 +81,10 @@ class _JournalEntryPresentationViewState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
+    final currentEntry = widget.entries[_currentPage];
+
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.7,
       child: SafeArea(
@@ -89,19 +92,49 @@ class _JournalEntryPresentationViewState
         child: Column(
           children: [
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                  widget.onPageChanged(index);
-                },
+              child: Stack(
                 children: [
-                  for (final entry in widget.entries)
-                    _JournalEntryPresentationPage(
-                      entry: entry,
-                      onEdit: () => _handleEdit(entry),
-                      onDelete: () => _handleDelete(entry),
+                  PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _currentPage = index);
+                      widget.onPageChanged(index);
+                    },
+                    children: [
+                      for (final entry in widget.entries)
+                        _JournalEntryPresentationPage(entry: entry),
+                    ],
+                  ),
+                  // Persistent header overlay — stays in one fixed position
+                  // across every swipe (design spec: "keeps the header from
+                  // jumping around while swiping between a photo entry and
+                  // a stub entry in the same day"), styled by whichever
+                  // entry is currently showing.
+                  PositionedDirectional(
+                    top: 8,
+                    start: 0,
+                    end: 0,
+                    child: Center(
+                      child: _handle(
+                        currentEntry.hasPhotos
+                            ? colors.surface.withValues(alpha: 0.85)
+                            : colors.hairline,
+                      ),
                     ),
+                  ),
+                  PositionedDirectional(
+                    top: currentEntry.hasPhotos ? 2 : 4,
+                    end: 2,
+                    child: _menu(
+                      l10n,
+                      iconColor: currentEntry.hasPhotos
+                          ? colors.surface
+                          : colors.inkMuted,
+                      deleteColor: colors.error,
+                      onEdit: () => _handleEdit(currentEntry),
+                      onDelete: () => _handleDelete(currentEntry),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -163,18 +196,47 @@ class _JournalEntryPresentationViewState
       if (mounted) Navigator.of(context).pop();
     }
   }
+
+  Widget _handle(Color color) => Container(
+        width: 36,
+        height: 4,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      );
+
+  Widget _menu(
+    AppLocalizations l10n, {
+    required Color iconColor,
+    required Color deleteColor,
+    required VoidCallback onEdit,
+    required VoidCallback onDelete,
+  }) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, color: iconColor),
+      onSelected: (action) {
+        if (action == 'edit') {
+          onEdit();
+        } else if (action == 'delete') {
+          onDelete();
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(value: 'edit', child: Text(l10n.menuEdit)),
+        PopupMenuItem(
+          value: 'delete',
+          child: Text(l10n.menuDelete, style: TextStyle(color: deleteColor)),
+        ),
+      ],
+    );
+  }
 }
 
 class _JournalEntryPresentationPage extends StatelessWidget {
-  const _JournalEntryPresentationPage({
-    required this.entry,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const _JournalEntryPresentationPage({required this.entry});
 
   final JournalEntry entry;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +248,7 @@ class _JournalEntryPresentationPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          entry.hasPhotos ? _photoHeader(colors, l10n) : _plainHeader(colors, l10n),
+          entry.hasPhotos ? _photoHeader(colors) : _plainHeader(),
           Padding(
             padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
             child: Column(
@@ -231,7 +293,11 @@ class _JournalEntryPresentationPage extends StatelessWidget {
     );
   }
 
-  Widget _photoHeader(AppColors colors, AppLocalizations l10n) {
+  // Photo + its own bottom gradient scrim (for the summary text below to
+  // stay readable against a bright photo edge) — specific to this page's
+  // photo, unlike the handle/menu, which are now a persistent overlay
+  // owned by the parent (see _JournalEntryPresentationViewState.build).
+  Widget _photoHeader(AppColors colors) {
     return Stack(
       children: [
         ClipRRect(
@@ -262,76 +328,13 @@ class _JournalEntryPresentationPage extends StatelessWidget {
             ),
           ),
         ),
-        PositionedDirectional(
-          top: 8,
-          start: 0,
-          end: 0,
-          child: Center(child: _handle(colors.surface.withValues(alpha: 0.85))),
-        ),
-        PositionedDirectional(
-          top: 2,
-          end: 2,
-          child: _menu(l10n, iconColor: colors.surface, deleteColor: colors.error),
-        ),
       ],
     );
   }
 
-  Widget _plainHeader(AppColors colors, AppLocalizations l10n) {
-    // Explicit height, not left to the Stack's own non-positioned child
-    // (the handle) to determine: this sits inside a SingleChildScrollView,
-    // which hands the Stack unbounded height, so a loose-fit Stack would
-    // shrink-wrap to just the tiny handle's size — leaving the menu
-    // button positioned outside the Stack's own hit-testable bounds
-    // (painted, but untappable).
-    return SizedBox(
-      height: 56,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(top: 12),
-            child: Center(child: _handle(colors.hairline)),
-          ),
-          PositionedDirectional(
-            top: 4,
-            end: 2,
-            child: _menu(l10n, iconColor: colors.inkMuted, deleteColor: colors.error),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _handle(Color color) => Container(
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
-
-  Widget _menu(
-    AppLocalizations l10n, {
-    required Color iconColor,
-    required Color deleteColor,
-  }) {
-    return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: iconColor),
-      onSelected: (action) {
-        if (action == 'edit') {
-          onEdit();
-        } else if (action == 'delete') {
-          onDelete();
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem(value: 'edit', child: Text(l10n.menuEdit)),
-        PopupMenuItem(
-          value: 'delete',
-          child: Text(l10n.menuDelete, style: TextStyle(color: deleteColor)),
-        ),
-      ],
-    );
-  }
+  // No photo, so no natural top element — just enough top spacing to
+  // clear the persistent handle/menu overlay floating above the page
+  // content (see _JournalEntryPresentationViewState.build) so it doesn't
+  // sit on top of the date/place text below.
+  Widget _plainHeader() => const SizedBox(height: 40);
 }
