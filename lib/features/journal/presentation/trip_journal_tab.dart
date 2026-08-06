@@ -8,16 +8,18 @@ import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
 import '../domain/journal_entry.dart';
 import 'journal_entry_form_sheet.dart';
+import 'journal_entry_presentation_sheet.dart';
 import 'journal_globe.dart';
 import 'journal_map_view.dart';
 import 'journal_providers.dart';
 import 'journal_widgets.dart';
 
 /// Journal tab inside a trip's detail screen: a globe of this trip's
-/// visited places, a timeline of logged entries below it, and a map
-/// sub-view toggle (entries as circles/photo-markers connected by a
-/// polyline, in chronological order).
-class TripJournalTab extends ConsumerWidget {
+/// logged entries, a timeline below it, and a map sub-view toggle. Holds
+/// [_selectedEntryId] as the coordinator between the globe and the
+/// gallery — tapping either one's representation of an entry focuses
+/// the other on it (design spec: bidirectional globe<->gallery sync).
+class TripJournalTab extends ConsumerStatefulWidget {
   const TripJournalTab({
     super.key,
     required this.trip,
@@ -36,11 +38,18 @@ class TripJournalTab extends ConsumerWidget {
   final bool renderMap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TripJournalTab> createState() => _TripJournalTabState();
+}
+
+class _TripJournalTabState extends ConsumerState<TripJournalTab> {
+  String? _selectedEntryId;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final asyncEntries = ref.watch(tripJournalProvider(trip.id));
+    final asyncEntries = ref.watch(tripJournalProvider(widget.trip.id));
     final entries = asyncEntries.valueOrNull ?? const <JournalEntry>[];
-    final visitedPlaces = ref.watch(tripVisitedPlacesProvider(trip.id));
+    final visitedPlaces = ref.watch(tripVisitedPlacesProvider(widget.trip.id));
     final showMap = ref.watch(journalMapModeProvider);
 
     if (asyncEntries.hasValue && entries.isEmpty) {
@@ -49,7 +58,7 @@ class TripJournalTab extends ConsumerWidget {
         title: l10n.journalEmptyTitle,
         body: l10n.journalEmptyBody,
         ctaLabel: l10n.journalAddEntryCta,
-        onCta: () => showJournalEntryFormSheet(context, tripId: trip.id),
+        onCta: () => showJournalEntryFormSheet(context, tripId: widget.trip.id),
       );
     }
 
@@ -72,7 +81,7 @@ class TripJournalTab extends ConsumerWidget {
                 icon: const Icon(Icons.add),
                 tooltip: l10n.journalAddEntryCta,
                 onPressed: () =>
-                    showJournalEntryFormSheet(context, tripId: trip.id),
+                    showJournalEntryFormSheet(context, tripId: widget.trip.id),
               ),
               IconButton(
                 icon: Icon(showMap ? Icons.timeline : Icons.map_outlined),
@@ -87,7 +96,7 @@ class TripJournalTab extends ConsumerWidget {
         // every pan/tap on it drives the globe, never a parent scroll.
         Expanded(
           child: showMap
-              ? JournalMapView(entries: entries, renderMap: renderMap)
+              ? JournalMapView(entries: entries, renderMap: widget.renderMap)
               : Column(
                   // stretch: without this, children only get a loose width
                   // constraint (Column's default is center) — the globe
@@ -103,20 +112,31 @@ class TripJournalTab extends ConsumerWidget {
                       flex: 7,
                       child: JournalGlobe(
                         entries: entries,
-                        renderGlobe: renderGlobe,
+                        selectedEntryId: _selectedEntryId,
+                        onEntryTap: (entry) =>
+                            setState(() => _selectedEntryId = entry.id),
+                        renderGlobe: widget.renderGlobe,
                       ),
                     ),
                     Expanded(
                       flex: 3,
                       child: JournalGalleryTimeline(
                         entries: entries,
-                        onEdit: (entry) => showJournalEntryFormSheet(
-                          context,
-                          tripId: trip.id,
-                          existing: entry,
-                        ),
-                        onDelete: (entry) =>
-                            _confirmDelete(context, ref, entry),
+                        selectedEntryId: _selectedEntryId,
+                        onTapDay: (dayEntries, tappedIndex) {
+                          setState(
+                            () => _selectedEntryId = dayEntries[tappedIndex].id,
+                          );
+                          showJournalEntryPresentationSheet(
+                            context,
+                            tripId: widget.trip.id,
+                            entries: dayEntries,
+                            initialIndex: tappedIndex,
+                            onPageChanged: (index) => setState(
+                              () => _selectedEntryId = dayEntries[index].id,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -124,33 +144,5 @@ class TripJournalTab extends ConsumerWidget {
         ),
       ],
     );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    JournalEntry entry,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.journalDeleteEntryTitle),
-        content: Text(l10n.journalDeleteEntryBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.menuDelete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed ?? false) {
-      await ref.read(journalRepositoryProvider).deleteEntry(entry.id);
-    }
   }
 }

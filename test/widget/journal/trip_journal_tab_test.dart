@@ -59,7 +59,9 @@ void main() {
     expect(find.text('No journal entries yet'), findsOneWidget);
   });
 
-  testWidgets('entries render in the timeline', (tester) async {
+  testWidgets(
+      'entries render in the timeline, tapping one opens the presentation '
+      'view', (tester) async {
     await _pump(
       tester,
       entries: [
@@ -72,6 +74,14 @@ void main() {
         ),
       ],
     );
+    // The card shows the date, not the summary.
+    expect(find.text('20 JUL'), findsOneWidget);
+    expect(find.text('Arrived in Krabi'), findsNothing);
+
+    await tester.tap(find.text('20 JUL'));
+    await tester.pumpAndSettle();
+
+    // The presentation view now shows the summary.
     expect(find.text('Arrived in Krabi'), findsOneWidget);
   });
 
@@ -89,13 +99,58 @@ void main() {
         ),
       ],
     );
-    expect(find.text('Arrived in Krabi'), findsOneWidget);
+    expect(find.text('20 JUL'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.map_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('Arrived in Krabi'), findsNothing);
+    expect(find.text('20 JUL'), findsNothing);
     expect(find.byIcon(Icons.timeline), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping a globe dot selects the matching gallery card '
+      '(accent border)', (tester) async {
+    await _pump(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Arrived',
+          loggedAt: DateTime(2026, 7, 19),
+          createdAt: DateTime(2026, 7, 19),
+          lat: 8.0,
+          lng: 98.8,
+        ),
+        JournalEntry(
+          id: 'e2',
+          tripId: 'trip-1',
+          summary: 'Next day',
+          loggedAt: DateTime(2026, 7, 20),
+          createdAt: DateTime(2026, 7, 20),
+          lat: 7.9,
+          lng: 98.7,
+        ),
+      ],
+    );
+    // renderGlobe: false in _pump renders each located entry as a plain
+    // tappable Icon (Icons.circle for entries with no photo) — tapping
+    // the first one fires JournalGlobe.onEntryTap with entry 'e1', which
+    // TripJournalTab wires to select it.
+    await tester.tap(find.byIcon(Icons.circle).first);
+    await tester.pumpAndSettle();
+
+    // PaperCard only sets Material.shape.side to a 1.0-width border when
+    // borderColor is non-null (the "selected" state) — the default
+    // hairline path uses AppShape.hairlineWidth (0.5) instead. At least
+    // one gallery card should now have the 1.0-width accent border.
+    final selectedCards = tester
+        .widgetList<Material>(find.byType(Material))
+        .where((m) => m.shape is RoundedRectangleBorder)
+        .where((m) => (m.shape as RoundedRectangleBorder).side.width == 1.0)
+        .toList();
+    expect(selectedCards, isNotEmpty);
   });
 
   testWidgets('"Add entry" opens the entry form sheet', (tester) async {
