@@ -1,22 +1,40 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
+import 'package:tripper/features/journal/domain/journal_photo.dart';
 import 'package:tripper/features/journal/presentation/journal_entry_presentation_sheet.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 import '../../helpers/fake_journal_repository.dart';
 
-JournalEntry _e(String id, {String summary = 'Some summary'}) => JournalEntry(
+/// 1x1 PNG. Sync file IO below: real IO never completes inside the
+/// fake-async test zone, so `tester.runAsync` is used to let the real
+/// event loop deliver the decode (see show_code_screen_test.dart, same
+/// pattern).
+final _pngBytes = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+);
+
+JournalEntry _e(
+  String id, {
+  String summary = 'Some summary',
+  List<JournalPhoto> photos = const [],
+}) =>
+    JournalEntry(
       id: id,
       tripId: 't1',
       summary: summary,
       loggedAt: DateTime(2026, 7, 20, 14, 30),
       createdAt: DateTime(2026, 7, 20, 14, 30),
       placeName: 'Krabi',
+      photos: photos,
     );
 
 Future<T?> _open<T>(
@@ -141,5 +159,53 @@ void main() {
 
     expect(await repo.getById('a'), isNull);
     expect(find.text('Krabi'), findsNothing); // sheet closed
+  });
+
+  testWidgets(
+      'photo entry: renders the photo header and its overflow menu is '
+      'tappable', (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_presentation');
+    addTearDown(() {
+      // Windows may still hold the image file handle via the image cache.
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // Temp dir — the OS cleans it up; don't fail the test over a lock.
+      }
+    });
+    final file = File('${dir.path}/photo.png')..writeAsBytesSync(_pngBytes);
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'a',
+          summary: 'Sunset at the pier',
+          photos: [JournalPhoto(id: 'p1', filePath: file.path)],
+        ),
+      ],
+      initialIndex: 0,
+    );
+    // Let the real event loop deliver the file read + decode.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    // Confirms the photo header (not the plain header) is what's on
+    // screen for this entry.
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('Sunset at the pier'), findsOneWidget);
+
+    // The same hit-test concern already found and fixed for _plainHeader
+    // (menu button painted outside the Stack's own hit-testable bounds)
+    // could just as easily have slipped into _photoHeader — confirm the
+    // menu is actually reachable here too, not just visually present.
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
   });
 }
