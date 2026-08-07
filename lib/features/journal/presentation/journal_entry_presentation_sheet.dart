@@ -127,9 +127,7 @@ class _JournalEntryPresentationViewState
                     end: 2,
                     child: _menu(
                       l10n,
-                      iconColor: currentEntry.hasPhotos
-                          ? colors.surface
-                          : colors.inkMuted,
+                      hasPhoto: currentEntry.hasPhotos,
                       deleteColor: colors.error,
                       onEdit: () => _handleEdit(currentEntry),
                       onDelete: () => _handleDelete(currentEntry),
@@ -208,13 +206,17 @@ class _JournalEntryPresentationViewState
 
   Widget _menu(
     AppLocalizations l10n, {
-    required Color iconColor,
+    required bool hasPhoto,
     required Color deleteColor,
     required VoidCallback onEdit,
     required VoidCallback onDelete,
   }) {
-    return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: iconColor),
+    final colors = context.colors;
+    final button = PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_vert,
+        color: hasPhoto ? colors.surface : colors.inkMuted,
+      ),
       onSelected: (action) {
         if (action == 'edit') {
           onEdit();
@@ -229,6 +231,14 @@ class _JournalEntryPresentationViewState
           child: Text(l10n.menuDelete, style: TextStyle(color: deleteColor)),
         ),
       ],
+    );
+    if (!hasPhoto) return button;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.inkPrimary.withValues(alpha: 0.55),
+      ),
+      child: button,
     );
   }
 }
