@@ -11,10 +11,9 @@ import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
 /// A compact card for the horizontal entry gallery below the globe —
-/// photo (or a placeholder) on top, a thin date + place caption below.
-/// Tapping opens the read-only presentation view (never edits directly —
-/// design spec: "tap = view, edit is explicit"), so the card no longer
-/// carries summary text or a delete action; both live in that view now.
+/// photo on top, a single-line date + place caption below. Tapping
+/// opens the read-only presentation view (never edits directly), so the
+/// card carries no summary text or delete action.
 class JournalGalleryCard extends StatelessWidget {
   const JournalGalleryCard({
     super.key,
@@ -26,12 +25,13 @@ class JournalGalleryCard extends StatelessWidget {
   final JournalEntry entry;
   final VoidCallback? onTap;
 
-  /// True while this entry is the globe/gallery's shared selection —
-  /// rendered as an accent-colored border in place of the usual hairline.
+  /// True while this entry is the globe/gallery's shared (tap-driven)
+  /// selection — rendered as an accent-colored border in place of the
+  /// usual hairline.
   final bool selected;
 
-  static const width = 116.0;
-  static const photoHeight = 88.0;
+  static const width = 100.0;
+  static const photoHeight = 76.0;
 
   @override
   Widget build(BuildContext context) {
@@ -63,36 +63,62 @@ class JournalGalleryCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppShape.radius - 1),
                   ),
-                  child: entry.hasPhotos
-                      ? Image.file(
-                          File(entry.photos.first.filePath),
-                          width: width,
-                          height: photoHeight,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => placeholder(colors),
-                        )
-                      : placeholder(colors),
+                  child: Stack(
+                    children: [
+                      entry.hasPhotos
+                          ? Image.file(
+                              File(entry.photos.first.filePath),
+                              width: width,
+                              height: photoHeight,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => placeholder(colors),
+                            )
+                          : placeholder(colors),
+                      if (entry.photos.length > 1)
+                        PositionedDirectional(
+                          top: 4,
+                          end: 4,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: colors.inkPrimary.withValues(alpha: 0.72),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              child: MonoText(
+                                '${entry.photos.length}',
+                                color: colors.surface,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: AppSpacing.sm,
                     vertical: 6,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       MonoText(DateFormat('dd MMM').format(entry.loggedAt)),
                       if (placeName != null && placeName.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          placeName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.accent,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            placeName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: colors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],

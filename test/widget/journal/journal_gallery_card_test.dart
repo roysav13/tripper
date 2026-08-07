@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
+import 'package:tripper/features/journal/domain/journal_photo.dart';
 import 'package:tripper/features/journal/presentation/journal_widgets.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
@@ -70,6 +71,39 @@ void main() {
     await tester.pumpWidget(_wrap(JournalGalleryCard(entry: _e())));
     await tester.pumpAndSettle();
     expect(find.text('20 JUL'), findsOneWidget);
+  });
+
+  testWidgets('entry with more than one photo shows a count badge',
+      (tester) async {
+    final entry = JournalEntry(
+      id: 'e1',
+      tripId: 't1',
+      summary: 'irrelevant',
+      loggedAt: DateTime(2026, 7, 20),
+      createdAt: DateTime(2026, 7, 20),
+      photos: const [
+        JournalPhoto(id: 'p1', filePath: '/tmp/a.jpg'),
+        JournalPhoto(id: 'p2', filePath: '/tmp/b.jpg'),
+      ],
+    );
+    await tester.pumpWidget(_wrap(JournalGalleryCard(entry: entry)));
+    await tester.pumpAndSettle();
+    expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets('entry with exactly one photo shows no count badge',
+      (tester) async {
+    final entry = JournalEntry(
+      id: 'e1',
+      tripId: 't1',
+      summary: 'irrelevant',
+      loggedAt: DateTime(2026, 7, 20),
+      createdAt: DateTime(2026, 7, 20),
+      photos: const [JournalPhoto(id: 'p1', filePath: '/tmp/a.jpg')],
+    );
+    await tester.pumpWidget(_wrap(JournalGalleryCard(entry: entry)));
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsNothing);
   });
 
   testWidgets('selected renders an accent border, unselected a hairline',
