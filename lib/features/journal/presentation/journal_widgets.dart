@@ -157,11 +157,18 @@ class JournalGalleryTimeline extends StatefulWidget {
     required this.entries,
     required this.selectedEntryId,
     required this.onTapDay,
+    required this.onCenteredDayChanged,
   });
 
   final List<JournalEntry> entries;
   final String? selectedEntryId;
   final void Function(List<JournalEntry> dayEntries, int tappedIndex) onTapDay;
+
+  /// Fired continuously as the strip scrolls, whenever the day-slot
+  /// closest to the visible viewport's horizontal center changes —
+  /// drives the globe's live-follow (JournalGlobe.liveFollowEntryId),
+  /// separate from the tap-driven selection above.
+  final void Function(List<JournalEntry> dayEntries) onCenteredDayChanged;
 
   static const _dotSize = 11.0;
   static const _stemHeight = 22.0;
@@ -175,6 +182,8 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
   /// rebuilds as long as that entry stays the earliest one for its day,
   /// which is true unless entries are added/removed within the day.
   final _slotKeys = <String, GlobalKey>{};
+  final _scrollViewKey = GlobalKey();
+  String? _lastCenteredDayId;
 
   @override
   void didUpdateWidget(JournalGalleryTimeline oldWidget) {
@@ -204,6 +213,46 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
     }
   }
 
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification ||
+        notification is ScrollStartNotification) {
+      _reportCenteredDay();
+    }
+    return false;
+  }
+
+  /// Finds whichever day-slot's horizontal center is closest to the
+  /// scroll viewport's own horizontal center, and reports it via
+  /// widget.onCenteredDayChanged — but only when it actually changes,
+  /// not on every scroll pixel.
+  void _reportCenteredDay() {
+    final viewportBox =
+        _scrollViewKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null || !viewportBox.hasSize) return;
+    final viewportCenterX =
+        viewportBox.localToGlobal(Offset(viewportBox.size.width / 2, 0)).dx;
+
+    final days = groupEntriesByDay(widget.entries);
+    String? closestDayId;
+    var closestDistance = double.infinity;
+    for (final day in days) {
+      final slotBox = _slotKeys[day.first.id]?.currentContext
+          ?.findRenderObject() as RenderBox?;
+      if (slotBox == null || !slotBox.hasSize) continue;
+      final slotCenterX =
+          slotBox.localToGlobal(Offset(slotBox.size.width / 2, 0)).dx;
+      final distance = (slotCenterX - viewportCenterX).abs();
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestDayId = day.first.id;
+      }
+    }
+    if (closestDayId == null || closestDayId == _lastCenteredDayId) return;
+    _lastCenteredDayId = closestDayId;
+    final day = days.firstWhere((d) => d.first.id == closestDayId);
+    widget.onCenteredDayChanged(day);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -214,44 +263,48 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
       _slotKeys.putIfAbsent(day.first.id, GlobalKey.new);
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
-      child: Stack(
-        children: [
-          PositionedDirectional(
-            start: 0,
-            end: 0,
-            top: JournalGalleryTimeline._dotSize / 2 - 1,
-            child: Container(height: 2, color: colors.hairline),
-          ),
-          Padding(
-            padding: const EdgeInsetsDirectional.only(
-              top: JournalGalleryTimeline._dotSize / 2,
+    return NotificationListener<ScrollNotification>(
+      onNotification: _handleScrollNotification,
+      child: SingleChildScrollView(
+        key: _scrollViewKey,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        child: Stack(
+          children: [
+            PositionedDirectional(
+              start: 0,
+              end: 0,
+              top: JournalGalleryTimeline._dotSize / 2 - 1,
+              child: Container(height: 2, color: colors.hairline),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final day in days)
-                  Padding(
-                    key: _slotKeys[day.first.id],
-                    padding:
-                        const EdgeInsetsDirectional.only(end: AppSpacing.sm),
-                    child: _DaySlot(
-                      day: day,
-                      colors: colors,
-                      selected:
-                          day.any((e) => e.id == widget.selectedEntryId),
-                      onTap: () => widget.onTapDay(day, 0),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(
+                top: JournalGalleryTimeline._dotSize / 2,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final day in days)
+                    Padding(
+                      key: _slotKeys[day.first.id],
+                      padding:
+                          const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+                      child: _DaySlot(
+                        day: day,
+                        colors: colors,
+                        selected:
+                            day.any((e) => e.id == widget.selectedEntryId),
+                        onTap: () => widget.onTapDay(day, 0),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

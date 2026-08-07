@@ -43,6 +43,7 @@ void main() {
             tappedDay = day;
             tappedIndex = index;
           },
+          onCenteredDayChanged: (_) {},
         ),
       ),
     );
@@ -71,6 +72,7 @@ void main() {
           entries: entries,
           selectedEntryId: null,
           onTapDay: (_, __) {},
+          onCenteredDayChanged: (_) {},
         ),
       ),
     );
@@ -101,6 +103,7 @@ void main() {
             tappedDay = day;
             tappedIndex = index;
           },
+          onCenteredDayChanged: (_) {},
         ),
       ),
     );
@@ -122,6 +125,7 @@ void main() {
           ],
           selectedEntryId: null,
           onTapDay: (_, __) {},
+          onCenteredDayChanged: (_) {},
         ),
       ),
     );
@@ -142,6 +146,7 @@ void main() {
             entries: entries,
             selectedEntryId: selectedEntryId,
             onTapDay: (_, __) {},
+            onCenteredDayChanged: (_) {},
           ),
         );
 
@@ -158,5 +163,41 @@ void main() {
     await tester.pumpWidget(build('e19'));
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, greaterThan(0)); // scrolled into view
+  });
+
+  testWidgets('scrolling reports the day closest to the viewport center',
+      (tester) async {
+    final entries = [
+      for (var i = 0; i < 20; i++)
+        _e('e$i', DateTime(2026, 7, 1 + i), placeName: 'Place $i'),
+    ];
+    List<JournalEntry>? lastCentered;
+    await tester.pumpWidget(
+      _wrap(
+        JournalGalleryTimeline(
+          entries: entries,
+          selectedEntryId: null,
+          onTapDay: (_, __) {},
+          onCenteredDayChanged: (day) => lastCentered = day,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Initial layout already reports whichever day starts closest to
+    // center (ScrollStartNotification fires on the first drag below,
+    // but a plain pump with no scroll yet won't have reported anything
+    // — this asserts the FIRST report, once scrolling begins).
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(-600, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(lastCentered, isNotNull);
+    // After scrolling left by 600px, the centered day should no longer
+    // be the very first one (Place 0) — some later day is now closer to
+    // the viewport's center.
+    expect(lastCentered!.first.id, isNot('e0'));
   });
 }
