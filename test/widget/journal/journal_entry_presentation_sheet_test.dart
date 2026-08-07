@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tripper/core/theme/app_colors.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/domain/journal_photo.dart';
@@ -82,6 +83,17 @@ Future<T?> _open<T>(
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
   return result;
+}
+
+/// The decoration color of the photo carousel's dot indicator at [index]
+/// (`_photoCarousel`'s dot `Container`s are keyed `photo-dot-$i`) — same
+/// pattern as `journal_gallery_card_test.dart`'s `_borderColor`, adapted
+/// from reading `Material.shape` to reading `Container.decoration`.
+Color _dotColor(WidgetTester tester, int index) {
+  final container = tester.widget<Container>(
+    find.byKey(ValueKey('photo-dot-$index')),
+  );
+  return (container.decoration! as BoxDecoration).color!;
 }
 
 void main() {
@@ -243,16 +255,32 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(Image), findsOneWidget); // only photo A visible
+    // Dot 0 (photo A) starts active (full opacity); dot 1 (photo B) starts
+    // dimmed. Comparing actual decoration colors — not just widget counts,
+    // since PageView only ever builds one page at a time regardless of
+    // which photo it is, so `find.byType(Image)` can't tell them apart.
+    expect(_dotColor(tester, 0), AppColors.light.surface);
+    expect(
+      _dotColor(tester, 1),
+      AppColors.light.surface.withValues(alpha: 0.5),
+    );
 
-    await tester.drag(find.byType(PageView).first, const Offset(-400, 0));
+    // Inner PageView is the innermost/last one in pre-order traversal —
+    // the outer (entry-to-entry) PageView is always found first.
+    await tester.drag(find.byType(PageView).last, const Offset(-400, 0));
     await tester.pumpAndSettle();
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
     await tester.pump();
 
-    expect(find.byType(Image), findsOneWidget); // now photo B visible
+    // Active dot has swapped from 0 to 1, confirming the swipe actually
+    // paged the carousel rather than just bouncing.
+    expect(
+      _dotColor(tester, 0),
+      AppColors.light.surface.withValues(alpha: 0.5),
+    );
+    expect(_dotColor(tester, 1), AppColors.light.surface);
   });
 
   testWidgets(
@@ -291,8 +319,10 @@ void main() {
 
     // A single photo means there's nowhere for the inner carousel to go
     // — this drag should overscroll immediately and fall through to the
-    // outer PageView, landing on entry 'b'.
-    await tester.drag(find.byType(PageView).first, const Offset(-400, 0));
+    // outer PageView, landing on entry 'b'. `.last` targets the inner
+    // (photo) PageView: pre-order traversal finds the outer
+    // (entry-to-entry) PageView first, since it's the ancestor.
+    await tester.drag(find.byType(PageView).last, const Offset(-400, 0));
     await tester.pumpAndSettle();
 
     expect(find.text('Second entry, no photo'), findsOneWidget);

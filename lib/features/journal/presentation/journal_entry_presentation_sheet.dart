@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -310,67 +311,79 @@ class _JournalEntryPresentationPageState
     final entry = widget.entry;
     final placeName = entry.placeName;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        entry.hasPhotos ? _photoCarousel(colors) : const SizedBox(height: 40),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MonoText(
-                  DateFormat('d MMMM yyyy · HH:mm').format(entry.loggedAt),
-                ),
-                if (placeName != null && placeName.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.place_outlined,
-                        size: 14,
-                        color: colors.accent,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        placeName,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.accent,
-                          fontWeight: FontWeight.w500,
-                        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final carouselHeight = entry.hasPhotos
+            ? math.min(
+                _photoAreaHeight,
+                math.max(0.0, constraints.maxHeight - 100),
+              )
+            : 0.0;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            entry.hasPhotos
+                ? _photoCarousel(colors, carouselHeight)
+                : const SizedBox(height: 40),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MonoText(
+                      DateFormat('d MMMM yyyy · HH:mm').format(entry.loggedAt),
+                    ),
+                    if (placeName != null && placeName.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.place_outlined,
+                            size: 14,
+                            color: colors.accent,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            placeName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
-                const SizedBox(height: 14),
-                Text(
-                  entry.summary.isEmpty
-                      ? l10n.journalUntitledEntry
-                      : entry.summary,
-                  style: AppTextStyles.body.copyWith(
-                    color: entry.summary.isEmpty
-                        ? colors.inkMuted
-                        : colors.inkPrimary,
-                    fontStyle: entry.summary.isEmpty
-                        ? FontStyle.italic
-                        : FontStyle.normal,
-                  ),
+                    const SizedBox(height: 14),
+                    Text(
+                      entry.summary.isEmpty
+                          ? l10n.journalUntitledEntry
+                          : entry.summary,
+                      style: AppTextStyles.body.copyWith(
+                        color: entry.summary.isEmpty
+                            ? colors.inkMuted
+                            : colors.inkPrimary,
+                        fontStyle: entry.summary.isEmpty
+                            ? FontStyle.italic
+                            : FontStyle.normal,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _photoCarousel(AppColors colors) {
+  Widget _photoCarousel(AppColors colors, double height) {
     final photos = widget.entry.photos;
     return SizedBox(
-      height: _photoAreaHeight,
+      height: height,
       child: NotificationListener<OverscrollNotification>(
         onNotification: (notification) {
           if (notification.overscroll > 0 &&
@@ -395,7 +408,7 @@ class _JournalEntryPresentationPageState
                     Image.file(
                       File(photo.filePath),
                       width: double.infinity,
-                      height: _photoAreaHeight,
+                      height: height,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) =>
                           Container(color: colors.paper),
@@ -431,6 +444,7 @@ class _JournalEntryPresentationPageState
                   children: [
                     for (var i = 0; i < photos.length; i++)
                       Container(
+                        key: ValueKey('photo-dot-$i'),
                         width: 6,
                         height: 6,
                         margin: const EdgeInsetsDirectional.symmetric(
