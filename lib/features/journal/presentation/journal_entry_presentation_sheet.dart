@@ -101,8 +101,26 @@ class _JournalEntryPresentationViewState
                       widget.onPageChanged(index);
                     },
                     children: [
-                      for (final entry in widget.entries)
-                        _JournalEntryPresentationPage(entry: entry),
+                      for (var i = 0; i < widget.entries.length; i++)
+                        _JournalEntryPresentationPage(
+                          entry: widget.entries[i],
+                          onOverscrollNext: () {
+                            if (i < widget.entries.length - 1) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          },
+                          onOverscrollPrevious: () {
+                            if (i > 0) {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          },
+                        ),
                     ],
                   ),
                   // Persistent header overlay — stays in one fixed position
@@ -243,23 +261,61 @@ class _JournalEntryPresentationViewState
   }
 }
 
-class _JournalEntryPresentationPage extends StatelessWidget {
-  const _JournalEntryPresentationPage({required this.entry});
+class _JournalEntryPresentationPage extends StatefulWidget {
+  const _JournalEntryPresentationPage({
+    required this.entry,
+    required this.onOverscrollNext,
+    required this.onOverscrollPrevious,
+  });
 
   final JournalEntry entry;
+
+  /// Called when the user keeps swiping past this entry's last photo —
+  /// hands the gesture off to the outer (entry-to-entry) PageView, so
+  /// swiping "past the end" of a photo carousel moves to the next
+  /// entry instead of just bouncing.
+  final VoidCallback onOverscrollNext;
+
+  /// Same as above, for swiping past the first photo.
+  final VoidCallback onOverscrollPrevious;
+
+  @override
+  State<_JournalEntryPresentationPage> createState() =>
+      _JournalEntryPresentationPageState();
+}
+
+class _JournalEntryPresentationPageState
+    extends State<_JournalEntryPresentationPage> {
+  late final PageController _photoController;
+  int _currentPhoto = 0;
+
+  static const _photoAreaHeight = 260.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _photoController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _photoController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
+    final entry = widget.entry;
     final placeName = entry.placeName;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          entry.hasPhotos ? _photoHeader(colors) : _plainHeader(),
-          Padding(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        entry.hasPhotos ? _photoCarousel(colors) : const SizedBox(height: 40),
+        Expanded(
+          child: SingleChildScrollView(
             padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +328,11 @@ class _JournalEntryPresentationPage extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.place_outlined, size: 14, color: colors.accent),
+                      Icon(
+                        Icons.place_outlined,
+                        size: 14,
+                        color: colors.accent,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         placeName,
@@ -287,54 +347,19 @@ class _JournalEntryPresentationPage extends StatelessWidget {
                 ],
                 const SizedBox(height: 14),
                 Text(
-                  entry.summary.isEmpty ? l10n.journalUntitledEntry : entry.summary,
+                  entry.summary.isEmpty
+                      ? l10n.journalUntitledEntry
+                      : entry.summary,
                   style: AppTextStyles.body.copyWith(
-                    color:
-                        entry.summary.isEmpty ? colors.inkMuted : colors.inkPrimary,
-                    fontStyle:
-                        entry.summary.isEmpty ? FontStyle.italic : FontStyle.normal,
+                    color: entry.summary.isEmpty
+                        ? colors.inkMuted
+                        : colors.inkPrimary,
+                    fontStyle: entry.summary.isEmpty
+                        ? FontStyle.italic
+                        : FontStyle.normal,
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Photo + its own bottom gradient scrim (for the summary text below to
-  // stay readable against a bright photo edge) — specific to this page's
-  // photo, unlike the handle/menu, which are now a persistent overlay
-  // owned by the parent (see _JournalEntryPresentationViewState.build).
-  Widget _photoHeader(AppColors colors) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: Image.file(
-            File(entry.photos.first.filePath),
-            width: double.infinity,
-            height: 220,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(height: 220, color: colors.paper),
-          ),
-        ),
-        PositionedDirectional(
-          start: 0,
-          end: 0,
-          bottom: 0,
-          child: Container(
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  colors.inkPrimary.withValues(alpha: 0),
-                  colors.inkPrimary.withValues(alpha: 0.4),
-                ],
-              ),
             ),
           ),
         ),
@@ -342,9 +367,88 @@ class _JournalEntryPresentationPage extends StatelessWidget {
     );
   }
 
-  // No photo, so no natural top element — just enough top spacing to
-  // clear the persistent handle/menu overlay floating above the page
-  // content (see _JournalEntryPresentationViewState.build) so it doesn't
-  // sit on top of the date/place text below.
-  Widget _plainHeader() => const SizedBox(height: 40);
+  Widget _photoCarousel(AppColors colors) {
+    final photos = widget.entry.photos;
+    return SizedBox(
+      height: _photoAreaHeight,
+      child: NotificationListener<OverscrollNotification>(
+        onNotification: (notification) {
+          if (notification.overscroll > 0 &&
+              _currentPhoto == photos.length - 1) {
+            widget.onOverscrollNext();
+          } else if (notification.overscroll < 0 && _currentPhoto == 0) {
+            widget.onOverscrollPrevious();
+          }
+          return false;
+        },
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: PageView(
+                controller: _photoController,
+                onPageChanged: (i) => setState(() => _currentPhoto = i),
+                children: [
+                  for (final photo in photos)
+                    Image.file(
+                      File(photo.filePath),
+                      width: double.infinity,
+                      height: _photoAreaHeight,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: colors.paper),
+                    ),
+                ],
+              ),
+            ),
+            PositionedDirectional(
+              start: 0,
+              end: 0,
+              bottom: 0,
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      colors.inkPrimary.withValues(alpha: 0),
+                      colors.inkPrimary.withValues(alpha: 0.4),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (photos.length > 1)
+              PositionedDirectional(
+                bottom: 10,
+                start: 0,
+                end: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var i = 0; i < photos.length; i++)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsetsDirectional.symmetric(
+                          horizontal: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: i == _currentPhoto
+                              ? colors.surface
+                              : colors.surface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

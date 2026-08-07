@@ -208,4 +208,94 @@ void main() {
     expect(find.text('Edit'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
   });
+
+  testWidgets('multi-photo entry shows a dot per photo, swiping changes it',
+      (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_carousel');
+    addTearDown(() {
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // OS cleans up temp dirs — don't fail the test over a lock.
+      }
+    });
+    final photoA = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+    final photoB = File('${dir.path}/b.png')..writeAsBytesSync(_pngBytes);
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'a',
+          summary: 'Two photos here',
+          photos: [
+            JournalPhoto(id: 'p1', filePath: photoA.path),
+            JournalPhoto(id: 'p2', filePath: photoB.path),
+          ],
+        ),
+      ],
+      initialIndex: 0,
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    expect(find.byType(Image), findsOneWidget); // only photo A visible
+
+    await tester.drag(find.byType(PageView).first, const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    expect(find.byType(Image), findsOneWidget); // now photo B visible
+  });
+
+  testWidgets(
+      'swiping past the last photo in a multi-entry day advances to the '
+      'next entry', (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_carousel2');
+    addTearDown(() {
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // OS cleans up temp dirs — don't fail the test over a lock.
+      }
+    });
+    final photo = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'a',
+          summary: 'Only entry photo',
+          photos: [JournalPhoto(id: 'p1', filePath: photo.path)],
+        ),
+        _e('b', summary: 'Second entry, no photo'),
+      ],
+      initialIndex: 0,
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    expect(find.text('Only entry photo'), findsOneWidget);
+
+    // A single photo means there's nowhere for the inner carousel to go
+    // — this drag should overscroll immediately and fall through to the
+    // outer PageView, landing on entry 'b'.
+    await tester.drag(find.byType(PageView).first, const Offset(-400, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Second entry, no photo'), findsOneWidget);
+    expect(find.text('Only entry photo'), findsNothing);
+  });
 }
