@@ -31,6 +31,7 @@ class JournalGlobe extends StatefulWidget {
     super.key,
     required this.entries,
     this.selectedEntryId,
+    this.liveFollowEntryId,
     this.onEntryTap,
     this.renderGlobe = true,
   });
@@ -42,6 +43,14 @@ class JournalGlobe extends StatefulWidget {
   /// a gallery card. A changed, non-null value takes priority over the
   /// "focus on the latest entry" default and animates the globe there.
   final String? selectedEntryId;
+
+  /// Set continuously by the coordinating parent as the gallery strip
+  /// scrolls — whichever entry is currently centered in the visible
+  /// viewport, NOT a tap. A changed, non-null value snaps the globe
+  /// there instantly (no easing animation — the scroll gesture itself
+  /// already supplies the perceived motion; stacking a separate eased
+  /// pan on top would fight it and look laggy, not smooth).
+  final String? liveFollowEntryId;
 
   final void Function(JournalEntry entry)? onEntryTap;
   final bool renderGlobe;
@@ -72,12 +81,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
   void didUpdateWidget(JournalGlobe oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.renderGlobe) return;
+    if (widget.liveFollowEntryId != oldWidget.liveFollowEntryId) {
+      _maybeFollowLive();
+    }
     if (widget.selectedEntryId != oldWidget.selectedEntryId) {
       _maybeFocusSelected();
     }
     if (!_sameEntryIds(oldWidget.entries)) {
       _syncPoints(oldWidget.entries);
-      if (widget.selectedEntryId == null) _maybeFocusLatest();
+      if (widget.selectedEntryId == null && widget.liveFollowEntryId == null) {
+        _maybeFocusLatest();
+      }
     }
   }
 
@@ -218,6 +232,25 @@ class _JournalGlobeState extends State<JournalGlobe> {
       }
     };
     return controller;
+  }
+
+  /// Snaps instantly (no easing) to widget.liveFollowEntryId whenever it
+  /// changes — driven by the gallery's own scroll position, not a tap.
+  /// Silently does nothing if the entry has no location, same reasoning
+  /// as _maybeFocusSelected.
+  void _maybeFollowLive() {
+    final controller = _controller;
+    final liveId = widget.liveFollowEntryId;
+    if (controller == null || !controller.isReady || liveId == null) {
+      return;
+    }
+    if (liveId == _focusedEntryId) return;
+    final target = widget.entries.where((e) => e.id == liveId).firstOrNull;
+    if (target == null || !target.hasLocation) return;
+    _focusedEntryId = liveId;
+    controller.focusOnCoordinates(
+      GlobeCoordinates(target.lat!, target.lng!),
+    );
   }
 
   /// Focuses on widget.selectedEntryId if it's set, located, and not
