@@ -80,7 +80,8 @@ Future<T?> _open<T>(
       ),
     ),
   );
-  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byType(TextButton));
   await tester.pumpAndSettle();
   return result;
 }
@@ -140,6 +141,65 @@ void main() {
       initialIndex: 0,
     );
     expect(find.text('Not written yet'), findsOneWidget);
+  });
+
+  testWidgets('sheet height adapts to entry: 0.4 for photo-less entries',
+      (tester) async {
+    await _open<void>(
+      tester,
+      entries: [_e('a', summary: 'No photo here')],
+      initialIndex: 0,
+    );
+    final noPhotoHeight =
+        tester.getSize(find.byType(AnimatedContainer)).height;
+    final screenHeight = MediaQuery.of(tester.element(find.byType(AnimatedContainer))).size.height;
+
+    // Photo-less should be ~0.4 of screen height
+    expect(noPhotoHeight, closeTo(screenHeight * 0.4, 1));
+  });
+
+  testWidgets('sheet height adapts to entry: 0.7 for entries with photos',
+      (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_height');
+    addTearDown(() {
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // OS cleans up temp dirs — don't fail the test over a lock.
+      }
+    });
+    final photo = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'b',
+          summary: 'Has a photo',
+          photos: [JournalPhoto(id: 'p1', filePath: photo.path)],
+        ),
+      ],
+      initialIndex: 0,
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    final photoHeight = tester.getSize(find.byType(AnimatedContainer)).height;
+    final photoScreenHeight = MediaQuery.of(tester.element(find.byType(AnimatedContainer))).size.height;
+
+    // Photo entry should be ~0.7 of screen height
+    expect(photoHeight, closeTo(photoScreenHeight * 0.7, 1));
+  });
+
+  testWidgets('place name renders as a prominent title, not a small row',
+      (tester) async {
+    await _open<void>(tester, entries: [_e('a')], initialIndex: 0);
+    final placeText = tester.widget<Text>(find.text('Krabi'));
+    expect(placeText.style?.fontFamily, 'Fraunces');
   });
 
   testWidgets('Edit closes the sheet and opens the entry form pre-filled',

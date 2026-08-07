@@ -85,9 +85,13 @@ class _JournalEntryPresentationViewState
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final currentEntry = widget.entries[_currentPage];
+    final screenHeight = MediaQuery.of(context).size.height;
+    final targetHeight = screenHeight * (currentEntry.hasPhotos ? 0.7 : 0.4);
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.7,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      height: targetHeight,
       child: SafeArea(
         top: false,
         child: Column(
@@ -335,28 +339,14 @@ class _JournalEntryPresentationPageState
                       DateFormat('d MMMM yyyy · HH:mm').format(entry.loggedAt),
                     ),
                     if (placeName != null && placeName.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.place_outlined,
-                            size: 14,
-                            color: colors.accent,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            placeName,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.accent,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        placeName,
+                        style:
+                            AppTextStyles.title.copyWith(color: colors.inkPrimary),
                       ),
                     ],
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Text(
                       entry.summary.isEmpty
                           ? l10n.journalUntitledEntry
