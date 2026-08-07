@@ -13,7 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
-const _plainDotDiameter = 11.0;
+const _plainDotSize = 2.5;
 const _photoDotDiameter = 26.0;
 
 /// flutter_earth_globe renders via GPU fragment shaders, which widget tests
@@ -124,44 +124,61 @@ class _JournalGlobeState extends State<JournalGlobe> {
   }
 
   void _addPoints(FlutterEarthGlobeController controller) {
+    final colors = context.colors;
     for (final entry in widget.entries) {
       if (!entry.hasLocation) continue;
-      final diameter = entry.hasPhotos ? _photoDotDiameter : _plainDotDiameter;
       final onTap =
           widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
-      controller.addPoint(
-        Point(
-          id: entry.id,
-          coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-          label: entry.placeName ?? entry.summary,
-          // Every point renders entirely through labelBuilder now (below)
-          // — size 0 means the package's own GPU-native dot draws
-          // nothing, so it can never peek out from behind the widget.
-          style: const PointStyle(size: 0),
-          isLabelVisible: true,
-          // Centers a diameter-square widget exactly on the point: the
-          // package positions labelBuilder output at
-          // `left = pos.dx - labelOffset.dx - width/2`,
-          // `top = pos.dy - labelOffset.dy - height`.
-          labelOffset: Offset(0, -diameter / 2),
-          labelBuilder: (context, point, isHovering, isVisible) =>
-              entry.hasPhotos
-                  ? _PhotoDot(
-                      filePath: entry.photos.first.filePath,
-                      onTap: onTap,
-                    )
-                  : _PlainDot(onTap: onTap),
-          // Point.onTap is intentionally left unset. The package's own
-          // globe-level GestureDetector hit-tests taps against each
-          // point's native (now zero-size) hit region separately from
-          // whatever labelBuilder renders, and would call Point.onTap
-          // itself if set — double-firing onEntryTap for any tap that
-          // happens to land within that residual ~8x8px native region,
-          // on top of the tap our own widget's GestureDetector below
-          // already handles. Routing taps only through the widget avoids
-          // this entirely.
-        ),
-      );
+      if (entry.hasPhotos) {
+        controller.addPoint(
+          Point(
+            id: entry.id,
+            coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+            label: entry.placeName ?? entry.summary,
+            // Photo dots stay widget-rendered — the package has no
+            // native way to show an image on a point. size: 0 suppresses
+            // the (otherwise pointless) native dot underneath it.
+            style: const PointStyle(size: 0),
+            isLabelVisible: true,
+            // Centers a _photoDotDiameter-square widget exactly on the
+            // point: the package positions labelBuilder output at
+            // `left = pos.dx - labelOffset.dx - width/2`,
+            // `top = pos.dy - labelOffset.dy - height`.
+            labelOffset: const Offset(0, -_photoDotDiameter / 2),
+            labelBuilder: (context, point, isHovering, isVisible) =>
+                _PhotoDot(filePath: entry.photos.first.filePath, onTap: onTap),
+            // Point.onTap is intentionally left unset — see _PhotoDot's
+            // own GestureDetector. Setting both would double-fire
+            // onEntryTap for taps landing in the native point's small
+            // residual hit region.
+          ),
+        );
+      } else {
+        controller.addPoint(
+          Point(
+            id: entry.id,
+            coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+            label: entry.placeName ?? entry.summary,
+            // Native GPU-rendered dot: cheap, and perfectly in sync with
+            // the sphere's rotation every frame by construction (the
+            // shader paints it — no separate widget-position recompute
+            // pass, unlike the labelBuilder path above). This is the
+            // fix for rotation jank: the prior round made every dot
+            // widget-rendered for zoom-independent sizing, which made
+            // rotation noticeably less smooth since every dot's
+            // position had to be recomputed as a real widget rebuild on
+            // every animation frame. Trade-off accepted: these dots
+            // will grow with zoom again (the package's own internal,
+            // undocumented zoom-scaling factor) — smoothness was
+            // prioritized over that.
+            style: PointStyle(size: _plainDotSize, color: colors.accent),
+            // No labelBuilder for this one, so tap must be wired
+            // directly on the Point — the package's own native
+            // hit-testing (sized from PointStyle.size) drives it.
+            onTap: onTap,
+          ),
+        );
+      }
     }
     for (final (start, end) in journeyConnections(widget.entries)) {
       controller.addPointConnection(
@@ -170,7 +187,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
           start: GlobeCoordinates(start.lat!, start.lng!),
           end: GlobeCoordinates(end.lat!, end.lng!),
           style: PointConnectionStyle(
-            color: context.colors.accent.withValues(alpha: 0.6),
+            color: colors.accent.withValues(alpha: 0.6),
             lineWidth: 1.5,
           ),
         ),
@@ -332,36 +349,6 @@ class _PhotoDot extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => ColoredBox(color: colors.paper),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A small solid-color dot for a located entry with no photo — same
-/// labelBuilder/GestureDetector technique as _PhotoDot, so it's immune
-/// to the GPU painter's zoom-based size scaling the same way _PhotoDot
-/// already was (see the design spec for why this is the fix, not a
-/// PointStyle.size tweak — the scaling factor is an internal,
-/// undocumented package constant).
-class _PlainDot extends StatelessWidget {
-  const _PlainDot({this.onTap});
-
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: _plainDotDiameter,
-        height: _plainDotDiameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colors.accent,
-          border: Border.all(color: colors.surface, width: 1.5),
         ),
       ),
     );
