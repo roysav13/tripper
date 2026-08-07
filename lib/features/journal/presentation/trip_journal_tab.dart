@@ -43,6 +43,7 @@ class TripJournalTab extends ConsumerStatefulWidget {
 
 class _TripJournalTabState extends ConsumerState<TripJournalTab> {
   String? _selectedEntryId;
+  String? _liveFollowEntryId;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +114,7 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                       child: JournalGlobe(
                         entries: entries,
                         selectedEntryId: _selectedEntryId,
+                        liveFollowEntryId: _liveFollowEntryId,
                         onEntryTap: (entry) =>
                             setState(() => _selectedEntryId = entry.id),
                         renderGlobe: widget.renderGlobe,
@@ -137,6 +139,9 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                             ),
                           );
                         },
+                        onCenteredDayChanged: (dayEntries) => setState(
+                          () => _liveFollowEntryId = dayEntries.first.id,
+                        ),
                       ),
                     ),
                   ],

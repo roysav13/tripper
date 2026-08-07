@@ -153,6 +153,32 @@ void main() {
     expect(selectedCards, isNotEmpty);
   });
 
+  testWidgets('scrolling the gallery does not throw (live-follow wiring smoke test)',
+      (tester) async {
+    final entries = [
+      for (var i = 0; i < 20; i++)
+        JournalEntry(
+          id: 'e$i',
+          tripId: 'trip-1',
+          summary: 'Entry $i',
+          loggedAt: DateTime(2026, 7, 1 + i),
+          createdAt: DateTime(2026, 7, 1 + i),
+          lat: 8.0 + i * 0.01,
+          lng: 98.8 + i * 0.01,
+          placeName: 'Place $i',
+        ),
+    ];
+    await _pump(tester, entries: entries);
+
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(-600, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
       'swiping the presentation sheet to a new entry updates the gallery '
       'selection after the sheet closes', (tester) async {
