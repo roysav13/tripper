@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../domain/journal_entry.dart';
@@ -30,13 +31,14 @@ class JournalGalleryCard extends StatelessWidget {
   /// usual hairline.
   final bool selected;
 
-  static const width = 100.0;
-  static const photoHeight = 76.0;
+  static const width = 150.0;
+  static const photoHeight = 130.0;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final placeName = entry.placeName;
+    final hasPhoto = entry.hasPhotos;
 
     return SizedBox(
       width: width,
@@ -44,9 +46,9 @@ class JournalGalleryCard extends StatelessWidget {
         onTap: onTap,
         padding: EdgeInsets.zero,
         borderColor: selected ? colors.accent : null,
-        // The card has a natural (photo + caption) size. FittedBox only
-        // ever shrinks (never grows) to fit whatever the gallery strip
-        // actually gives it — a plain Column would instead throw a
+        // The card has a natural (photo) size. FittedBox only ever
+        // shrinks (never grows) to fit whatever the gallery strip
+        // actually gives it — a plain SizedBox would instead throw a
         // render overflow during a transient squeeze (e.g. a keyboard
         // animating over the tab shrinks the strip below the card's
         // natural height).
@@ -55,77 +57,100 @@ class JournalGalleryCard extends StatelessWidget {
           alignment: AlignmentDirectional.topStart,
           child: SizedBox(
             width: width,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppShape.radius - 1),
-                  ),
-                  child: Stack(
-                    children: [
-                      entry.hasPhotos
-                          ? Image.file(
-                              File(entry.photos.first.filePath),
-                              width: width,
-                              height: photoHeight,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => placeholder(colors),
-                            )
-                          : placeholder(colors),
-                      if (entry.photos.length > 1)
-                        PositionedDirectional(
-                          top: 4,
-                          end: 4,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: colors.inkPrimary.withValues(alpha: 0.72),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: 5,
-                                vertical: 1,
-                              ),
-                              child: MonoText(
-                                '${entry.photos.length}',
-                                color: colors.surface,
-                              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppShape.radius - 1),
+              child: SizedBox(
+                width: width,
+                height: photoHeight,
+                child: Stack(
+                  children: [
+                    hasPhoto
+                        ? Image.file(
+                            File(entry.photos.first.filePath),
+                            width: width,
+                            height: photoHeight,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => placeholder(colors),
+                          )
+                        : placeholder(colors),
+                    // Bottom gradient scrim so the overlaid caption stays
+                    // legible over a bright photo — no scrim on the
+                    // placeholder case below, since there's nothing to
+                    // darken against.
+                    if (hasPhoto)
+                      PositionedDirectional(
+                        start: 0,
+                        end: 0,
+                        bottom: 0,
+                        child: Container(
+                          height: photoHeight * 0.6,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                colors.inkPrimary.withValues(alpha: 0),
+                                colors.inkPrimary.withValues(alpha: 0.85),
+                              ],
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      MonoText(DateFormat('dd MMM').format(entry.loggedAt)),
-                      if (placeName != null && placeName.isNotEmpty) ...[
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            placeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: colors.accent,
-                              fontWeight: FontWeight.w500,
+                      ),
+                    if (entry.photos.length > 1)
+                      PositionedDirectional(
+                        top: 6,
+                        end: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: colors.inkPrimary.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
+                            child: MonoText(
+                              '${entry.photos.length}',
+                              color: colors.surface,
                             ),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                    PositionedDirectional(
+                      start: 8,
+                      end: 8,
+                      bottom: 8,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          MonoText(
+                            DateFormat('dd MMM').format(entry.loggedAt),
+                            color: hasPhoto
+                                ? colors.surface.withValues(alpha: 0.75)
+                                : colors.inkMuted,
+                          ),
+                          if (placeName != null && placeName.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              placeName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.title.copyWith(
+                                fontSize: 17,
+                                color: hasPhoto
+                                    ? colors.surface
+                                    : colors.inkPrimary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -405,6 +430,7 @@ class _GroupedGalleryCard extends StatelessWidget {
     final first = day.first;
     final photoEntry = day.firstWhere((e) => e.hasPhotos, orElse: () => first);
     final placeName = first.placeName;
+    final hasPhoto = photoEntry.hasPhotos;
 
     return SizedBox(
       width: JournalGalleryCard.width,
@@ -417,128 +443,152 @@ class _GroupedGalleryCard extends StatelessWidget {
           alignment: AlignmentDirectional.topStart,
           child: SizedBox(
             width: JournalGalleryCard.width,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Extra ~6px of top space for the peeking card-edge slivers
-                // below — accounted for in _DaySlot's Flexible sizing so it
-                // doesn't reintroduce a Column-overflow.
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(top: 6),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Stacked-photo effect: two thin "card edge" slivers
-                      // peeking out above/behind the top photo, evoking a
-                      // fanned stack of photos.
-                      PositionedDirectional(
-                        top: -6,
-                        start: 10,
-                        end: 10,
-                        child: Container(
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            border: Border.all(
-                              color: colors.hairline,
-                              width: AppShape.hairlineWidth,
-                            ),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6),
-                            ),
-                          ),
+            // Extra ~6px of top space for the peeking card-edge slivers
+            // below — accounted for in _DaySlot's Flexible sizing so it
+            // doesn't reintroduce a Column-overflow.
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(top: 6),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Stacked-photo effect: two thin "card edge" slivers
+                  // peeking out above/behind the top photo, evoking a
+                  // fanned stack of photos. Deliberately outside the
+                  // ClipRRect below, same as before this redesign — they
+                  // need to poke past the card's rounded bounds.
+                  PositionedDirectional(
+                    top: -6,
+                    start: 10,
+                    end: 10,
+                    child: Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        border: Border.all(
+                          color: colors.hairline,
+                          width: AppShape.hairlineWidth,
                         ),
-                      ),
-                      PositionedDirectional(
-                        top: -3,
-                        start: 5,
-                        end: 5,
-                        child: Container(
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            border: Border.all(
-                              color: colors.hairline,
-                              width: AppShape.hairlineWidth,
-                            ),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      ClipRRect(
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(AppShape.radius - 1),
-                        ),
-                        child: photoEntry.hasPhotos
-                            ? Image.file(
-                                File(photoEntry.photos.first.filePath),
-                                width: JournalGalleryCard.width,
-                                height: JournalGalleryCard.photoHeight,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    JournalGalleryCard.placeholder(colors),
-                              )
-                            : JournalGalleryCard.placeholder(colors),
-                      ),
-                      PositionedDirectional(
-                        top: 6,
-                        end: 6,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: colors.inkPrimary.withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            child: MonoText(
-                              '${day.length}',
-                              color: colors.surface,
-                            ),
-                          ),
+                          top: Radius.circular(6),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 6,
+                  PositionedDirectional(
+                    top: -3,
+                    start: 5,
+                    end: 5,
+                    child: Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        border: Border.all(
+                          color: colors.hairline,
+                          width: AppShape.hairlineWidth,
+                        ),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
-                  // Same one-line Row caption as JournalGalleryCard — a
-                  // two-line Column here made the grouped card taller than
-                  // its single-entry neighbours, which then scaled down
-                  // more inside _DaySlot's shared FittedBox and rendered
-                  // visibly smaller in the same strip.
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      MonoText(DateFormat('dd MMM').format(first.loggedAt)),
-                      if (placeName != null && placeName.isNotEmpty) ...[
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            placeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: colors.accent,
-                              fontWeight: FontWeight.w500,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppShape.radius - 1),
+                    child: SizedBox(
+                      width: JournalGalleryCard.width,
+                      height: JournalGalleryCard.photoHeight,
+                      child: Stack(
+                        children: [
+                          hasPhoto
+                              ? Image.file(
+                                  File(photoEntry.photos.first.filePath),
+                                  width: JournalGalleryCard.width,
+                                  height: JournalGalleryCard.photoHeight,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      JournalGalleryCard.placeholder(colors),
+                                )
+                              : JournalGalleryCard.placeholder(colors),
+                          if (hasPhoto)
+                            PositionedDirectional(
+                              start: 0,
+                              end: 0,
+                              bottom: 0,
+                              child: Container(
+                                height: JournalGalleryCard.photoHeight * 0.6,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      colors.inkPrimary.withValues(alpha: 0),
+                                      colors.inkPrimary
+                                          .withValues(alpha: 0.85),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          PositionedDirectional(
+                            start: 8,
+                            end: 8,
+                            bottom: 8,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                MonoText(
+                                  DateFormat('dd MMM').format(first.loggedAt),
+                                  color: hasPhoto
+                                      ? colors.surface.withValues(alpha: 0.75)
+                                      : colors.inkMuted,
+                                ),
+                                if (placeName != null &&
+                                    placeName.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    placeName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.title.copyWith(
+                                      fontSize: 17,
+                                      color: hasPhoto
+                                          ? colors.surface
+                                          : colors.inkPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  // Day-count badge stays outside the ClipRRect, same
+                  // position as before this redesign — it's always shown
+                  // here (unconditionally, unlike the photo-count badge
+                  // above) since a grouped card is only ever built for
+                  // day.length > 1.
+                  PositionedDirectional(
+                    top: 6,
+                    end: 6,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.inkPrimary.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: MonoText('${day.length}', color: colors.surface),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
