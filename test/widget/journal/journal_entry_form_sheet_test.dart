@@ -50,14 +50,15 @@ Future<FakeJournalRepository> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('saving without a summary shows a validation error, no save',
-      (tester) async {
+  testWidgets('saving without a summary creates the entry with an empty '
+      'summary', (tester) async {
     final repo = await _pump(tester);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Enter a summary'), findsOneWidget);
-    expect(await repo.watchForTrip('trip-1').first, isEmpty);
+    final entries = await repo.watchForTrip('trip-1').first;
+    expect(entries, hasLength(1));
+    expect(entries.single.summary, isEmpty);
   });
 
   testWidgets('the logged-at header defaults to clock(), shown as date + time',

@@ -713,9 +713,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalFieldSummary => 'What happened?';
 
   @override
-  String get errJournalSummaryRequired => 'Enter a summary';
-
-  @override
   String get journalAddPhoto => 'Add photo';
 
   @override

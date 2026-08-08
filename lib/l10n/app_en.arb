@@ -286,7 +286,6 @@
   "journalEntryFormTitle": "New entry",
   "journalEntryFormEditTitle": "Edit entry",
   "journalFieldSummary": "What happened?",
-  "errJournalSummaryRequired": "Enter a summary",
   "journalAddPhoto": "Add photo",
   "journalPhotoSourceCamera": "Camera",
   "journalPhotoSourceGallery": "Gallery",

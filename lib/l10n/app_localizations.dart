@@ -1312,12 +1312,6 @@ abstract class AppLocalizations {
   /// **'What happened?'**
   String get journalFieldSummary;
 
-  /// No description provided for @errJournalSummaryRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a summary'**
-  String get errJournalSummaryRequired;
-
   /// No description provided for @journalAddPhoto.
   ///
   /// In en, this message translates to:

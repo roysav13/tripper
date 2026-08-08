@@ -52,7 +52,6 @@ class _JournalEntryForm extends ConsumerStatefulWidget {
 class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
   final _summary = TextEditingController();
   DateTime? _loggedAt;
-  bool _summaryError = false;
   bool _saving = false;
 
   late List<JournalPhoto> _keptPhotos;
@@ -137,7 +136,6 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
           style: AppTextStyles.body.copyWith(color: colors.inkPrimary),
           decoration: InputDecoration(
             hintText: l10n.journalFieldSummary,
-            errorText: _summaryError ? l10n.errJournalSummaryRequired : null,
             filled: true,
             fillColor: colors.paper,
             contentPadding: const EdgeInsets.all(AppSpacing.md),
@@ -380,10 +378,6 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
   }
 
   Future<void> _save() async {
-    if (_summary.text.trim().isEmpty) {
-      setState(() => _summaryError = true);
-      return;
-    }
     setState(() => _saving = true);
     final repo = ref.read(journalRepositoryProvider);
     final existing = widget.existing;
