@@ -222,13 +222,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // so the whole globe renders evenly lit.
       surfaceLightingEnabled: false,
       surface: const AssetImage('assets/globe/earth_day.jpg'),
+      // Default is 2.5 (~5.7x, radius = baseRadius * 2^zoom) — too shallow
+      // to make individual streets/landmarks near a pin legible. 5 is
+      // ~32x.
+      maxZoom: 5,
     );
     controller.onLoaded = () {
       _addPoints(controller);
       if (widget.selectedEntryId != null) {
         _maybeFocusSelected();
       } else {
-        _maybeFocusLatest(animate: false);
+        _maybeFocusLatest(instant: true);
       }
     };
     return controller;
@@ -248,8 +252,18 @@ class _JournalGlobeState extends State<JournalGlobe> {
     final target = widget.entries.where((e) => e.id == liveId).firstOrNull;
     if (target == null || !target.hasLocation) return;
     _focusedEntryId = liveId;
+    // animate: true with a zero duration — not animate: false. The
+    // package's focusOnCoordinates only disposes/replaces an in-flight
+    // animation controller on the animate: true path; animate: false
+    // just assigns rotation once and leaves a still-running prior
+    // animation free to overwrite it on the next frame (confirmed by
+    // reading rotating_globe.dart directly). Using animate: true here,
+    // even for this "instant" snap, is what actually guarantees no
+    // stale animation survives to fight this update.
     controller.focusOnCoordinates(
       GlobeCoordinates(target.lat!, target.lng!),
+      animate: true,
+      duration: Duration.zero,
     );
   }
 
@@ -279,9 +293,14 @@ class _JournalGlobeState extends State<JournalGlobe> {
   }
 
   /// Opens on the most recent entry rather than a fixed default, and
-  /// re-focuses (animated) only when the latest entry actually changes —
-  /// not on every unrelated edit to some other entry.
-  void _maybeFocusLatest({bool animate = true}) {
+  /// re-focuses only when the latest entry actually changes — not on
+  /// every unrelated edit to some other entry. [instant] skips the
+  /// animation (used for the very first focus, on initial load); the
+  /// default animates over 600ms (used when a new entry becomes the
+  /// latest during an active session). Both branches still call
+  /// focusOnCoordinates with animate: true — see the comment in
+  /// _maybeFollowLive for why animate: false is never used in this file.
+  void _maybeFocusLatest({bool instant = false}) {
     final controller = _controller;
     if (controller == null || !controller.isReady) return;
     final latest = latestLocatedEntry(widget.entries);
@@ -289,8 +308,8 @@ class _JournalGlobeState extends State<JournalGlobe> {
     _focusedEntryId = latest.id;
     controller.focusOnCoordinates(
       GlobeCoordinates(latest.lat!, latest.lng!),
-      animate: animate,
-      duration: const Duration(milliseconds: 600),
+      animate: true,
+      duration: instant ? Duration.zero : const Duration(milliseconds: 600),
     );
   }
 
