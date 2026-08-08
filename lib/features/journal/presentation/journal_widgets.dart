@@ -496,14 +496,20 @@ class _GroupedGalleryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppShape.radius - 1),
                     child: SizedBox(
                       width: JournalGalleryCard.width,
-                      height: JournalGalleryCard.photoHeight,
+                      // 6px shorter than JournalGalleryCard.photoHeight to
+                      // offset this card's top: 6 padding above — keeps the
+                      // grouped card's total natural height pixel-identical
+                      // to the single-entry card's (both 130), so the
+                      // shared FittedBox in _DaySlot doesn't scale one down
+                      // more than the other.
+                      height: JournalGalleryCard.photoHeight - 6,
                       child: Stack(
                         children: [
                           hasPhoto
                               ? Image.file(
                                   File(photoEntry.photos.first.filePath),
                                   width: JournalGalleryCard.width,
-                                  height: JournalGalleryCard.photoHeight,
+                                  height: JournalGalleryCard.photoHeight - 6,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) =>
                                       JournalGalleryCard.placeholder(colors),
@@ -515,7 +521,8 @@ class _GroupedGalleryCard extends StatelessWidget {
                               end: 0,
                               bottom: 0,
                               child: Container(
-                                height: JournalGalleryCard.photoHeight * 0.6,
+                                height: (JournalGalleryCard.photoHeight - 6) *
+                                    0.6,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
