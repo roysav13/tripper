@@ -12,6 +12,7 @@ import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
 import 'journal_entry_form_sheet.dart';
+import 'journal_photo_viewer.dart';
 import 'journal_providers.dart';
 
 /// Read-only presentation view for one day's journal entries, reached by
@@ -413,13 +414,25 @@ class _JournalEntryPresentationPageState
                 }),
                 children: [
                   for (final photo in photos)
-                    Image.file(
-                      File(photo.filePath),
-                      width: double.infinity,
-                      height: height,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: colors.paper),
+                    GestureDetector(
+                      onTap: () => showJournalPhotoViewer(
+                        context,
+                        photos: photos,
+                        initialIndex: _currentPhoto,
+                        onPageChanged: (i) =>
+                            setState(() => _currentPhoto = i),
+                      ),
+                      child: Hero(
+                        tag: photo.id,
+                        child: Image.file(
+                          File(photo.filePath),
+                          width: double.infinity,
+                          height: height,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Container(color: colors.paper),
+                        ),
+                      ),
                     ),
                 ],
               ),
