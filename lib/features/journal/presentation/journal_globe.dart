@@ -14,7 +14,13 @@ import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
 const _plainDotSize = 2.5;
+const _haloDotSize = 6.0;
 const _photoDotDiameter = 26.0;
+const _photoHaloDotSize = 8.0;
+// Monochrome teal — CLAUDE.md's two-accents rule (teal for actions/
+// places, rust reserved for warnings only) means the halo has to be a
+// low-alpha version of the same accent, not a new hue.
+const _haloAlpha = 0.28;
 
 /// flutter_earth_globe renders via GPU fragment shaders, which widget tests
 /// can't render. Tests pass `renderGlobe: false` to get tappable
@@ -132,7 +138,10 @@ class _JournalGlobeState extends State<JournalGlobe> {
       controller.removePointConnection(connection.id);
     }
     for (final entry in previous) {
-      if (entry.hasLocation) controller.removePoint(entry.id);
+      if (entry.hasLocation) {
+        controller.removePoint(entry.id);
+        controller.removePoint('${entry.id}-halo');
+      }
     }
     _addPoints(controller);
   }
@@ -143,6 +152,21 @@ class _JournalGlobeState extends State<JournalGlobe> {
       if (!entry.hasLocation) continue;
       final onTap =
           widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
+      // Halo: a larger, low-alpha native point at the same coordinates as
+      // the dot below, added first so it paints (and therefore sits)
+      // behind it — this needs on-device confirmation like every other
+      // dot-visual change in this file; the package's actual draw order
+      // isn't guaranteed by its public API.
+      controller.addPoint(
+        Point(
+          id: '${entry.id}-halo',
+          coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+          style: PointStyle(
+            size: entry.hasPhotos ? _photoHaloDotSize : _haloDotSize,
+            color: colors.accent.withValues(alpha: _haloAlpha),
+          ),
+        ),
+      );
       if (entry.hasPhotos) {
         controller.addPoint(
           Point(
