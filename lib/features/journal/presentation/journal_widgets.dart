@@ -185,6 +185,13 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
   final _scrollViewKey = GlobalKey();
   String? _lastCenteredDayId;
 
+  /// True while [_scrollToSelected]'s `ensureVisible` animation is
+  /// running. That programmatic scroll emits the same
+  /// ScrollStart/ScrollUpdate notifications as a real drag, so without
+  /// this latch a tap-driven scroll would report a (wrong, mid-animation)
+  /// centered day up to live-follow and clobber the tap's own selection.
+  bool _programmaticScroll = false;
+
   @override
   void didUpdateWidget(JournalGalleryTimeline oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -199,21 +206,24 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
     for (final day in days) {
       if (!day.any((e) => e.id == widget.selectedEntryId)) continue;
       final key = _slotKeys[day.first.id];
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         final renderContext = key?.currentContext;
         if (renderContext == null) return;
-        Scrollable.ensureVisible(
+        _programmaticScroll = true;
+        await Scrollable.ensureVisible(
           renderContext,
           duration: const Duration(milliseconds: 300),
           alignment: 0.5,
         );
+        _programmaticScroll = false;
       });
       return;
     }
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
+    if (_programmaticScroll) return false;
     if (notification is ScrollUpdateNotification ||
         notification is ScrollStartNotification) {
       _reportCenteredDay();
@@ -482,21 +492,27 @@ class _GroupedGalleryCard extends StatelessWidget {
                     horizontal: AppSpacing.sm,
                     vertical: 6,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  // Same one-line Row caption as JournalGalleryCard — a
+                  // two-line Column here made the grouped card taller than
+                  // its single-entry neighbours, which then scaled down
+                  // more inside _DaySlot's shared FittedBox and rendered
+                  // visibly smaller in the same strip.
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       MonoText(DateFormat('dd MMM').format(first.loggedAt)),
                       if (placeName != null && placeName.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          placeName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.accent,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            placeName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: colors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],

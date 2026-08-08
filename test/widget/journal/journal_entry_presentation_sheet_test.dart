@@ -281,6 +281,54 @@ void main() {
     expect(find.text('Delete'), findsOneWidget);
   });
 
+  testWidgets('menu sits on a circular scrim when the entry has a photo',
+      (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_menu_scrim');
+    addTearDown(() {
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // OS cleans up temp dirs — don't fail the test over a lock.
+      }
+    });
+    final photo = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'a',
+          summary: 'Has a photo',
+          photos: [JournalPhoto(id: 'p1', filePath: photo.path)],
+        ),
+      ],
+      initialIndex: 0,
+    );
+
+    final decoratedBox = tester.widget<DecoratedBox>(
+      find.ancestor(
+        of: find.byIcon(Icons.more_vert),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
+    final decoration = decoratedBox.decoration as BoxDecoration;
+    expect(decoration.shape, BoxShape.circle);
+  });
+
+  testWidgets('menu has no scrim when the entry has no photo', (tester) async {
+    await _open<void>(tester, entries: [_e('a')], initialIndex: 0);
+
+    expect(
+      find.ancestor(
+        of: find.byIcon(Icons.more_vert),
+        matching: find.byType(DecoratedBox),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('multi-photo entry shows a dot per photo, swiping changes it',
       (tester) async {
     final dir = Directory.systemTemp.createTempSync('journal_carousel');

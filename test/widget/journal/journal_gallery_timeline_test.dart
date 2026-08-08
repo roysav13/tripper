@@ -165,6 +165,39 @@ void main() {
     expect(scrollable.position.pixels, greaterThan(0)); // scrolled into view
   });
 
+  testWidgets(
+      'selecting an entry via tap does not report a live-follow day change '
+      'from the resulting programmatic scroll', (tester) async {
+    final entries = [
+      for (var i = 0; i < 20; i++)
+        _e('e$i', DateTime(2026, 7, 1 + i), placeName: 'Place $i'),
+    ];
+    final reportedDays = <String>[];
+    Widget build(String? selectedEntryId) => _wrap(
+          JournalGalleryTimeline(
+            entries: entries,
+            selectedEntryId: selectedEntryId,
+            onTapDay: (_, __) {},
+            onCenteredDayChanged: (day) => reportedDays.add(day.first.id),
+          ),
+        );
+
+    await tester.pumpWidget(build(null));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(build('e19'));
+    // Pump through the 300ms ensureVisible animation in steps — this is
+    // exactly the window where the old code's ScrollStartNotification
+    // would misreport a live-follow day change mid-scroll.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle();
+
+    expect(reportedDays, isEmpty);
+  });
+
   testWidgets('scrolling reports the day closest to the viewport center',
       (tester) async {
     final entries = [

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
+import 'package:tripper/features/journal/presentation/journal_globe.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/features/journal/presentation/trip_journal_tab.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
@@ -177,6 +178,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    // renderGlobe: false strips the *rendered* globe, but the JournalGlobe
+    // widget object still carries the prop — so the live-follow id itself
+    // is assertable, not just "nothing threw". Can't predict the exact id
+    // without duplicating the viewport-center geometry, but it must have
+    // moved off the first entry.
+    final globe = tester.widget<JournalGlobe>(find.byType(JournalGlobe));
+    expect(globe.liveFollowEntryId, isNotNull);
+    expect(globe.liveFollowEntryId, isNot('e0'));
   });
 
   testWidgets(

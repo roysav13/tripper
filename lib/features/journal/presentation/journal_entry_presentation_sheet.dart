@@ -294,7 +294,13 @@ class _JournalEntryPresentationPageState
   late final PageController _photoController;
   int _currentPhoto = 0;
 
-  static const _photoAreaHeight = 260.0;
+  /// Latches after handing a boundary overscroll off to the outer
+  /// (entry-to-entry) PageView. ClampingScrollPhysics re-dispatches an
+  /// OverscrollNotification on every pointer move while pinned, and the
+  /// outer nextPage() is itself a 300ms animation — without this, a slow
+  /// drag would advance two entries instead of one. Cleared when the
+  /// inner carousel reports a real page change or the scroll ends.
+  bool _handedOff = false;
 
   @override
   void initState() {
@@ -317,9 +323,12 @@ class _JournalEntryPresentationPageState
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Proportional, not a fixed pixel cap: on a real phone the sheet
+        // is far taller than a test viewport, and a fixed 260px left the
+        // photo under half the sheet instead of dominating it.
         final carouselHeight = entry.hasPhotos
             ? math.min(
-                _photoAreaHeight,
+                constraints.maxHeight * 0.62,
                 math.max(0.0, constraints.maxHeight - 100),
               )
             : 0.0;
@@ -374,13 +383,19 @@ class _JournalEntryPresentationPageState
     final photos = widget.entry.photos;
     return SizedBox(
       height: height,
-      child: NotificationListener<OverscrollNotification>(
+      child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.overscroll > 0 &&
-              _currentPhoto == photos.length - 1) {
-            widget.onOverscrollNext();
-          } else if (notification.overscroll < 0 && _currentPhoto == 0) {
-            widget.onOverscrollPrevious();
+          if (notification is OverscrollNotification && !_handedOff) {
+            if (notification.overscroll > 0 &&
+                _currentPhoto == photos.length - 1) {
+              _handedOff = true;
+              widget.onOverscrollNext();
+            } else if (notification.overscroll < 0 && _currentPhoto == 0) {
+              _handedOff = true;
+              widget.onOverscrollPrevious();
+            }
+          } else if (notification is ScrollEndNotification) {
+            _handedOff = false;
           }
           return false;
         },
@@ -392,7 +407,10 @@ class _JournalEntryPresentationPageState
               ),
               child: PageView(
                 controller: _photoController,
-                onPageChanged: (i) => setState(() => _currentPhoto = i),
+                onPageChanged: (i) => setState(() {
+                  _currentPhoto = i;
+                  _handedOff = false;
+                }),
                 children: [
                   for (final photo in photos)
                     Image.file(
