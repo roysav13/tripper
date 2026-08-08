@@ -192,6 +192,15 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
   /// centered day up to live-follow and clobber the tap's own selection.
   bool _programmaticScroll = false;
 
+  /// Bumped once per programmatic scroll. `ensureVisible`'s TickerFuture
+  /// also completes when a later `animateTo` on the same ScrollPosition
+  /// supersedes it, so a rapid second tap resolves the FIRST call's await
+  /// early — without this, that stale completion would clear the latch
+  /// while the second scroll is still in flight and reopen the very
+  /// live-follow corruption window this latch exists to close. Only the
+  /// most recent generation is allowed to clear the flag.
+  int _scrollGeneration = 0;
+
   @override
   void didUpdateWidget(JournalGalleryTimeline oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -210,13 +219,23 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
         if (!mounted) return;
         final renderContext = key?.currentContext;
         if (renderContext == null) return;
+        final myGeneration = ++_scrollGeneration;
         _programmaticScroll = true;
-        await Scrollable.ensureVisible(
-          renderContext,
-          duration: const Duration(milliseconds: 300),
-          alignment: 0.5,
-        );
-        _programmaticScroll = false;
+        // try/finally, not a bare await: if ensureVisible ever completes
+        // with an error (e.g. the target render context goes invalid
+        // mid-animation) the latch would otherwise stay true forever and
+        // silently disable live-follow reporting for good.
+        try {
+          await Scrollable.ensureVisible(
+            renderContext,
+            duration: const Duration(milliseconds: 300),
+            alignment: 0.5,
+          );
+        } finally {
+          if (myGeneration == _scrollGeneration) {
+            _programmaticScroll = false;
+          }
+        }
       });
       return;
     }

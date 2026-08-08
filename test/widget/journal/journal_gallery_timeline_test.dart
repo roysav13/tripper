@@ -198,6 +198,53 @@ void main() {
     expect(reportedDays, isEmpty);
   });
 
+  testWidgets(
+      'a second tap-driven selection while the first is still scrolling '
+      'does not leave live-follow reporting stuck disabled', (tester) async {
+    final entries = [
+      for (var i = 0; i < 20; i++)
+        _e('e$i', DateTime(2026, 7, 1 + i), placeName: 'Place $i'),
+    ];
+    final reportedDays = <String>[];
+    Widget build(String? selectedEntryId) => _wrap(
+          JournalGalleryTimeline(
+            entries: entries,
+            selectedEntryId: selectedEntryId,
+            onTapDay: (_, __) {},
+            onCenteredDayChanged: (day) => reportedDays.add(day.first.id),
+          ),
+        );
+
+    await tester.pumpWidget(build(null));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(build('e10'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    // Second selection change lands mid-animation, superseding the first.
+    // That resolves the FIRST ensureVisible's future early, so without a
+    // generation guard the stale completion clears the latch while the
+    // second scroll is still running.
+    await tester.pumpWidget(build('e19'));
+    await tester.pumpAndSettle();
+
+    // Issue B proper: neither programmatic scroll may report. Without the
+    // generation guard the superseded first future clears the latch
+    // mid-flight and the second scroll's own notifications get reported.
+    expect(reportedDays, isEmpty);
+
+    // Issue A: both programmatic scrolls are done, so a real user drag
+    // now must be reported — if _programmaticScroll got stuck true, this
+    // list stays empty forever.
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(-100, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(reportedDays, isNotEmpty);
+  });
+
   testWidgets('scrolling reports the day closest to the viewport center',
       (tester) async {
     final entries = [
