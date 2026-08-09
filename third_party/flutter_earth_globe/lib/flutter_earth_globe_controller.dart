@@ -718,14 +718,22 @@ class FlutterEarthGlobeController extends ChangeNotifier {
     ImageProvider image, {
     ImageConfiguration configuration = const ImageConfiguration(),
   }) {
-    image
-        .resolve(configuration)
-        .addListener(ImageStreamListener((info, _) async {
-      surface = info.image;
-      surfaceConfiguration = configuration;
-      surfaceProcessed = await convertImageToUint32List(info.image);
-      notifyListeners();
-    }));
+    image.resolve(configuration).addListener(ImageStreamListener(
+      (info, _) async {
+        surface = info.image;
+        surfaceConfiguration = configuration;
+        surfaceProcessed = await convertImageToUint32List(info.image);
+        notifyListeners();
+      },
+      // Previously missing entirely: a failed resolve (bad path, decode
+      // error) left `surface`/`surfaceProcessed` null forever with no
+      // signal at all — see PATCHES.md.
+      onError: (exception, stackTrace) {
+        debugPrint('FlutterEarthGlobeController.loadSurface: FAILED to '
+            'resolve $image: $exception');
+        debugPrint('$stackTrace');
+      },
+    ));
   }
 
   /// Loads the [image] as the night surface of the globe for day/night cycle effect.
@@ -988,7 +996,19 @@ class FlutterEarthGlobeController extends ChangeNotifier {
   }
 
   /// A callback function that is called when the globe is loaded.
+  ///
+  /// Fires as soon as [load] is called — this happens on the very next
+  /// frame after mount, unconditionally, regardless of whether the surface
+  /// texture has actually finished decoding. It is NOT a signal that the
+  /// sphere is visibly rendered yet; use [onSphereReady] for that.
   VoidCallback? onLoaded;
+
+  /// A callback function that is called the first time the sphere is
+  /// actually paintable — the GPU shader has a texture to draw, or (CPU
+  /// fallback) the rasterized sphere image has been built. Unlike
+  /// [onLoaded], this reflects real on-screen readiness and is the right
+  /// signal for hiding a "loading the globe" placeholder.
+  VoidCallback? onSphereReady;
 
   /// Disposes the controller.
   @override
@@ -996,6 +1016,7 @@ class FlutterEarthGlobeController extends ChangeNotifier {
     onPointConnectionAdded = null;
     onResetGlobeRotation = null;
     onLoaded = null;
+    onSphereReady = null;
     rotationController.dispose();
     super.dispose();
   }

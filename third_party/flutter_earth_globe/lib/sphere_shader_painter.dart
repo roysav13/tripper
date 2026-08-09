@@ -47,22 +47,34 @@ class SphereShaderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     try {
-      // Guard against invalid values that could cause shader issues
+      // Guard against invalid values that could cause shader issues.
+      // These used to call onPaintError silently — indistinguishable from
+      // "still initializing" to anyone watching the console, and after
+      // enough repeats (_maxShaderErrors in rotating_globe.dart) this
+      // silently falls back to CPU rendering, which has its own history of
+      // silent failure (see PATCHES.md). debugPrint here so a genuinely
+      // invalid radius/size/rotation is visible instead of just "the globe
+      // never showed up."
       if (radius <= 0 || !radius.isFinite) {
+        debugPrint('SphereShaderPainter.paint: invalid radius ($radius)');
         onPaintError?.call();
         return;
       }
       if (!size.width.isFinite || !size.height.isFinite) {
+        debugPrint('SphereShaderPainter.paint: invalid size ($size)');
         onPaintError?.call();
         return;
       }
       if (size.width <= 0 || size.height <= 0) {
+        debugPrint('SphereShaderPainter.paint: non-positive size ($size)');
         onPaintError?.call();
         return;
       }
 
       // Guard against invalid rotation values
       if (!rotationX.isFinite || !rotationZ.isFinite) {
+        debugPrint(
+            'SphereShaderPainter.paint: invalid rotation (x=$rotationX, z=$rotationZ)');
         onPaintError?.call();
         return;
       }

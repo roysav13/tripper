@@ -111,6 +111,8 @@ class RotatingGlobeState extends State<RotatingGlobe>
   double _cachedSunLatitude = double.nan;
   Size _cachedSize = Size.zero;
   bool _isBuildingSphere = false;
+  // One-shot latch for controller.onSphereReady — see PATCHES.md.
+  bool _sphereReadyFired = false;
   // Cached surface references to detect texture changes (CPU rendering)
   ui.Image? _cachedCpuSurface;
   ui.Image? _cachedCpuNightSurface;
@@ -604,6 +606,26 @@ class RotatingGlobeState extends State<RotatingGlobe>
     _cachedCpuNightSurface = widget.controller.nightSurface;
   }
 
+  /// One-shot notification that the sphere has something real to paint —
+  /// see [FlutterEarthGlobeController.onSphereReady] for why this exists
+  /// separately from [FlutterEarthGlobeController.onLoaded].
+  ///
+  /// Deferred via `addPostFrameCallback` rather than called inline: the GPU
+  /// call site (`_buildSphereContent`) runs from inside `build()` (via the
+  /// outer `LayoutBuilder`), and `onSphereReady`'s app-side listener does
+  /// `setState()` on an *ancestor* widget (`JournalGlobe`) — calling that
+  /// synchronously mid-build throws "setState() or markNeedsBuild() called
+  /// during build" because that ancestor already finished building this
+  /// frame. Same `Future.delayed`-vs-frame-callback hazard as the fix
+  /// documented in PATCHES.md, just triggered from a new call site.
+  void _notifySphereReady() {
+    if (_sphereReadyFired) return;
+    _sphereReadyFired = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller.onSphereReady?.call();
+    });
+  }
+
   Future<SphereImage?> buildSphere(double maxWidth, double maxHeight) async {
     // Return cached image if still valid
     if (_isCacheValid(maxWidth, maxHeight)) {
@@ -879,6 +901,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
       _cachedSphereImage = sphereImage;
       _updateCacheParams(maxWidth, maxHeight);
       _isBuildingSphere = false;
+      _notifySphereReady();
       completer.complete(sphereImage);
     });
     return completer.future;
@@ -1564,6 +1587,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
     // Try GPU rendering first
     final gpuWidget = _buildGpuSphere(constraints);
     if (gpuWidget != null) {
+      _notifySphereReady();
       // Use Stack to separate sphere and foreground into different RepaintBoundaries
       // This prevents hover events from triggering sphere repaints
       return Stack(
@@ -1613,6 +1637,17 @@ class RotatingGlobeState extends State<RotatingGlobe>
       key: _futureBuilderKey,
       future: buildSphere(constraints.maxWidth, constraints.maxHeight),
       builder: (BuildContext context, AsyncSnapshot<SphereImage?> snapshot) {
+        // Was silently swallowed here: this builder only ever branched on
+        // hasData, so a thrown exception inside buildSphere() (captured
+        // into snapshot.error by FutureBuilder, same as any other Future
+        // error) fell straight into the same `return Container();` as
+        // "still loading" — a permanently blank sphere with nothing
+        // printed anywhere, indistinguishable from a slow decode.
+        if (snapshot.hasError) {
+          debugPrint(
+              'flutter_earth_globe: CPU buildSphere failed: ${snapshot.error}');
+          debugPrint('${snapshot.stackTrace}');
+        }
         if (snapshot.hasData) {
           final data = snapshot.data!;
           // Use Stack to separate sphere and foreground for CPU rendering too

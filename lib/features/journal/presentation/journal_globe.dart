@@ -97,10 +97,13 @@ class _JournalGlobeState extends State<JournalGlobe> {
   bool _initialized = false;
   String? _focusedEntryId;
 
-  /// True once the GPU shader has decoded the surface texture and
-  /// [FlutterEarthGlobeController.onLoaded] has fired — until then the
-  /// sphere either isn't drawn yet or briefly flashes an unlit/blank
-  /// frame, so [_GlobeLoadingIndicator] covers that gap.
+  /// True once the sphere has actually decoded its surface texture and has
+  /// something real to paint — driven by
+  /// [FlutterEarthGlobeController.onSphereReady], NOT [onLoaded] (which
+  /// fires on mount, before the texture is anywhere near ready — see
+  /// PATCHES.md). Until this flips, the sphere either isn't drawn yet or
+  /// briefly flashes an unlit/blank frame, so [_GlobeLoadingIndicator]
+  /// covers that gap.
   bool _isLoaded = false;
 
   // Not initState: building the controller reads context.colors (a Theme
@@ -382,6 +385,8 @@ class _JournalGlobeState extends State<JournalGlobe> {
       } else {
         _maybeFocusLatest(instant: true);
       }
+    };
+    controller.onSphereReady = () {
       if (mounted) setState(() => _isLoaded = true);
     };
     return controller;
@@ -513,24 +518,49 @@ class _JournalGlobeState extends State<JournalGlobe> {
             .toDouble();
         return Stack(
           children: [
-            MediaQuery(
-              data: MediaQuery.of(context).copyWith(size: size),
-              child: FlutterEarthGlobe(
-                controller: _controller!,
-                radius: radius,
-                onZoomChanged: _handleZoomChanged,
+            // Positioned.fill is load-bearing, not decorative: a bare
+            // Stack gives its non-Positioned children LOOSENED constraints
+            // (0..max) regardless of what constraints this Stack itself
+            // received — and flutter_earth_globe's own root widget
+            // (RotatingGlobeState.build()) is *also* a bare Stack, whose
+            // only non-positioned child is a hardcoded SizedBox.shrink()
+            // (its unused "background" layer — we never set
+            // controller.background). Under tight constraints that inner
+            // Stack is forced to the full given size regardless of that
+            // zero-sized child; under loose constraints (what it started
+            // receiving the moment this wrapping Stack was introduced for
+            // the loading indicator below) it sizes itself to the LARGEST
+            // non-positioned child — which is that same zero-sized
+            // SizedBox, since its actual sphere content lives in a
+            // Positioned child that doesn't count toward sizing. The whole
+            // globe collapsed to 0x0 and got clipped away entirely, even
+            // though everything painted inside it still executed with
+            // perfectly valid non-zero values throughout (confirmed via
+            // extensive on-device tracing — see PATCHES.md). Positioned.fill
+            // forces tight constraints again, matching the behavior this
+            // had before this Stack existed.
+            Positioned.fill(
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(size: size),
+                child: FlutterEarthGlobe(
+                  controller: _controller!,
+                  radius: radius,
+                  onZoomChanged: _handleZoomChanged,
+                ),
               ),
             ),
             // Fades out once the surface texture finishes decoding —
             // IgnorePointer once invisible so it doesn't eat the globe's
             // own drag/tap gestures after the fade completes.
-            IgnorePointer(
-              ignoring: _isLoaded,
-              child: AnimatedOpacity(
-                opacity: _isLoaded ? 0 : 1,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOut,
-                child: const _GlobeLoadingIndicator(),
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: _isLoaded,
+                child: AnimatedOpacity(
+                  opacity: _isLoaded ? 0 : 1,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOut,
+                  child: const _GlobeLoadingIndicator(),
+                ),
               ),
             ),
           ],
