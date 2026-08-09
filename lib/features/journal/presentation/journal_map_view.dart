@@ -171,8 +171,9 @@ class _JournalMapViewState extends State<JournalMapView> {
           zIndex: 0,
         ),
       );
-      if (hasMarker)
+      if (hasMarker) {
         continue; // border + core are baked into the marker bitmap.
+      }
       circles.add(
         Circle(
           circleId: CircleId('${e.id}-border'),
