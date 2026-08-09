@@ -10,6 +10,8 @@ import 'package:flutter_earth_globe/point_connection.dart';
 import 'package:flutter_earth_globe/point_connection_style.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/mono_text.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
@@ -63,7 +65,6 @@ class JournalGlobe extends StatefulWidget {
     required this.entries,
     this.selectedEntryId,
     this.liveFollowEntryId,
-    this.resetToNorthSignal,
     this.onEntryTap,
     this.renderGlobe = true,
   });
@@ -84,13 +85,6 @@ class JournalGlobe extends StatefulWidget {
   /// pan on top would fight it and look laggy, not smooth).
   final String? liveFollowEntryId;
 
-  /// Bumped by the coordinating parent (a plain incrementing counter, not
-  /// a meaningful value on its own — only *changes* matter) each time the
-  /// user taps the "face north" button. Any change re-centers the globe
-  /// on the equator/prime-meridian, animated the same way a deliberate
-  /// tap-to-entry focus is.
-  final Object? resetToNorthSignal;
-
   final void Function(JournalEntry entry)? onEntryTap;
   final bool renderGlobe;
 
@@ -102,6 +96,12 @@ class _JournalGlobeState extends State<JournalGlobe> {
   FlutterEarthGlobeController? _controller;
   bool _initialized = false;
   String? _focusedEntryId;
+
+  /// True once the GPU shader has decoded the surface texture and
+  /// [FlutterEarthGlobeController.onLoaded] has fired — until then the
+  /// sphere either isn't drawn yet or briefly flashes an unlit/blank
+  /// frame, so [_GlobeLoadingIndicator] covers that gap.
+  bool _isLoaded = false;
 
   // Not initState: building the controller reads context.colors (a Theme
   // lookup), and establishing an InheritedWidget dependency before
@@ -125,9 +125,6 @@ class _JournalGlobeState extends State<JournalGlobe> {
     }
     if (widget.selectedEntryId != oldWidget.selectedEntryId) {
       _maybeFocusSelected();
-    }
-    if (widget.resetToNorthSignal != oldWidget.resetToNorthSignal) {
-      _resetToNorth();
     }
     if (!_sameEntryIds(oldWidget.entries)) {
       _syncPoints(oldWidget.entries);
@@ -376,7 +373,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // package's own 2.5 default, without diving deep into visible
       // blur. Revisiting this needs either a higher-resolution texture
       // asset or an on-device call on how much softening is acceptable.
-      maxZoom: 3.5,
+      maxZoom: 8,
     );
     controller.onLoaded = () {
       _addPoints(controller);
@@ -385,6 +382,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       } else {
         _maybeFocusLatest(instant: true);
       }
+      if (mounted) setState(() => _isLoaded = true);
     };
     return controller;
   }
@@ -464,28 +462,6 @@ class _JournalGlobeState extends State<JournalGlobe> {
     );
   }
 
-  /// Re-centers on the equator/prime-meridian — the sphere's natural
-  /// unrotated orientation, north pole up. Driven through the same
-  /// focusOnCoordinates path as every other programmatic focus in this
-  /// file (see _maybeFollowLive's comment on why animate: true is always
-  /// used) rather than the package's own `controller.resetRotation()`,
-  /// which snaps instantly with no easing — inconsistent with how every
-  /// other deliberate action here (tap-to-entry) feels. Clears
-  /// _focusedEntryId: after this reset the globe is no longer actually
-  /// pointed at whatever entry was last focused, so a later re-selection
-  /// of that same entry must be free to re-animate there instead of being
-  /// skipped as a no-op.
-  void _resetToNorth() {
-    final controller = _controller;
-    if (controller == null || !controller.isReady) return;
-    _focusedEntryId = null;
-    controller.focusOnCoordinates(
-      const GlobeCoordinates(0, 0),
-      animate: true,
-      duration: const Duration(milliseconds: 600),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -535,15 +511,85 @@ class _JournalGlobeState extends State<JournalGlobe> {
         final radius = (math.min(size.width, size.height) / 2 - 12)
             .clamp(40.0, 110.0)
             .toDouble();
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(size: size),
-          child: FlutterEarthGlobe(
-            controller: _controller!,
-            radius: radius,
-            onZoomChanged: _handleZoomChanged,
-          ),
+        return Stack(
+          children: [
+            MediaQuery(
+              data: MediaQuery.of(context).copyWith(size: size),
+              child: FlutterEarthGlobe(
+                controller: _controller!,
+                radius: radius,
+                onZoomChanged: _handleZoomChanged,
+              ),
+            ),
+            // Fades out once the surface texture finishes decoding —
+            // IgnorePointer once invisible so it doesn't eat the globe's
+            // own drag/tap gestures after the fade completes.
+            IgnorePointer(
+              ignoring: _isLoaded,
+              child: AnimatedOpacity(
+                opacity: _isLoaded ? 0 : 1,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+                child: const _GlobeLoadingIndicator(),
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+}
+
+/// Covers the sphere while its surface texture is still decoding — a
+/// pulsing accent-teal ring rather than Material's default
+/// [CircularProgressIndicator], which reads as generic chrome against this
+/// app's serif/mono/hairline visual language.
+class _GlobeLoadingIndicator extends StatefulWidget {
+  const _GlobeLoadingIndicator();
+
+  @override
+  State<_GlobeLoadingIndicator> createState() => _GlobeLoadingIndicatorState();
+}
+
+class _GlobeLoadingIndicatorState extends State<_GlobeLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
+    return ColoredBox(
+      color: colors.paper,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FadeTransition(
+              opacity: Tween(begin: 0.3, end: 1.0).animate(_pulse),
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.accent,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            MonoText(l10n.journalGlobeLoading, color: colors.inkMuted),
+          ],
+        ),
+      ),
     );
   }
 }

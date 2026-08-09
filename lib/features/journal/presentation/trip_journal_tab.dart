@@ -48,7 +48,6 @@ class TripJournalTab extends ConsumerStatefulWidget {
 class _TripJournalTabState extends ConsumerState<TripJournalTab> {
   String? _selectedEntryId;
   String? _liveFollowEntryId;
-  int _resetToNorthSignal = 0;
 
   static const _galleryStripHeight = 190.0;
 
@@ -87,11 +86,21 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                   entries: entries,
                   selectedEntryId: _selectedEntryId,
                   liveFollowEntryId: _liveFollowEntryId,
-                  resetToNorthSignal: _resetToNorthSignal,
                   onEntryTap: (entry) =>
                       setState(() => _selectedEntryId = entry.id),
                   renderGlobe: widget.renderGlobe,
                 ),
+        ),
+        // Smooths the hard cut where the TabBar above hands off to the
+        // globe/map's own busy, edge-to-edge imagery — the same
+        // inkPrimary-alpha-gradient scrim as _GalleryOverlay below,
+        // mirrored to the top edge instead. IgnorePointer: purely
+        // decorative, must never intercept the globe's own drag/tap.
+        const PositionedDirectional(
+          top: 0,
+          start: 0,
+          end: 0,
+          child: IgnorePointer(child: _TopEdgeScrim()),
         ),
         PositionedDirectional(
           top: 0,
@@ -140,24 +149,6 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
             ),
           ),
         ),
-        // Floats just above the gallery strip's top edge, bottom-end
-        // corner — the same spot map apps conventionally put a
-        // recenter/compass control, clear of both the top action row and
-        // the gallery overlay below it. Globe-only: "face north" has no
-        // meaning in the map view.
-        if (!showMap)
-          PositionedDirectional(
-            end: 0,
-            bottom: _galleryStripHeight + AppSpacing.md,
-            child: Padding(
-              padding: const EdgeInsetsDirectional.only(end: AppSpacing.md),
-              child: _GlassIconButton(
-                icon: Icons.explore_outlined,
-                tooltip: l10n.faceNorthTooltip,
-                onPressed: () => setState(() => _resetToNorthSignal++),
-              ),
-            ),
-          ),
         if (!showMap)
           PositionedDirectional(
             start: 0,
@@ -227,6 +218,34 @@ class _GalleryOverlay extends StatelessWidget {
           ),
           child,
         ],
+      ),
+    );
+  }
+}
+
+/// A short fade at the very top of the globe/map — same inkPrimary-alpha
+/// gradient convention as [_GalleryOverlay], much shallower since this is
+/// only smoothing a hairline seam against the TabBar above, not backing
+/// legible overlaid text.
+class _TopEdgeScrim extends StatelessWidget {
+  const _TopEdgeScrim();
+
+  static const _height = 28.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      height: _height,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colors.inkPrimary.withValues(alpha: 0.22),
+            colors.inkPrimary.withValues(alpha: 0),
+          ],
+        ),
       ),
     );
   }

@@ -192,7 +192,7 @@
   "placeFormTrip": "Link to a trip",
   "mapViewToggle": "Map view",
   "listViewToggle": "List view",
-  "faceNorthTooltip": "Face north",
+  "journalGlobeLoading": "Loading globe",
   "pickOnMap": "Pick on map",
   "pickOnMapTitle": "Drop a pin",
   "pickOnMapHint": "Search above, or long-press the map to place the pin",

@@ -75,32 +75,4 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.circle), findsNothing);
   });
-
-  testWidgets(
-      'changing resetToNorthSignal with renderGlobe: false does not crash '
-      '(no controller to reset)', (tester) async {
-    await tester.pumpWidget(
-      _wrap(
-        JournalGlobe(
-          renderGlobe: false,
-          resetToNorthSignal: 0,
-          entries: [_e('a', 8.0, 98.8)],
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.pumpWidget(
-      _wrap(
-        JournalGlobe(
-          renderGlobe: false,
-          resetToNorthSignal: 1,
-          entries: [_e('a', 8.0, 98.8)],
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-  });
 }

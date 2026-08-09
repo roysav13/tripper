@@ -11,38 +11,46 @@ import '../../../l10n/app_localizations.dart';
 import '../../places/presentation/map_style.dart';
 import '../domain/journal_entry.dart';
 
-const _markerPx = 96;
-const _markerSize = 96.0;
-const _markerBorderWidth = 4.0;
-// Reserved, unclipped canvas margin around the photo circle so its drop
-// shadow (see _photoMarkerBitmap) has room to blur outward instead of
-// being cut off at the bitmap's edge.
-const _markerShadowMargin = 8.0;
-
-// Halo / border / core radii (real-world meters, so they scale with the
-// map's own zoom) — the flat-map equivalent of journal_globe.dart's
-// three-layer native Point treatment (halo glow, solid border ring, core
-// fill), carried over so a trip's route reads the same way in both
-// views. Photo entries get a larger footprint, matching the globe's
-// larger photo-dot sizing relative to its plain dots.
+// Every dot below is baked into a fixed-pixel-size bitmap and placed via
+// a screen-space Marker rather than a real-world-meter Circle. A meters-
+// based radius looks fine at one zoom/latitude and either balloons into a
+// washed-out blob or shrinks to nothing at another (see dot_misplace.png)
+// — a Marker icon stays the same on-screen size at every zoom, which is
+// what actually makes this match journal_globe.dart's own zoom-
+// compensated native Points (halo glow, solid border ring, core fill/
+// photo) instead of merely gesturing at the same three layers.
 const _haloAlpha = 0.28;
-const _plainCoreRadiusMeters = 40.0;
-const _plainBorderRadiusMeters = 60.0;
-const _plainHaloRadiusMeters = 110.0;
-// Only used as a transient fallback while a photo entry's marker bitmap
-// is still decoding — see _circles below.
-const _photoCoreRadiusMeters = 90.0;
-const _photoBorderRadiusMeters = 120.0;
-const _photoHaloRadiusMeters = 200.0;
+
+// Plain (photo-less) dot: halo, paper-colored border ring, accent core —
+// the flat-canvas equivalent of the globe's plain Point layering. Built
+// once (no per-entry data) and reused for every plain entry.
+const _dotCoreRadius = 9.0;
+const _dotBorderRadius = 13.0;
+const _dotHaloRadius = 21.0;
+const _dotHaloBlur = 6.0;
+const _dotCanvasSize = 56.0;
+
+// Photo dot: halo, paper-colored ring, drop shadow, the photo itself,
+// accent stroke — mirrors the globe's own layering of a native halo +
+// border Point behind _PhotoDot's widget (which has its own accent
+// border and BoxShadow).
+const _photoImageRadius = 30.0;
+const _photoStrokeWidth = 3.0;
+const _photoRingRadius = 39.0;
+const _photoHaloRadius = 55.0;
+const _photoHaloBlur = 8.0;
+const _photoShadowBlur = 3.0;
+const _photoCanvasSize = 128.0;
 
 /// Google Maps needs a platform view, which widget tests can't render.
 /// Tests pass `renderMap: false` to get the same non-rendering scaffold as
 /// PlacesMapView (SPEC: no network, no platform channels in tests).
 ///
-/// Each located entry is a small [Circle]; entries with a photo render
-/// larger, as the photo itself via a custom [Marker] bitmap once decoded.
-/// Located entries are connected with a [Polyline] in chronological
-/// (loggedAt ascending) order to show trip progression.
+/// Each located entry is a fixed-size layered-dot [Marker]; entries with a
+/// photo render larger, as the photo itself, once its bitmap decodes (a
+/// plain dot shows in the meantime). Located entries are connected with a
+/// [Polyline] in chronological (loggedAt ascending) order to show trip
+/// progression.
 class JournalMapView extends StatefulWidget {
   const JournalMapView({
     super.key,
@@ -63,6 +71,11 @@ class _JournalMapViewState extends State<JournalMapView> {
   /// Keyed by entry id, populated asynchronously as photos decode.
   final Map<String, BitmapDescriptor> _photoMarkers = {};
 
+  /// The shared plain-dot bitmap — built once (it carries no per-entry
+  /// data) and reused for every located entry without a photo, plus as a
+  /// transient stand-in for photo entries whose bitmap hasn't decoded yet.
+  BitmapDescriptor? _plainDotBitmap;
+
   List<JournalEntry> get _located {
     final located = widget.entries.where((e) => e.hasLocation).toList()
       ..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
@@ -71,16 +84,16 @@ class _JournalMapViewState extends State<JournalMapView> {
 
   bool _initialized = false;
 
-  // Not initState: _loadPhotoMarkers reads context.colors (a Theme lookup),
-  // and establishing an InheritedWidget dependency before initState()
-  // completes throws. didChangeDependencies is the first safe point, and
-  // runs before the first build.
+  // Not initState: _loadMarkerBitmaps reads context.colors (a Theme
+  // lookup), and establishing an InheritedWidget dependency before
+  // initState() completes throws. didChangeDependencies is the first safe
+  // point, and runs before the first build.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.renderMap && !_initialized) {
       _initialized = true;
-      _loadPhotoMarkers();
+      _loadMarkerBitmaps();
     }
   }
 
@@ -88,7 +101,7 @@ class _JournalMapViewState extends State<JournalMapView> {
   void didUpdateWidget(JournalMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.renderMap && widget.entries != oldWidget.entries) {
-      _loadPhotoMarkers();
+      _loadMarkerBitmaps();
       _fitToPins();
     }
   }
@@ -99,8 +112,15 @@ class _JournalMapViewState extends State<JournalMapView> {
     super.dispose();
   }
 
-  Future<void> _loadPhotoMarkers() async {
+  Future<void> _loadMarkerBitmaps() async {
     final colors = context.colors;
+    if (_plainDotBitmap == null) {
+      final bitmap = await _plainDotMarkerBitmap(
+        accentColor: colors.accent,
+        paperColor: colors.surface,
+      );
+      if (mounted) setState(() => _plainDotBitmap = bitmap);
+    }
     for (final entry in _located) {
       if (!entry.hasPhotos || _photoMarkers.containsKey(entry.id)) continue;
       final path = entry.photos.first.filePath;
@@ -109,12 +129,13 @@ class _JournalMapViewState extends State<JournalMapView> {
       try {
         final bitmap = await _photoMarkerBitmap(
           await file.readAsBytes(),
-          colors.accent,
-          colors.inkPrimary,
+          accentColor: colors.accent,
+          paperColor: colors.surface,
+          shadowColor: colors.inkPrimary,
         );
         if (mounted) setState(() => _photoMarkers[entry.id] = bitmap);
       } catch (_) {
-        // Corrupt/unreadable photo: entry falls back to a plain circle.
+        // Corrupt/unreadable photo: entry falls back to the plain dot.
       }
     }
   }
@@ -153,64 +174,22 @@ class _JournalMapViewState extends State<JournalMapView> {
     );
   }
 
-  Set<Circle> _circles(AppColors colors) {
-    final circles = <Circle>{};
-    for (final e in _located) {
-      final hasMarker = e.hasPhotos && _photoMarkers.containsKey(e.id);
-      // Halo renders for every located entry, marker or not — same as the
-      // globe, where the halo sits behind a photo dot rather than being
-      // replaced by it.
-      circles.add(
-        Circle(
-          circleId: CircleId('${e.id}-halo'),
-          center: LatLng(e.lat!, e.lng!),
-          radius: e.hasPhotos ? _photoHaloRadiusMeters : _plainHaloRadiusMeters,
-          fillColor: colors.accent.withValues(alpha: _haloAlpha),
-          strokeColor: Colors.transparent,
-          strokeWidth: 0,
-          zIndex: 0,
-        ),
-      );
-      if (hasMarker) {
-        continue; // border + core are baked into the marker bitmap.
-      }
-      circles.add(
-        Circle(
-          circleId: CircleId('${e.id}-border'),
-          center: LatLng(e.lat!, e.lng!),
-          radius:
-              e.hasPhotos ? _photoBorderRadiusMeters : _plainBorderRadiusMeters,
-          fillColor: colors.surface,
-          strokeColor: Colors.transparent,
-          strokeWidth: 0,
-          zIndex: 1,
-        ),
-      );
-      circles.add(
-        Circle(
-          circleId: CircleId(e.id),
-          center: LatLng(e.lat!, e.lng!),
-          radius: e.hasPhotos ? _photoCoreRadiusMeters : _plainCoreRadiusMeters,
-          fillColor: colors.accent,
-          strokeColor: Colors.transparent,
-          strokeWidth: 0,
-          zIndex: 2,
-        ),
-      );
-    }
-    return circles;
-  }
-
-  Set<Marker> get _photoMarkerSet {
+  /// One layered-dot marker per located entry — the photo bitmap once it's
+  /// decoded, the shared plain-dot bitmap otherwise (including as a
+  /// transient stand-in for a photo entry still decoding). Both bitmaps
+  /// are fixed-pixel-size, so every dot renders identically at any zoom
+  /// or latitude instead of the real-world-meter Circle approach this
+  /// replaced.
+  Set<Marker> _markerSet() {
+    final plainDot = _plainDotBitmap;
+    if (plainDot == null) return {};
     final markers = <Marker>{};
     for (final e in _located) {
-      final bitmap = _photoMarkers[e.id];
-      if (bitmap == null) continue;
       markers.add(
         Marker(
           markerId: MarkerId(e.id),
           position: LatLng(e.lat!, e.lng!),
-          icon: bitmap,
+          icon: _photoMarkers[e.id] ?? plainDot,
           anchor: const Offset(0.5, 0.5),
           infoWindow: InfoWindow(title: e.summary),
         ),
@@ -275,8 +254,7 @@ class _JournalMapViewState extends State<JournalMapView> {
           style: isDark ? kMapStyleDark : kMapStyleLight,
           myLocationButtonEnabled: false,
           zoomControlsEnabled: true,
-          circles: _circles(colors),
-          markers: _photoMarkerSet,
+          markers: _markerSet(),
           polylines: _polylines(colors),
           onMapCreated: (controller) {
             _controller = controller;
@@ -317,43 +295,81 @@ class _JournalMapViewState extends State<JournalMapView> {
   }
 }
 
+/// Builds the shared plain (photo-less) dot bitmap: halo, paper-colored
+/// border ring, accent core — the flat-canvas equivalent of
+/// journal_globe.dart's plain-Point layering (halo Point, border-ring
+/// Point, core Point). Carries no per-entry data, so callers build this
+/// once and reuse it.
+Future<BitmapDescriptor> _plainDotMarkerBitmap({
+  required Color accentColor,
+  required Color paperColor,
+}) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  const center = Offset(_dotCanvasSize / 2, _dotCanvasSize / 2);
+
+  canvas.drawCircle(
+    center,
+    _dotHaloRadius,
+    Paint()
+      ..color = accentColor.withValues(alpha: _haloAlpha)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _dotHaloBlur),
+  );
+  canvas.drawCircle(center, _dotBorderRadius, Paint()..color = paperColor);
+  canvas.drawCircle(center, _dotCoreRadius, Paint()..color = accentColor);
+
+  final picture = recorder.endRecording();
+  final rendered =
+      await picture.toImage(_dotCanvasSize.toInt(), _dotCanvasSize.toInt());
+  final byteData = await rendered.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.bytes(
+    byteData!.buffer.asUint8List(),
+    width: _dotCanvasSize,
+    height: _dotCanvasSize,
+  );
+}
+
 /// Decodes [bytes] and draws them circle-clipped ("cover" crop, centered)
-/// with a [borderColor] ring and a soft [shadowColor] drop shadow,
-/// returning a marker bitmap for GoogleMap — the flat-canvas equivalent of
-/// journal_globe.dart's _PhotoDot (accent border + BoxShadow lift off the
-/// background).
+/// with a soft halo, a paper-colored ring, a drop shadow, and an
+/// [accentColor] stroke around the photo — the flat-canvas equivalent of
+/// journal_globe.dart's halo/border Points behind _PhotoDot's own accent
+/// border + BoxShadow lift off the background.
 Future<BitmapDescriptor> _photoMarkerBitmap(
-  Uint8List bytes,
-  Color borderColor,
-  Color shadowColor,
-) async {
+  Uint8List bytes, {
+  required Color accentColor,
+  required Color paperColor,
+  required Color shadowColor,
+}) async {
   final codec = await ui.instantiateImageCodec(bytes);
   final frame = await codec.getNextFrame();
   final image = frame.image;
 
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
-  const size = _markerSize;
-  final rect = Rect.fromLTWH(0, 0, size, size);
-  // The photo itself sits inside this radius; the border stroke sits just
-  // outside it. _markerShadowMargin keeps both, plus the shadow's blur,
-  // clear of the bitmap's raster edge.
-  final imageRadius = size / 2 - _markerBorderWidth - _markerShadowMargin;
-  final borderRadius = imageRadius + _markerBorderWidth / 2;
+  const center = Offset(_photoCanvasSize / 2, _photoCanvasSize / 2);
+  const strokeRadius = _photoImageRadius + _photoStrokeWidth / 2;
 
-  // Drop shadow, drawn first so the opaque border/photo paint over it —
-  // unclipped, so its blur can spread past the border ring's edge.
   canvas.drawCircle(
-    rect.center.translate(0, 2),
-    borderRadius,
+    center,
+    _photoHaloRadius,
+    Paint()
+      ..color = accentColor.withValues(alpha: _haloAlpha)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _photoHaloBlur),
+  );
+  // Drop shadow, drawn before the opaque ring/photo paint over it —
+  // unclipped, so its blur can spread past the ring's edge.
+  canvas.drawCircle(
+    center.translate(0, 2),
+    _photoRingRadius,
     Paint()
       ..color = shadowColor
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _photoShadowBlur),
   );
+  canvas.drawCircle(center, _photoRingRadius, Paint()..color = paperColor);
 
   canvas.save();
   canvas.clipPath(
-    Path()..addOval(Rect.fromCircle(center: rect.center, radius: imageRadius)),
+    Path()..addOval(Rect.fromCircle(center: center, radius: _photoImageRadius)),
   );
   final srcSize = image.width < image.height
       ? image.width.toDouble()
@@ -366,7 +382,7 @@ Future<BitmapDescriptor> _photoMarkerBitmap(
   canvas.drawImageRect(
     image,
     srcRect,
-    Rect.fromCircle(center: rect.center, radius: imageRadius),
+    Rect.fromCircle(center: center, radius: _photoImageRadius),
     Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high,
@@ -374,20 +390,23 @@ Future<BitmapDescriptor> _photoMarkerBitmap(
   canvas.restore();
 
   canvas.drawCircle(
-    rect.center,
-    borderRadius,
+    center,
+    strokeRadius,
     Paint()
-      ..color = borderColor
+      ..color = accentColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = _markerBorderWidth,
+      ..strokeWidth = _photoStrokeWidth,
   );
 
   final picture = recorder.endRecording();
-  final rendered = await picture.toImage(_markerPx, _markerPx);
+  final rendered = await picture.toImage(
+    _photoCanvasSize.toInt(),
+    _photoCanvasSize.toInt(),
+  );
   final byteData = await rendered.toByteData(format: ui.ImageByteFormat.png);
   return BitmapDescriptor.bytes(
     byteData!.buffer.asUint8List(),
-    width: _markerSize,
-    height: _markerSize,
+    width: _photoCanvasSize,
+    height: _photoCanvasSize,
   );
 }
