@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -28,15 +27,9 @@ const _plainDotSize = 2.5;
 // A ring between the halo and the core, giving the flat native dot a
 // visible outline — PointStyle has no border property, so this is a
 // second, larger, opaque circle painted directly behind the core (see
-// the layering comment in _addPoints). The photo dot's own widget
-// already has an accent border; its native ring sits further out, just
-// past the widget's edge, for the same "outlined pin" look as the
-// plain dots.
+// the layering comment in _addPoints).
 const _plainBorderSize = 4.0;
-const _photoBorderSize = 15.0;
 const _haloDotSize = 5.0;
-const _photoDotDiameter = 26.0;
-const _photoHaloDotSize = 7.0;
 // Monochrome teal — CLAUDE.md's two-accents rule (teal for actions/
 // places, rust reserved for warnings only) means the halo has to be a
 // low-alpha version of the same accent, not a new hue.
@@ -222,12 +215,10 @@ class _JournalGlobeState extends State<JournalGlobe> {
   }
 
   // Compares the fields the globe actually renders per entry — id, lat,
-  // lng, and the first photo's path (which decides dot-vs-thumbnail and
-  // which thumbnail) — not just id/order. Journal entries are edited
-  // constantly (unlike the visited Places this replaced, whose coordinates
-  // rarely changed), so an identity-only check would miss a location being
-  // added/moved or a first photo being added to a previously photo-less
-  // entry.
+  // lng — not just id/order. Journal entries are edited constantly
+  // (unlike the visited Places this replaced, whose coordinates rarely
+  // changed), so an identity-only check would miss a location being
+  // added or moved.
   bool _sameEntryIds(List<JournalEntry> previous) {
     if (previous.length != widget.entries.length) return false;
     for (var i = 0; i < previous.length; i++) {
@@ -236,11 +227,6 @@ class _JournalGlobeState extends State<JournalGlobe> {
       if (prevEntry.id != nextEntry.id) return false;
       if (prevEntry.lat != nextEntry.lat) return false;
       if (prevEntry.lng != nextEntry.lng) return false;
-      final prevPhotoPath =
-          prevEntry.hasPhotos ? prevEntry.photos.first.filePath : null;
-      final nextPhotoPath =
-          nextEntry.hasPhotos ? nextEntry.photos.first.filePath : null;
-      if (prevPhotoPath != nextPhotoPath) return false;
     }
     return true;
   }
@@ -276,40 +262,27 @@ class _JournalGlobeState extends State<JournalGlobe> {
         final entry = cluster.single;
         final onTap =
             widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
-        // Halo, then border ring, then the dot/photo widget itself —
-        // three native layers (halo and border both native points; the
-        // photo case's actual "dot" is the labelBuilder widget below,
-        // not a native point) added in back-to-front order so they
-        // paint (and therefore sit) correctly stacked — this needs
-        // on-device confirmation like every other dot-visual change in
-        // this file; the package's actual draw order isn't guaranteed
-        // by its public API, only inferred from insertion order +
-        // depth-tie stability.
+        // Halo, then border ring, then the core dot — three native
+        // layers added in back-to-front order so they paint (and
+        // therefore sit) correctly stacked — this needs on-device
+        // confirmation like every other dot-visual change in this file;
+        // the package's actual draw order isn't guaranteed by its
+        // public API, only inferred from insertion order + depth-tie
+        // stability.
         controller.addPoint(
           Point(
             id: '${entry.id}-halo',
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
             style: PointStyle(
-              size: (entry.hasPhotos ? _photoHaloDotSize : _haloDotSize) *
-                  compensation,
+              size: _haloDotSize * compensation,
               color: colors.accent.withValues(alpha: _haloAlpha),
             ),
-            // The halo's hit-rect is strictly larger than the core
-            // dot's and is tested first (added first, same coordinates
-            // so depth ties, and the package's sort is only stable for
-            // small point counts) — the package marks a click "handled"
-            // on the first hit regardless of whether that point has a
-            // handler, so a halo with no onTap silently swallows taps
-            // meant for the dot below it. Left null for photo entries —
-            // _PhotoDot's own GestureDetector handles those; wiring
-            // both would double-fire.
-            onTap: entry.hasPhotos ? null : onTap,
+            onTap: onTap,
           ),
         );
         // Border ring: PointStyle has no border/stroke property, so a
         // solid, slightly-larger circle painted directly behind the
-        // core (or, for a photo entry, just past the photo widget's own
-        // edge) simulates an outline — giving the flat dot definition
+        // core simulates an outline — giving the flat dot definition
         // against the globe's own busy, variable-brightness texture
         // instead of just a soft color blob.
         controller.addPoint(
@@ -317,69 +290,34 @@ class _JournalGlobeState extends State<JournalGlobe> {
             id: '${entry.id}-border',
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
             style: PointStyle(
-              size: (entry.hasPhotos ? _photoBorderSize : _plainBorderSize) *
-                  compensation,
+              size: _plainBorderSize * compensation,
               color: colors.surface,
             ),
-            onTap: entry.hasPhotos ? null : onTap,
+            onTap: onTap,
           ),
         );
-        if (entry.hasPhotos) {
-          controller.addPoint(
-            Point(
-              id: entry.id,
-              coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-              label: entry.placeName ?? entry.summary,
-              // Photo dots stay widget-rendered — the package has no
-              // native way to show an image on a point. size: 0
-              // suppresses the (otherwise pointless) native dot
-              // underneath it.
-              style: const PointStyle(size: 0),
-              isLabelVisible: true,
-              // Centers a _photoDotDiameter-square widget exactly on
-              // the point: the package positions labelBuilder output at
-              // `left = pos.dx - labelOffset.dx - width/2`,
-              // `top = pos.dy - labelOffset.dy - height`.
-              labelOffset: const Offset(0, -_photoDotDiameter / 2),
-              labelBuilder: (context, point, isHovering, isVisible) =>
-                  _PhotoDot(
-                filePath: entry.photos.first.filePath,
-                onTap: onTap,
-              ),
-              // Point.onTap is intentionally left unset — see
-              // _PhotoDot's own GestureDetector. Setting both would
-              // double-fire onEntryTap for taps landing in the native
-              // point's small residual hit region.
+        controller.addPoint(
+          Point(
+            id: entry.id,
+            coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+            label: entry.placeName ?? entry.summary,
+            // Native GPU-rendered dot: cheap, and perfectly in sync
+            // with the sphere's rotation every frame by construction
+            // (the shader paints it — no separate widget-position
+            // recompute pass). A prior round made every dot
+            // widget-rendered instead, purely to dodge the package's
+            // built-in zoom-scaling, and that made rotation noticeably
+            // less smooth (every dot's position became a real widget
+            // rebuild on every animation frame). _handleZoomChanged
+            // counteracts the zoom-scaling directly instead, so this
+            // stays native/cheap AND zoom-stable.
+            style: PointStyle(
+              size: _plainDotSize * compensation,
+              color: colors.accent,
             ),
-          );
-        } else {
-          controller.addPoint(
-            Point(
-              id: entry.id,
-              coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-              label: entry.placeName ?? entry.summary,
-              // Native GPU-rendered dot: cheap, and perfectly in sync
-              // with the sphere's rotation every frame by construction
-              // (the shader paints it — no separate widget-position
-              // recompute pass, unlike the labelBuilder path above). A
-              // prior round made every dot widget-rendered instead,
-              // purely to dodge the package's built-in zoom-scaling,
-              // and that made rotation noticeably less smooth (every
-              // dot's position became a real widget rebuild on every
-              // animation frame). _handleZoomChanged counteracts the
-              // zoom-scaling directly instead, so this can stay
-              // native/cheap AND zoom-stable.
-              style: PointStyle(
-                size: _plainDotSize * compensation,
-                color: colors.accent,
-              ),
-              // No labelBuilder for this one, so tap must be wired
-              // directly on the Point — the package's own native
-              // hit-testing (sized from PointStyle.size) drives it.
-              onTap: onTap,
-            ),
-          );
-        }
+            onTap: onTap,
+          ),
+        );
       } else {
         final key = _clusterKey(cluster);
         final (centroidLat, centroidLng) = _clusterCentroid(cluster);
@@ -478,18 +416,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
     for (final cluster in _lastClusters) {
       if (cluster.length == 1) {
         final entry = cluster.single;
-        final haloBase = entry.hasPhotos ? _photoHaloDotSize : _haloDotSize;
-        final borderBase =
-            entry.hasPhotos ? _photoBorderSize : _plainBorderSize;
-        _rescalePoint(controller, '${entry.id}-halo', haloBase * compensation);
+        _rescalePoint(
+          controller,
+          '${entry.id}-halo',
+          _haloDotSize * compensation,
+        );
         _rescalePoint(
           controller,
           '${entry.id}-border',
-          borderBase * compensation,
+          _plainBorderSize * compensation,
         );
-        if (!entry.hasPhotos) {
-          _rescalePoint(controller, entry.id, _plainDotSize * compensation);
-        }
+        _rescalePoint(controller, entry.id, _plainDotSize * compensation);
       } else {
         final key = _clusterKey(cluster);
         _rescalePoint(
@@ -692,8 +629,8 @@ class _JournalGlobeState extends State<JournalGlobe> {
 
     if (!widget.renderGlobe) {
       // Test/preview scaffold: no shader surface, located entries as
-      // tappable icons (photo-camera for entries with a photo, plain dot
-      // otherwise) — mirrors JournalMapView's own renderMap:false seam.
+      // tappable plain-dot icons — mirrors JournalMapView's own
+      // renderMap:false seam.
       return ColoredBox(
         color: colors.paper,
         child: Center(
@@ -707,7 +644,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
                     label: entry.placeName ?? entry.summary,
                     child: IconButton(
                       icon: Icon(
-                        entry.hasPhotos ? Icons.photo_camera : Icons.circle,
+                        Icons.circle,
                         color: colors.accent,
                       ),
                       onPressed: widget.onEntryTap == null
@@ -837,55 +774,6 @@ class _GlobeLoadingIndicatorState extends State<_GlobeLoadingIndicator>
             const SizedBox(height: 12),
             MonoText(l10n.journalGlobeLoading, color: colors.inkMuted),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A circular, accent-bordered photo thumbnail rendered at a point's
-/// screen position via Point.labelBuilder (the package has no built-in
-/// image support for points). Wraps itself in a GestureDetector — see
-/// the comment on Point.onTap in _addPoints for why tap handling lives
-/// here instead of on the Point itself.
-class _PhotoDot extends StatelessWidget {
-  const _PhotoDot({required this.filePath, this.onTap});
-
-  final String filePath;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: _photoDotDiameter,
-        height: _photoDotDiameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: colors.accent, width: 1.5),
-          // A widget-rendered dot, unlike the native plain-dot points,
-          // so a real BoxShadow is available here without any zoom-
-          // scaling risk (this stays a fixed pixel size regardless of
-          // zoom, same as the rest of this widget) — a soft lift off
-          // the globe surface, matching the "give it more character"
-          // ask alongside the native halo/border layers behind it.
-          boxShadow: [
-            BoxShadow(
-              color: colors.inkPrimary.withValues(alpha: 0.35),
-              blurRadius: 4,
-              offset: const Offset(0, 1.5),
-            ),
-          ],
-        ),
-        child: ClipOval(
-          child: Image.file(
-            File(filePath),
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => ColoredBox(color: colors.paper),
-          ),
         ),
       ),
     );

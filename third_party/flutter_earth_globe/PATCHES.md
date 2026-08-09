@@ -243,6 +243,30 @@ indicator, for consistency) in `Positioned.fill`, forcing tight
 constraints again — restoring the behavior it had before that wrapping
 Stack was introduced.
 
+## Fix: draw points on top of arcs, not behind them
+
+**File:** `lib/gpu_foreground_painter.dart`, `GpuForegroundPainter.paint()`.
+
+**What was wrong:** the package hardcodes a fixed z-order — points are
+always drawn first ("behind arcs"), then arcs on top, unconditionally, in
+two separate loops, with no configuration option to reverse it. Hit-test
+priority followed the same order: arc taps were checked before point
+taps ("arcs have priority over points since they're on top"). This
+matters for `journal_globe.dart` specifically because its journey line
+(`journeyConnections`) draws arcs whose endpoints sit at exactly the same
+coordinates as each entry's own dot — so every dot with a connected
+journey segment had an arc passing directly through it, both visually
+(the line cut across the dot) and for hit-testing (tapping a dot could
+be intercepted by the arc's hit-test region instead of the dot's own
+`onTap`, since arcs were checked first).
+
+**The fix:** draw arcs first (behind), points second (on top), and swap
+the hit-test priority to match — points are checked and can claim a tap
+before arcs get a chance. `_drawArc`'s returned `Path` (needed for
+hit-testing) is computed during the arc draw pass and carried into the
+later hit-test pass via a small `List<(ArcRenderData, Path?)>`, since
+drawing and hit-testing are no longer interleaved in one loop.
+
 ## Re-applying after a version bump
 
 If `flutter_earth_globe` is ever upgraded, re-apply all of these changes
@@ -278,6 +302,10 @@ to the new version's `rotating_globe.dart`:
    surfaceProcessed race in loadSurface" above), which corrupts the CPU
    rendering fallback path if `loadSurface` is ever called more than once
    per controller.
+8. In `GpuForegroundPainter.paint()` (`gpu_foreground_painter.dart`),
+   draw arcs before points (not after) and check point hit-tests before
+   arc hit-tests (not after) — see "Fix: draw points on top of arcs, not
+   behind them" above.
 
 Then remove this vendored copy and the `dependency_overrides` entry in
 the app's `pubspec.yaml` once upstream ships equivalent fixes.

@@ -670,7 +670,27 @@ class GpuForegroundPainter extends CustomPainter {
     String? currentHoveredConnectionId;
     bool clickHandled = false;
 
-    // Draw points first (behind arcs)
+    // Draw arcs first (behind points) — journal_globe.dart's journey line
+    // connects entries at exactly their own dot coordinates, so an arc
+    // endpoint always sits under a point; drawing points on top reads
+    // better (the dot stays crisp, not visually cut by the line) and,
+    // paired with the hit-test priority swap below, means tapping a dot
+    // reliably hits the dot even where an arc passes right through it.
+    // _drawArc's returned Path is needed again below for hit-testing, so
+    // it's captured here rather than recomputed.
+    final arcPaths = <(ArcRenderData arc, Path? path)>[];
+    for (final arc in arcs) {
+      // Check if any portion of the arc is visible (elevated arcs can peek over horizon)
+      final hasVisiblePortion = arc.arcPointsVisible.any((v) => v);
+      if (!hasVisiblePortion) {
+        onConnectionHover?.call(arc.id, arc.midPoint2D, false, false);
+        arcPaths.add((arc, null));
+        continue;
+      }
+      arcPaths.add((arc, _drawArc(canvas, arc, size)));
+    }
+
+    // Draw points (on top of arcs)
     for (final point in points) {
       if (!point.isVisible) {
         onPointHover?.call(point.id, point.position2D, false, false);
@@ -689,50 +709,8 @@ class GpuForegroundPainter extends CustomPainter {
       }
     }
 
-    // Draw arcs (on top of points)
-    for (final arc in arcs) {
-      // Check if any portion of the arc is visible (elevated arcs can peek over horizon)
-      final hasVisiblePortion = arc.arcPointsVisible.any((v) => v);
-      if (!hasVisiblePortion) {
-        onConnectionHover?.call(arc.id, arc.midPoint2D, false, false);
-        continue;
-      }
-
-      final path = _drawArc(canvas, arc, size);
-
-      if (path != null) {
-        // Check hover on arc (arcs have priority over points since they're on top)
-        final isHovering = currentHoveredConnectionId == null &&
-            hoverPoint != null &&
-            _isPointOnPath(hoverPoint!, path, arc.connection.strokeWidth + 4);
-
-        if (isHovering) {
-          currentHoveredConnectionId = arc.id;
-          if (arc.id != previousHoveredConnectionId) {
-            arc.connection.onHover?.call();
-          }
-        }
-
-        onConnectionHover?.call(arc.id, arc.midPoint2D, isHovering, true);
-
-        // Handle click on arc first (since arcs are on top)
-        if (!clickHandled &&
-            clickPoint != null &&
-            _isPointOnPath(clickPoint!, path, arc.connection.strokeWidth + 4)) {
-          // Defer callback to after paint to avoid triggering widget builds during paint
-          final callback = arc.connection.onTap;
-          if (callback != null) {
-            SchedulerBinding.instance.addPostFrameCallback((_) => callback());
-          }
-          onPointClicked?.call();
-          clickHandled = true;
-        }
-      } else {
-        onConnectionHover?.call(arc.id, arc.midPoint2D, false, false);
-      }
-    }
-
-    // Handle point hover/click after drawing (points are behind arcs but still interactive)
+    // Handle point hover/click first — points are on top now, so they
+    // should win over arcs where they overlap.
     for (final point in points) {
       if (!point.isVisible) continue;
 
@@ -745,7 +723,6 @@ class GpuForegroundPainter extends CustomPainter {
       );
 
       final isHovering = currentHoveredPointId == null &&
-          currentHoveredConnectionId == null && // Arc hover takes priority
           hoverPoint != null &&
           hitRect.contains(hoverPoint!);
 
@@ -759,12 +736,45 @@ class GpuForegroundPainter extends CustomPainter {
       onPointHover?.call(
           point.id, point.position2D, isHovering, point.isVisible);
 
-      // Handle click (arcs already handled, so only if not already clicked)
+      // Handle click — points get first refusal now that they're on top.
       if (!clickHandled &&
           clickPoint != null &&
           hitRect.contains(clickPoint!)) {
         // Defer callback to after paint to avoid triggering widget builds during paint
         final callback = point.point.onTap;
+        if (callback != null) {
+          SchedulerBinding.instance.addPostFrameCallback((_) => callback());
+        }
+        onPointClicked?.call();
+        clickHandled = true;
+      }
+    }
+
+    // Handle arc hover/click after points (arcs are behind points now)
+    for (final (arc, path) in arcPaths) {
+      if (path == null) continue;
+
+      // Check hover on arc — only if no point already claimed it.
+      final isHovering = currentHoveredConnectionId == null &&
+          currentHoveredPointId == null &&
+          hoverPoint != null &&
+          _isPointOnPath(hoverPoint!, path, arc.connection.strokeWidth + 4);
+
+      if (isHovering) {
+        currentHoveredConnectionId = arc.id;
+        if (arc.id != previousHoveredConnectionId) {
+          arc.connection.onHover?.call();
+        }
+      }
+
+      onConnectionHover?.call(arc.id, arc.midPoint2D, isHovering, true);
+
+      // Handle click on arc only if a point didn't already claim it.
+      if (!clickHandled &&
+          clickPoint != null &&
+          _isPointOnPath(clickPoint!, path, arc.connection.strokeWidth + 4)) {
+        // Defer callback to after paint to avoid triggering widget builds during paint
+        final callback = arc.connection.onTap;
         if (callback != null) {
           SchedulerBinding.instance.addPostFrameCallback((_) => callback());
         }
