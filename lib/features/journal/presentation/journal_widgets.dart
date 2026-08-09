@@ -40,121 +40,138 @@ class JournalGalleryCard extends StatelessWidget {
     final placeName = entry.placeName;
     final hasPhoto = entry.hasPhotos;
 
-    return SizedBox(
-      width: width,
-      child: PaperCard(
-        onTap: onTap,
-        padding: EdgeInsets.zero,
-        borderColor: selected ? colors.accent : null,
-        // The card has a natural (photo) size. FittedBox only ever
-        // shrinks (never grows) to fit whatever the gallery strip
-        // actually gives it — a plain SizedBox would instead throw a
-        // render overflow during a transient squeeze (e.g. a keyboard
-        // animating over the tab shrinks the strip below the card's
-        // natural height).
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.topStart,
-          child: SizedBox(
-            width: width,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppShape.radius - 1),
+    // The card has a natural (photo) size. Scaling it down to fit
+    // whatever height the gallery strip actually gives it (e.g. a
+    // keyboard animating over the tab, or simply a shorter screen) can't
+    // use a plain FittedBox here: FittedBox always reports its OWN full
+    // incoming width to its parent regardless of how much its child
+    // actually shrank, which — combined with the scaled content aligning
+    // to the top-start corner inside that still-full-width outer box —
+    // left a visible dead-space wedge to the trailing side whenever the
+    // strip forced a shrink. Computing the scale ourselves and sizing the
+    // outer box to match keeps the card's painted footprint equal to
+    // what's actually visible, in both directions, with no dead space.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale =
+            constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                ? (constraints.maxHeight / photoHeight).clamp(0.0, 1.0)
+                : 1.0;
+        return SizedBox(
+          width: width * scale,
+          height: photoHeight * scale,
+          child: PaperCard(
+            onTap: onTap,
+            padding: EdgeInsets.zero,
+            borderColor: selected ? colors.accent : null,
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.topLeft,
               child: SizedBox(
                 width: width,
-                height: photoHeight,
-                child: Stack(
-                  children: [
-                    hasPhoto
-                        ? Image.file(
-                            File(entry.photos.first.filePath),
-                            width: width,
-                            height: photoHeight,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => placeholder(colors),
-                          )
-                        : placeholder(colors),
-                    // Bottom gradient scrim so the overlaid caption stays
-                    // legible over a bright photo — no scrim on the
-                    // placeholder case below, since there's nothing to
-                    // darken against.
-                    if (hasPhoto)
-                      PositionedDirectional(
-                        start: 0,
-                        end: 0,
-                        bottom: 0,
-                        child: Container(
-                          height: photoHeight * 0.6,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                colors.inkPrimary.withValues(alpha: 0),
-                                colors.inkPrimary.withValues(alpha: 0.85),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (entry.photos.length > 1)
-                      PositionedDirectional(
-                        top: 6,
-                        end: 6,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: colors.inkPrimary.withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.symmetric(
-                              horizontal: 5,
-                              vertical: 1,
-                            ),
-                            child: MonoText(
-                              '${entry.photos.length}',
-                              color: colors.surface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    PositionedDirectional(
-                      start: 8,
-                      end: 8,
-                      bottom: 8,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          MonoText(
-                            DateFormat('dd MMM').format(entry.loggedAt),
-                            color: hasPhoto
-                                ? colors.surface.withValues(alpha: 0.75)
-                                : colors.inkMuted,
-                          ),
-                          if (placeName != null && placeName.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              placeName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.title.copyWith(
-                                fontSize: 17,
-                                color: hasPhoto
-                                    ? colors.surface
-                                    : colors.inkPrimary,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppShape.radius - 1),
+                  child: SizedBox(
+                    width: width,
+                    height: photoHeight,
+                    child: Stack(
+                      children: [
+                        hasPhoto
+                            ? Image.file(
+                                File(entry.photos.first.filePath),
+                                width: width,
+                                height: photoHeight,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    placeholder(colors),
+                              )
+                            : placeholder(colors),
+                        // Bottom gradient scrim so the overlaid caption
+                        // stays legible over a bright photo — no scrim
+                        // on the placeholder case below, since there's
+                        // nothing to darken against.
+                        if (hasPhoto)
+                          PositionedDirectional(
+                            start: 0,
+                            end: 0,
+                            bottom: 0,
+                            child: Container(
+                              height: photoHeight * 0.6,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    colors.inkPrimary.withValues(alpha: 0),
+                                    colors.inkPrimary.withValues(alpha: 0.85),
+                                  ],
+                                ),
                               ),
                             ),
-                          ],
-                        ],
-                      ),
+                          ),
+                        if (entry.photos.length > 1)
+                          PositionedDirectional(
+                            top: 6,
+                            end: 6,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color:
+                                    colors.inkPrimary.withValues(alpha: 0.72),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                child: MonoText(
+                                  '${entry.photos.length}',
+                                  color: colors.surface,
+                                ),
+                              ),
+                            ),
+                          ),
+                        PositionedDirectional(
+                          start: 8,
+                          end: 8,
+                          bottom: 8,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              MonoText(
+                                DateFormat('dd MMM').format(entry.loggedAt),
+                                color: hasPhoto
+                                    ? colors.surface.withValues(alpha: 0.75)
+                                    : colors.inkMuted,
+                              ),
+                              if (placeName != null &&
+                                  placeName.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  placeName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.title.copyWith(
+                                    fontSize: 17,
+                                    color: hasPhoto
+                                        ? colors.surface
+                                        : colors.inkPrimary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -290,7 +307,8 @@ class _JournalGalleryTimelineState extends State<JournalGalleryTimeline> {
     String? closestDayId;
     var closestDistance = double.infinity;
     for (final day in days) {
-      final slotBox = _slotKeys[day.first.id]?.currentContext
+      final slotBox = _slotKeys[day.first.id]
+          ?.currentContext
           ?.findRenderObject() as RenderBox?;
       if (slotBox == null || !slotBox.hasSize) continue;
       final slotCenterX =
@@ -405,7 +423,8 @@ class _DaySlot extends StatelessWidget {
         // so FittedBox has a real bound to scale down against.
         Flexible(
           child: day.length == 1
-              ? JournalGalleryCard(entry: first, onTap: onTap, selected: selected)
+              ? JournalGalleryCard(
+                  entry: first, onTap: onTap, selected: selected)
               : _GroupedGalleryCard(day: day, onTap: onTap, selected: selected),
         ),
       ],
@@ -432,175 +451,200 @@ class _GroupedGalleryCard extends StatelessWidget {
     final placeName = first.placeName;
     final hasPhoto = photoEntry.hasPhotos;
 
-    return SizedBox(
-      width: JournalGalleryCard.width,
-      child: PaperCard(
-        onTap: onTap,
-        padding: EdgeInsets.zero,
-        borderColor: selected ? colors.accent : null,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.topStart,
-          child: SizedBox(
-            width: JournalGalleryCard.width,
-            // Extra ~6px of top space for the peeking card-edge slivers
-            // below — accounted for in _DaySlot's Flexible sizing so it
-            // doesn't reintroduce a Column-overflow.
-            child: Padding(
-              padding: const EdgeInsetsDirectional.only(top: 6),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Stacked-photo effect: two thin "card edge" slivers
-                  // peeking out above/behind the top photo, evoking a
-                  // fanned stack of photos. Deliberately outside the
-                  // ClipRRect below, same as before this redesign — they
-                  // need to poke past the card's rounded bounds.
-                  PositionedDirectional(
-                    top: -6,
-                    start: 10,
-                    end: 10,
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        border: Border.all(
-                          color: colors.hairline,
-                          width: AppShape.hairlineWidth,
-                        ),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(6),
-                        ),
-                      ),
-                    ),
-                  ),
-                  PositionedDirectional(
-                    top: -3,
-                    start: 5,
-                    end: 5,
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        border: Border.all(
-                          color: colors.hairline,
-                          width: AppShape.hairlineWidth,
-                        ),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppShape.radius - 1),
-                    child: SizedBox(
-                      width: JournalGalleryCard.width,
-                      // 6px shorter than JournalGalleryCard.photoHeight to
-                      // offset this card's top: 6 padding above — keeps the
-                      // grouped card's total natural height pixel-identical
-                      // to the single-entry card's (both 130), so the
-                      // shared FittedBox in _DaySlot doesn't scale one down
-                      // more than the other.
-                      height: JournalGalleryCard.photoHeight - 6,
-                      child: Stack(
-                        children: [
-                          hasPhoto
-                              ? Image.file(
-                                  File(photoEntry.photos.first.filePath),
-                                  width: JournalGalleryCard.width,
-                                  height: JournalGalleryCard.photoHeight - 6,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      JournalGalleryCard.placeholder(colors),
-                                )
-                              : JournalGalleryCard.placeholder(colors),
-                          if (hasPhoto)
-                            PositionedDirectional(
-                              start: 0,
-                              end: 0,
-                              bottom: 0,
-                              child: Container(
-                                height: (JournalGalleryCard.photoHeight - 6) *
-                                    0.6,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      colors.inkPrimary.withValues(alpha: 0),
-                                      colors.inkPrimary
-                                          .withValues(alpha: 0.85),
-                                    ],
-                                  ),
-                                ),
-                              ),
+    // Same manual scale-and-resize approach as JournalGalleryCard, for
+    // the same reason — a plain FittedBox always reports its full given
+    // width to its parent regardless of how much its child actually
+    // shrank, leaving dead space to the trailing side whenever the strip
+    // forces a shrink. See that class's build() for the full rationale;
+    // this mirrors it exactly so both card types keep reporting the same
+    // natural (unscaled) height, which is what keeps them scaling down
+    // in lockstep instead of one rendering visibly smaller than the other.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale =
+            constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                ? (constraints.maxHeight / JournalGalleryCard.photoHeight)
+                    .clamp(0.0, 1.0)
+                : 1.0;
+        return SizedBox(
+          width: JournalGalleryCard.width * scale,
+          height: JournalGalleryCard.photoHeight * scale,
+          child: PaperCard(
+            onTap: onTap,
+            padding: EdgeInsets.zero,
+            borderColor: selected ? colors.accent : null,
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: JournalGalleryCard.width,
+                // Extra ~6px of top space for the peeking card-edge
+                // slivers below — accounted for in _DaySlot's Flexible
+                // sizing so it doesn't reintroduce a Column-overflow.
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 6),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Stacked-photo effect: two thin "card edge" slivers
+                      // peeking out above/behind the top photo, evoking a
+                      // fanned stack of photos. Deliberately outside the
+                      // ClipRRect below, same as before this redesign — they
+                      // need to poke past the card's rounded bounds.
+                      PositionedDirectional(
+                        top: -6,
+                        start: 10,
+                        end: 10,
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            border: Border.all(
+                              color: colors.hairline,
+                              width: AppShape.hairlineWidth,
                             ),
-                          PositionedDirectional(
-                            start: 8,
-                            end: 8,
-                            bottom: 8,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                MonoText(
-                                  DateFormat('dd MMM').format(first.loggedAt),
-                                  color: hasPhoto
-                                      ? colors.surface.withValues(alpha: 0.75)
-                                      : colors.inkMuted,
-                                ),
-                                if (placeName != null &&
-                                    placeName.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    placeName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.title.copyWith(
-                                      fontSize: 17,
-                                      color: hasPhoto
-                                          ? colors.surface
-                                          : colors.inkPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ],
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Day-count badge stays outside the ClipRRect, same
-                  // position as before this redesign — it's always shown
-                  // here (unconditionally, unlike the photo-count badge
-                  // above) since a grouped card is only ever built for
-                  // day.length > 1.
-                  PositionedDirectional(
-                    top: 6,
-                    end: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.inkPrimary.withValues(alpha: 0.72),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
                         ),
-                        child: MonoText('${day.length}', color: colors.surface),
                       ),
-                    ),
+                      PositionedDirectional(
+                        top: -3,
+                        start: 5,
+                        end: 5,
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            border: Border.all(
+                              color: colors.hairline,
+                              width: AppShape.hairlineWidth,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(AppShape.radius - 1),
+                        child: SizedBox(
+                          width: JournalGalleryCard.width,
+                          // 6px shorter than JournalGalleryCard.photoHeight to
+                          // offset this card's top: 6 padding above — keeps the
+                          // grouped card's total natural height pixel-identical
+                          // to the single-entry card's (both 130), so the
+                          // shared FittedBox in _DaySlot doesn't scale one down
+                          // more than the other.
+                          height: JournalGalleryCard.photoHeight - 6,
+                          child: Stack(
+                            children: [
+                              hasPhoto
+                                  ? Image.file(
+                                      File(photoEntry.photos.first.filePath),
+                                      width: JournalGalleryCard.width,
+                                      height:
+                                          JournalGalleryCard.photoHeight - 6,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          JournalGalleryCard.placeholder(
+                                              colors),
+                                    )
+                                  : JournalGalleryCard.placeholder(colors),
+                              if (hasPhoto)
+                                PositionedDirectional(
+                                  start: 0,
+                                  end: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    height:
+                                        (JournalGalleryCard.photoHeight - 6) *
+                                            0.6,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          colors.inkPrimary
+                                              .withValues(alpha: 0),
+                                          colors.inkPrimary
+                                              .withValues(alpha: 0.85),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              PositionedDirectional(
+                                start: 8,
+                                end: 8,
+                                bottom: 8,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    MonoText(
+                                      DateFormat('dd MMM')
+                                          .format(first.loggedAt),
+                                      color: hasPhoto
+                                          ? colors.surface
+                                              .withValues(alpha: 0.75)
+                                          : colors.inkMuted,
+                                    ),
+                                    if (placeName != null &&
+                                        placeName.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        placeName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTextStyles.title.copyWith(
+                                          fontSize: 17,
+                                          color: hasPhoto
+                                              ? colors.surface
+                                              : colors.inkPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Day-count badge stays outside the ClipRRect, same
+                      // position as before this redesign — it's always shown
+                      // here (unconditionally, unlike the photo-count badge
+                      // above) since a grouped card is only ever built for
+                      // day.length > 1.
+                      PositionedDirectional(
+                        top: 6,
+                        end: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: colors.inkPrimary.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            child: MonoText('${day.length}',
+                                color: colors.surface),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
-

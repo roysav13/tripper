@@ -17,9 +17,9 @@ JournalEntry _e(String id, DateTime loggedAt, {String? placeName}) =>
       placeName: placeName,
     );
 
-Widget _wrap(Widget child) => MaterialApp(
+Widget _wrap(Widget child, {double height = 200}) => MaterialApp(
       theme: AppTheme.light(),
-      home: Scaffold(body: SizedBox(height: 200, child: child)),
+      home: Scaffold(body: SizedBox(height: height, child: child)),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -306,5 +306,34 @@ void main() {
     final singleCardHeight = tester.getSize(cards.at(0)).height;
     final groupedCardHeight = tester.getSize(cards.at(1)).height;
     expect(groupedCardHeight, singleCardHeight);
+  });
+
+  testWidgets(
+      'a squeezed strip shrinks the card width to match, leaving no dead '
+      'space beside it', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        JournalGalleryTimeline(
+          entries: [_e('a', DateTime(2026, 7, 20), placeName: 'Krabi')],
+          selectedEntryId: null,
+          onTapDay: (_, __) {},
+          onCenteredDayChanged: (_) {},
+        ),
+        height: 100,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final size = tester.getSize(find.byType(PaperCard).first);
+    // Full natural size is 150x130 (JournalGalleryCard.width/.photoHeight).
+    // A squeezed 100px strip forces a shrink well below that — the old
+    // FittedBox-based layout always reported the full 150 width to its
+    // parent regardless of how much the content inside had shrunk,
+    // leaving a dead-space wedge next to the visibly-smaller card. This
+    // asserts the reported (and therefore painted-border) width actually
+    // shrinks in proportion to the height, so nothing is left over.
+    expect(size.height, lessThan(130));
+    expect(size.width, lessThan(150));
+    expect(size.width / size.height, closeTo(150 / 130, 0.01));
   });
 }
