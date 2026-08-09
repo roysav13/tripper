@@ -46,6 +46,20 @@ dev_dependencies:
   build_runner: ^2.4.13
   flutter_lints: ^5.0.0
 
+# Vendored, patched copy of flutter_earth_globe 2.2.1 — see
+# third_party/flutter_earth_globe/PATCHES.md for what changed and why.
+# Fixes a real bug found by reading the package source: a setState
+# triggered from within build() (recentering the sphere when its
+# internal canvas needs to grow past the box we gave it — which starts
+# happening almost immediately on any zoom-in, since our globe already
+# nearly fills its box at rest) went through Future.delayed(Duration.zero)
+# instead of addPostFrameCallback, letting an unbounded number of extra
+# frames pass before the widget tree settles back down during an active
+# zoom gesture.
+dependency_overrides:
+  flutter_earth_globe:
+    path: third_party/flutter_earth_globe
+
 flutter:
   uses-material-design: true
   generate: true

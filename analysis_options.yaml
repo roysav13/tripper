@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "lib/l10n/generated/**"
+    # Vendored, patched third-party package — see
+    # third_party/flutter_earth_globe/PATCHES.md. Not our code to lint.
+    - "third_party/**"
   language:
     strict-casts: true
     strict-inference: true
