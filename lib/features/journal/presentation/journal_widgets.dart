@@ -424,7 +424,10 @@ class _DaySlot extends StatelessWidget {
         Flexible(
           child: day.length == 1
               ? JournalGalleryCard(
-                  entry: first, onTap: onTap, selected: selected)
+                  entry: first,
+                  onTap: onTap,
+                  selected: selected,
+                )
               : _GroupedGalleryCard(day: day, onTap: onTap, selected: selected),
         ),
       ],
@@ -550,7 +553,8 @@ class _GroupedGalleryCard extends StatelessWidget {
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) =>
                                           JournalGalleryCard.placeholder(
-                                              colors),
+                                        colors,
+                                      ),
                                     )
                                   : JournalGalleryCard.placeholder(colors),
                               if (hasPhoto)
@@ -632,8 +636,10 @@ class _GroupedGalleryCard extends StatelessWidget {
                               horizontal: 6,
                               vertical: 2,
                             ),
-                            child: MonoText('${day.length}',
-                                color: colors.surface),
+                            child: MonoText(
+                              '${day.length}',
+                              color: colors.surface,
+                            ),
                           ),
                         ),
                       ),

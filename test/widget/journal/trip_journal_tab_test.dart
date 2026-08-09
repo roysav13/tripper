@@ -178,7 +178,8 @@ void main() {
     expect(selectedCards, isNotEmpty);
   });
 
-  testWidgets('scrolling the gallery does not throw (live-follow wiring smoke test)',
+  testWidgets(
+      'scrolling the gallery does not throw (live-follow wiring smoke test)',
       (tester) async {
     final entries = [
       for (var i = 0; i < 20; i++)

@@ -30,8 +30,7 @@ Widget _wrap(Widget child, {double height = 200}) => MaterialApp(
     );
 
 void main() {
-  testWidgets(
-      'single-entry day: tapping it reports that day with index 0',
+  testWidgets('single-entry day: tapping it reports that day with index 0',
       (tester) async {
     List<JournalEntry>? tappedDay;
     int? tappedIndex;
