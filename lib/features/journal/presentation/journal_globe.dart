@@ -59,6 +59,13 @@ const _arcCurveScale = 0.4;
 // very top of the range.
 const highResGlobeZoomThreshold = 1.5;
 
+// The two locally bundled texture tiers (see the class doc comment above
+// for why both are bundled rather than fetched). Named constants so the
+// two call sites (_buildController's initial surface, and
+// _handleZoomChanged's tier-2 load) can't drift out of sync with a typo.
+const _baseGlobeTexture = 'assets/globe/earth_day.jpg';
+const _highResGlobeTexture = 'assets/globe/earth_day_high.jpg';
+
 /// Whether [JournalGlobe] should request the higher-resolution surface
 /// texture — true exactly once, the first time [zoom] crosses
 /// [highResGlobeZoomThreshold], given the caller already tracks whether
@@ -81,9 +88,12 @@ bool shouldRequestHighResGlobeSurface({
 /// `FlutterEarthGlobeController` (SPEC: no GPU/platform dependency in
 /// tests) — same seam as PlacesMapView's `renderMap: false`.
 ///
-/// Texture is a locally bundled asset (assets/globe/earth_day.jpg) — no
-/// network fetch to render (offline rule, SPEC §3.1.2). Points are this
-/// trip's located journal entries — an entry IS a visited place (see
+/// Texture is a locally bundled asset — the base tier
+/// (assets/globe/earth_day.jpg) at rest, swapped for a higher-resolution
+/// tier (assets/globe/earth_day_high.jpg) once zoom crosses
+/// highResGlobeZoomThreshold. Both are bundled in the app, never fetched
+/// over the network (offline rule, SPEC §3.1.2). Points are this trip's
+/// located journal entries — an entry IS a visited place (see
 /// place_visit_actions.dart) — not read from Places directly.
 class JournalGlobe extends StatefulWidget {
   const JournalGlobe({
@@ -127,9 +137,14 @@ class _JournalGlobeState extends State<JournalGlobe> {
   /// texture (see shouldRequestHighResGlobeSurface) — guards against
   /// re-requesting it on every subsequent zoom-changed callback past
   /// highResGlobeZoomThreshold. Deliberately never reset: once loaded,
-  /// the higher-res texture stays active for the rest of the session
-  /// even if the user zooms back out (approved design: avoids repeated
-  /// ~32MP decodes from ordinary zoom in/out fiddling).
+  /// the higher-res texture stays active for the lifetime of this
+  /// widget's mount even if the user zooms back out (approved design:
+  /// avoids repeated ~32MP decodes from ordinary zoom in/out fiddling).
+  /// Leaving and re-entering the trip's Journal tab tears down this
+  /// State (see didChangeDependencies/_initialized) and builds a fresh
+  /// FlutterEarthGlobeController, resetting this flag and re-triggering
+  /// the decode on the next threshold crossing — an accepted cost of the
+  /// simpler design, not cross-mount caching.
   bool _highResRequested = false;
 
   /// True once the sphere has actually decoded its surface texture and has
@@ -361,7 +376,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       alreadyRequested: _highResRequested,
     )) {
       _highResRequested = true;
-      controller.loadSurface(const AssetImage('assets/globe/earth_day_high.jpg'));
+      controller.loadSurface(const AssetImage(_highResGlobeTexture));
     }
     final compensation = 1 / math.pow(2, zoom);
     for (final entry in widget.entries) {
@@ -404,20 +419,23 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // hemisphere-darkening effect that reads as a night side. Disable it
       // so the whole globe renders evenly lit.
       surfaceLightingEnabled: false,
-      surface: const AssetImage('assets/globe/earth_day.jpg'),
+      surface: const AssetImage(_baseGlobeTexture),
       // Default is 2.5 (~5.7x, radius = baseRadius * 2^zoom). A prior
       // round raised this to 5 (~32x) for legibility, but that pushes far
-      // past what the bundled 2048x1024 earth_day.jpg texture actually
-      // has detail for — the sphere is rasterized by resampling that
-      // fixed-resolution texture (see RotatingGlobeState.buildSphere),
+      // past what the bundled 4000x2000 earth_day.jpg (base tier) texture
+      // actually has detail for — the sphere is rasterized by resampling
+      // that fixed-resolution texture (see RotatingGlobeState.buildSphere),
       // so zooming past its native detail only blurs pre-existing pixels
       // larger, it doesn't reveal anything sharper. 3.5 (~11x) is chosen
-      // to sit close to where a 2048px-wide equirectangular texture's own
+      // to sit close to where a 4000px-wide equirectangular texture's own
       // texel density starts to noticeably soften under this package's
       // per-pixel bilinear resampling — meaningfully closer than the
       // package's own 2.5 default, without diving deep into visible
-      // blur. Revisiting this needs either a higher-resolution texture
-      // asset or an on-device call on how much softening is acceptable.
+      // blur. This value is about the BASE tier's softening point only —
+      // a higher-resolution tier (earth_day_high.jpg, 8000x4000) now
+      // loads automatically past highResGlobeZoomThreshold, so the
+      // texture actually visible for most of this maxZoom range isn't
+      // the one this comment's math is about.
       maxZoom: 3.5,
     );
     controller.onLoaded = () {

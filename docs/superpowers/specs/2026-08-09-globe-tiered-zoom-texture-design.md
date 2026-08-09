@@ -115,3 +115,28 @@ change in this file.
 - Any change to `flutter_earth_globe`'s vendored source — this feature is
   implemented entirely in `journal_globe.dart` using the existing
   `loadSurface` API.
+
+## Known tradeoffs (post-review)
+
+**Memory cost.** The 8000×4000 tier retains roughly 256MB, not the
+~128MB originally estimated when this resolution was chosen: an 8000×4000
+`ui.Image` (GPU texture) costs about 128MB, and `loadSurface` also
+unconditionally converts it to a `Uint32List` via
+`convertImageToUint32List`, costing roughly another 128MB — even though
+the GPU render path (the normal path on most devices) never reads
+`surfaceProcessed` at all; only the CPU rendering fallback does. This is
+a deliberate, accepted decision: told of the actual ~256MB figure, the
+maintainer chose to keep the 8000×4000 resolution and accept the cost
+rather than reduce resolution or make the `Uint32List` conversion
+conditional on which render path is active. It is not an oversight.
+
+**Untested low-end-GPU risk.** An 8000px-wide texture may exceed
+`GL_MAX_TEXTURE_SIZE` on some lower-end/older GPUs — below the common
+4096 minimum some devices cap at. If that happens,
+`SphereShaderManager.createShaderWithTextures` returns `null`, and the
+sphere keeps showing the base texture indefinitely rather than crashing,
+though with a `debugPrint` on every build frame. Manual verification for
+this feature was done on a single real device (a modern flagship); this
+failure mode has not been exercised on lower-spec hardware. This is a
+known, accepted, unmitigated risk pending broader device testing — no
+code change is planned for it as part of this feature.

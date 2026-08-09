@@ -161,6 +161,48 @@ by `mounted` like every other deferred callback in this file.
 root cause below. It's a real, independent bug (the loading indicator was
 timed wrong) that was masking the actual one.
 
+## Fix: close the surface/surfaceProcessed race in loadSurface
+
+**File:** `lib/flutter_earth_globe_controller.dart`, `loadSurface`'s
+`ImageStreamListener` callback.
+
+**What was wrong:** the callback assigned `surface = info.image`
+immediately, then `await`ed `convertImageToUint32List(info.image)` before
+assigning `surfaceProcessed`. During that await window, `surface` already
+pointed at the new image while `surfaceProcessed` still held the old
+image's decoded data — two fields that are supposed to describe the same
+image, briefly describing two different ones. This was latent but
+unreachable as long as `loadSurface` was only ever called once per
+controller (`surfaceProcessed` starts `null` and every read site
+null-guards on that). It became reachable once the app started calling
+`loadSurface` a second time, to swap in a higher-resolution tier past a
+zoom threshold (`journal_globe.dart`'s `_handleZoomChanged`) — the second
+call has an old, non-null `surfaceProcessed` to race against. On the CPU
+rendering fallback path (`rotating_globe.dart`'s `buildSphere`), pixel
+indices are computed from `surface`'s (new, larger) dimensions but read
+from `surfaceProcessed`'s (old, smaller) buffer — an out-of-bounds read.
+Because `_isBuildingSphere` only resets to `false` inside the success
+path with no `try/finally`, a thrown exception here leaves the CPU render
+path permanently stuck showing a stale frame for the rest of the session.
+
+**The fix:** reorder so both fields are assigned together, only after the
+async conversion completes:
+
+```dart
+(info, _) async {
+  final processed = await convertImageToUint32List(info.image);
+  surface = info.image;
+  surfaceConfiguration = configuration;
+  surfaceProcessed = processed;
+  notifyListeners();
+},
+```
+
+This keeps `surface`/`surfaceProcessed` consistent at every point either
+is externally observable, at no cost on the GPU path (which never reads
+`surfaceProcessed` at all) — the swap just becomes visible one microtask
+later.
+
 ## The actual root cause (app-side, not this package)
 
 Fixing everything above still left the globe permanently invisible, with
@@ -228,6 +270,14 @@ to the new version's `rotating_globe.dart`:
    whose sizing depends on receiving tight constraints (see "The actual
    root cause" above). This is easy to reintroduce by accident with any
    future overlay added on top of the globe.
+7. In `loadSurface`'s `ImageStreamListener` callback, assign `surface`,
+   `surfaceConfiguration`, and `surfaceProcessed` together, only after
+   `await convertImageToUint32List(info.image)` resolves — never assign
+   `surface` before that await. Assigning it early reopens the
+   surface/surfaceProcessed race (see "Fix: close the surface/
+   surfaceProcessed race in loadSurface" above), which corrupts the CPU
+   rendering fallback path if `loadSurface` is ever called more than once
+   per controller.
 
 Then remove this vendored copy and the `dependency_overrides` entry in
 the app's `pubspec.yaml` once upstream ships equivalent fixes.

@@ -18,3 +18,20 @@ resolution.
 
 `flutter analyze`/`flutter run` will fail if this file goes missing,
 since `journal_globe.dart` references this exact path.
+
+## `earth_day_high.jpg`
+
+8000x4000, downscaled via high-quality bicubic interpolation from a
+21600x10800 source file that was already present in the working tree
+before this feature was built. That source file's own provenance/license
+wasn't tracked before this session, but 21600x10800 matches NASA's
+published "Blue Marble Next Generation" tile resolution, so it's very
+likely sourced from the same NASA Blue Marble public-domain collection
+cited above for `earth_day.jpg` — this is a reasonable inference, not a
+confirmed fact, since the chain of custody before this session isn't
+recorded.
+
+Loaded by `journal_globe.dart` as the "tier 2" / zoomed-in texture once
+`highResGlobeZoomThreshold` (currently `zoom > 1.5`) is crossed — via
+`FlutterEarthGlobeController.loadSurface` at runtime, not as the initial
+`surface:` texture the controller is constructed with.

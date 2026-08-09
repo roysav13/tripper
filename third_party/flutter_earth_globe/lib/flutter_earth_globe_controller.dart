@@ -720,9 +720,14 @@ class FlutterEarthGlobeController extends ChangeNotifier {
   }) {
     image.resolve(configuration).addListener(ImageStreamListener(
       (info, _) async {
+        // Both fields must update together, only after the async
+        // conversion completes — see PATCHES.md's "Fix: close the
+        // surface/surfaceProcessed race in loadSurface" section for why
+        // assigning `surface` before awaiting the conversion is unsafe.
+        final processed = await convertImageToUint32List(info.image);
         surface = info.image;
         surfaceConfiguration = configuration;
-        surfaceProcessed = await convertImageToUint32List(info.image);
+        surfaceProcessed = processed;
         notifyListeners();
       },
       // Previously missing entirely: a failed resolve (bad path, decode
