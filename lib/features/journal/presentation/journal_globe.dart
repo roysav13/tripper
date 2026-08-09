@@ -63,10 +63,12 @@ const _arcCurveScale = 0.4;
 // surface texture (see _buildController's maxZoom comment for why the
 // base texture softens at high zoom — this routes more real detail into
 // view instead of just resampling the same fixed-resolution source
-// larger). zoom's range is [minZoom (-1.0 default), maxZoom (3.5)]; 1.5
-// is partway through the zoom-in range, chosen so the swap happens
-// before the softening becomes very visible rather than only at the
-// very top of the range.
+// larger). zoom's range is [minZoom (-1.0 default), maxZoom (5)]; 1.5
+// sits closer to the bottom of that zoom-in range than "partway"
+// suggests (maxZoom was later raised from 3.5 to 5 by a separate task,
+// stretching the range without this threshold being revisited) — chosen
+// so the swap happens early, well before the base texture's softening
+// becomes very visible, rather than only near the top of the range.
 const highResGlobeZoomThreshold = 1.5;
 
 // The two locally bundled texture tiers (see the class doc comment above
@@ -412,7 +414,6 @@ class _JournalGlobeState extends State<JournalGlobe> {
           Point(
             id: key,
             coordinates: GlobeCoordinates(centroidLat, centroidLng),
-            label: '${cluster.length} entries',
             // Widget-rendered, same reasoning as the photo dot: the
             // package has no native way to show a count badge on a
             // point. size: 0 suppresses the native dot underneath it.
@@ -597,7 +598,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
     );
     controller.onLoaded = () {
       _addPoints(controller);
-      _lastClusterBand = controller.zoom.floor();
+      _lastClusterBand = _clusterBandFor(controller.zoom);
       if (widget.selectedEntryId != null) {
         _maybeFocusSelected();
       } else {

@@ -90,7 +90,7 @@ double _haversineDistanceKm(
 /// sensible chronological swipe order, matching [groupEntriesByDay]'s
 /// existing ordering guarantee.
 ///
-/// The clustering threshold shrinks as [zoom] increases — `50 *
+/// The clustering threshold shrinks as [zoom] increases — `150 *
 /// pow(2, -zoom)` km — deliberately using the same `2^zoom` scaling this
 /// file's caller (`journal_globe.dart`'s `_handleZoomChanged`) already
 /// uses to keep dot sizes visually consistent across zoom, so a
@@ -98,9 +98,18 @@ double _haversineDistanceKm(
 /// zoom rather than being a fixed geographic distance: entries cluster
 /// because they'd visually collide at the current zoom, and split apart
 /// once zooming in would give them enough screen space to be
-/// individually tappable. `50` (km, at zoom 0) is a starting value for
-/// on-device tuning, not precisely derived — see this file's `PATCHES.md`-
-/// adjacent design doc for the reasoning.
+/// individually tappable. The original `50` (km, at zoom 0) was picked
+/// from a "same metro area" real-world-distance intuition, without
+/// accounting for how much the globe's screen-scale compression shrinks
+/// apparent distance: at the app's actual rest zoom of 1, 50km worked
+/// out to under 1 pixel of screen distance — far tighter than the
+/// ~9-10px a halo actually occupies on screen, so real visual collisions
+/// at neighborhood/city-block scale went uncaught. `150` is a
+/// deliberate, more modest first correction, chosen for on-device
+/// re-verification rather than jumping straight to the fully
+/// pixel-derived value (~500-550km) that would more precisely match
+/// halo size — still a starting value for further tuning, not a final
+/// answer.
 ///
 /// Grouping is transitive: if A is within threshold of B, and B is
 /// within threshold of C, all three land in one cluster even if A and C
@@ -113,7 +122,7 @@ List<List<JournalEntry>> groupEntriesByProximity(
   double zoom,
 ) {
   final located = entries.where((e) => e.hasLocation).toList();
-  final thresholdKm = (50.0 * math.pow(2, -zoom)).toDouble();
+  final thresholdKm = (150.0 * math.pow(2, -zoom)).toDouble();
   final clusters = <List<JournalEntry>>[];
   final assigned = <String>{};
   for (final seed in located) {

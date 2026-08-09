@@ -113,48 +113,51 @@ void main() {
         _e('nyc', DateTime(2026, 1, 1), lat: 40.7, lng: -74.0),
         _e('tokyo', DateTime(2026, 1, 2), lat: 35.7, lng: 139.7),
       ];
-      // zoom: -1 gives the largest possible threshold (100km) — even then,
+      // zoom: -1 gives the largest possible threshold (300km) — even then,
       // two points on opposite sides of the planet must not cluster.
       final clusters = groupEntriesByProximity(entries, -1);
       expect(clusters, hasLength(2));
     });
 
-    test('entries within threshold at low zoom cluster, and split apart '
+    test(
+        'entries within threshold at low zoom cluster, and split apart '
         'once zoom shrinks the threshold below their distance', () {
-      // ~15km apart (0.135 degrees latitude at this longitude).
+      // ~15.011km apart (0.135 degrees latitude at this longitude).
       final entries = [
         _e('a', DateTime(2026, 1, 1), lat: 40.000, lng: -74.000),
         _e('b', DateTime(2026, 1, 2), lat: 40.135, lng: -74.000),
       ];
-      // zoom 0: threshold 50km — within range, one cluster.
+      // zoom 0: threshold 150km — within range, one cluster.
       final atRest = groupEntriesByProximity(entries, 0);
       expect(atRest, hasLength(1));
       expect(atRest.single, hasLength(2));
 
-      // zoom 3: threshold 6.25km — 15km apart exceeds it, two clusters.
-      final zoomedIn = groupEntriesByProximity(entries, 3);
+      // zoom 4: threshold 9.375km — 15.011km apart exceeds it, two
+      // clusters.
+      final zoomedIn = groupEntriesByProximity(entries, 4);
       expect(zoomedIn, hasLength(2));
     });
 
-    test('transitive chaining: A-C exceeds the threshold directly but '
-        'both are within threshold of B, so all three cluster together',
-        () {
-      // Collinear along longitude, ~15km between consecutive points
-      // (0.135 degrees latitude each step), ~30km between the ends.
+    test(
+        'transitive chaining: A-C exceeds the threshold directly but '
+        'both are within threshold of B, so all three cluster together', () {
+      // Collinear along longitude, ~15.011km between consecutive points
+      // (0.135 degrees latitude each step), ~30.023km between the ends.
       final entries = [
         _e('a', DateTime(2026, 1, 3), lat: 40.000, lng: -74.000),
         _e('b', DateTime(2026, 1, 1), lat: 40.135, lng: -74.000),
         _e('c', DateTime(2026, 1, 2), lat: 40.270, lng: -74.000),
       ];
-      // zoom 1: threshold 25km. a-b ~15km (in range), b-c ~15km (in
-      // range), a-c ~30km (out of range directly) — must still merge
-      // into one cluster via b.
-      final clusters = groupEntriesByProximity(entries, 1);
+      // zoom 3: threshold 18.75km. a-b ~15.011km (in range), b-c
+      // ~15.011km (in range), a-c ~30.023km (out of range directly) —
+      // must still merge into one cluster via b.
+      final clusters = groupEntriesByProximity(entries, 3);
       expect(clusters, hasLength(1));
       expect(clusters.single, hasLength(3));
     });
 
-    test('each cluster is sorted ascending by loggedAt regardless of '
+    test(
+        'each cluster is sorted ascending by loggedAt regardless of '
         'input order', () {
       final entries = [
         _e('later', DateTime(2026, 1, 10), lat: 40.0, lng: -74.0),

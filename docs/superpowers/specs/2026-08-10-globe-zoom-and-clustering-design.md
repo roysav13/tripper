@@ -75,16 +75,36 @@ utility for this in the codebase, so this feature adds a small private
 haversine helper alongside the new function, no new package dependency
 (the formula is ~10 lines).
 
-**Threshold curve.** `clusterThresholdKm = 50 * pow(2, -zoom)` — chosen to
-track the same `2^zoom` scaling already used everywhere else in this file
-for keeping on-screen sizes consistent across zoom (see
+**Threshold curve.** `clusterThresholdKm = 150 * pow(2, -zoom)` — chosen
+to track the same `2^zoom` scaling already used everywhere else in this
+file for keeping on-screen sizes consistent across zoom (see
 `_handleZoomChanged`'s `compensation = 1 / math.pow(2, zoom)`), so the
 cluster threshold's *apparent* on-screen size stays roughly constant as
 you zoom, exactly like dot sizing does — entries cluster if they'd
 visually collide at the current zoom, not based on a fixed geographic
-distance. At `zoom: 0` (rest), ~50km (roughly "same metro area"); at
-`zoom: 5` (new max), ~1.5km. `50` is a starting value for on-device
+distance. At `zoom: 1` (the app's actual rest zoom — `FlutterEarthGlobeController`'s
+own constructor default, never overridden by this app), ~75km; at
+`zoom: 5` (new max), ~4.7km. `150` is a starting value for on-device
 tuning like every other constant in this section.
+
+**Post-ship correction (final whole-branch review).** The value
+originally shipped here was `50`, not `150`, described above as ~50km at
+"zoom: 0 (rest)" — both the zoom and the value were wrong: the app's
+actual rest zoom is `1`, not `0`, and a final whole-branch review worked
+out the actual on-screen pixel math for this globe and found `50` was
+badly miscalibrated relative to it. At rest zoom, the globe renders into
+a sphere with ~220px screen radius, so 1 screen pixel ≈ 29km of real
+distance — meaning the original 50km threshold worked out to under 1
+pixel of screen distance, far tighter than a halo's actual ~9-10px
+on-screen size. In practice this meant entries that were visually
+colliding on screen (10-50km apart at rest zoom) very often never
+triggered clustering at all, which is very likely why the original
+reported problem ("close locations override each other") wasn't
+actually fixed by the feature as first tuned. The fully pixel-derived
+value would be roughly 500-550km (matching actual halo pixel size), but
+`150` was chosen instead as a deliberate, more modest first correction,
+to be re-tested on-device before going that far — still a starting
+value for further tuning, not a final answer.
 
 **Grouping is transitive-closure, not pairwise.** If A is within
 threshold of B, and B is within threshold of C, all three land in one
