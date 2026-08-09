@@ -1749,6 +1749,23 @@ class RotatingGlobeState extends State<RotatingGlobe>
                   _zoomAnimationController?.stop();
                 }
 
+                // PATCH: this stop was missing for genericAnimationController
+                // — the controller focusOnCoordinates() drives (used for
+                // every programmatic focus: tap-to-entry, live-follow on
+                // gallery scroll, initial/latest-entry focus). Without it,
+                // a manual drag starting while a focusOnCoordinates call is
+                // still resolving (even a nominally-instant Duration.zero
+                // one, which can still take a frame under load) leaves that
+                // controller's listener free to keep overwriting rotationX/
+                // Y/Z on top of the user's own drag input — the same class
+                // of stale-animation-controller bug already fixed for
+                // tap-then-scroll, at a different transition point this
+                // didn't cover: gallery-live-follow immediately followed by
+                // a manual globe drag.
+                if (genericAnimationController?.isAnimating == true) {
+                  genericAnimationController?.stop();
+                }
+
                 if (widget.controller.isRotating) {
                   widget.controller.rotationController.stop();
                 }

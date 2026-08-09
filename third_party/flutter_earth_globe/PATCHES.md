@@ -42,11 +42,40 @@ triggered from inside `build()` — it always resolves at the end of the
 concrete, confirmed source of extra out-of-band rendering work
 specifically correlated with zooming.
 
+## Fix: stop `genericAnimationController` on a new drag gesture
+
+**File:** `lib/rotating_globe.dart`, `RotatingGlobeState`'s
+`InteractiveViewer.onInteractionStart`.
+
+**What was wrong:** `onInteractionStart` explicitly stops
+`_decelerationController` and `_zoomAnimationController` if either is
+still animating when a new drag/pinch gesture begins — but never stopped
+`genericAnimationController`, the controller `focusOnCoordinates()` drives
+for every programmatic focus (tap-to-entry, live-follow on gallery
+scroll, initial/latest-entry focus). If a user starts dragging the globe
+while a `focusOnCoordinates` call is still resolving — even a nominally
+"instant" `Duration.zero` one, which can still take a frame to settle
+under load — that stale controller's listener stays free to keep
+overwriting `rotationX`/`rotationY`/`rotationZ` on top of the drag's own
+input. This is the same class of stale-animation-controller bug the app
+already worked around for its own `animate: true`-vs-`false` call
+pattern (see the app's `journal_globe.dart`), but at a transition point
+that fix didn't cover: a gallery-scroll-driven live-follow snap
+immediately followed by a manual drag on the globe itself.
+
+**The fix:** stop `genericAnimationController` too, in the same place and
+the same way as the other two controllers, before the gesture's own
+`setState()`.
+
 ## Re-applying after a version bump
 
-If `flutter_earth_globe` is ever upgraded, re-apply this same change (the
-`Future.delayed` → `addPostFrameCallback` swap, with a `mounted` guard)
-to the new version's `rotating_globe.dart`, in the same spot (the
-recentering logic in `RotatingGlobeState.build()`), then remove this
-vendored copy and the `dependency_overrides` entry in the app's
-`pubspec.yaml` once upstream ships an equivalent fix.
+If `flutter_earth_globe` is ever upgraded, re-apply both of these
+changes to the new version's `rotating_globe.dart`:
+
+1. `Future.delayed` → `addPostFrameCallback` (with a `mounted` guard) in
+   the recentering logic inside `RotatingGlobeState.build()`.
+2. Stop `genericAnimationController` in `onInteractionStart`, alongside
+   `_decelerationController` and `_zoomAnimationController`.
+
+Then remove this vendored copy and the `dependency_overrides` entry in
+the app's `pubspec.yaml` once upstream ships equivalent fixes.
