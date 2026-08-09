@@ -242,7 +242,11 @@ class _GlassPill extends StatelessWidget {
 
 /// A circular floating action button on the same glass backdrop as
 /// [_GlassPill] — the add-entry and map/list-toggle actions, relocated
-/// off the removed header bar onto the globe itself.
+/// off the removed header bar onto the globe itself. The backdrop is
+/// sized and tinted to read as a soft, seamless glass tint rather than a
+/// conspicuous solid disc — matching the button's own footprint (via
+/// IconButton's style, not a separately-sized wrapper) instead of the
+/// larger default Material tap-target circle.
 class _GlassIconButton extends StatelessWidget {
   const _GlassIconButton({
     required this.icon,
@@ -257,15 +261,15 @@ class _GlassIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colors.inkPrimary.withValues(alpha: 0.55),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: colors.surface),
-        tooltip: tooltip,
-        onPressed: onPressed,
+    return IconButton(
+      icon: Icon(icon, color: colors.surface, size: 20),
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: colors.inkPrimary.withValues(alpha: 0.32),
+        shape: const CircleBorder(),
+        minimumSize: const Size(36, 36),
+        padding: EdgeInsets.zero,
       ),
     );
   }

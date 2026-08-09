@@ -80,14 +80,14 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
             top: 8,
             start: 8,
             child: SafeArea(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.inkPrimary.withValues(alpha: 0.55),
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.close, color: colors.surface),
-                  onPressed: () => Navigator.of(context).pop(),
+              child: IconButton(
+                icon: Icon(Icons.close, color: colors.surface, size: 20),
+                onPressed: () => Navigator.of(context).pop(),
+                style: IconButton.styleFrom(
+                  backgroundColor: colors.inkPrimary.withValues(alpha: 0.32),
+                  shape: const CircleBorder(),
+                  minimumSize: const Size(36, 36),
+                  padding: EdgeInsets.zero,
                 ),
               ),
             ),

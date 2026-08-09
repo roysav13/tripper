@@ -328,6 +328,17 @@ void main() {
     );
     final decoration = decoratedBox.decoration as BoxDecoration;
     expect(decoration.shape, BoxShape.circle);
+    // Soft/seamless, not a conspicuous solid disc: low alpha, and sized
+    // tightly to the button rather than Material's larger default
+    // tap-target circle.
+    expect(decoration.color!.a, closeTo(0.32, 0.01));
+    final size = tester.getSize(
+      find.ancestor(
+        of: find.byIcon(Icons.more_vert),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
+    expect(size, const Size(36, 36));
   });
 
   testWidgets('menu has no scrim when the entry has no photo', (tester) async {

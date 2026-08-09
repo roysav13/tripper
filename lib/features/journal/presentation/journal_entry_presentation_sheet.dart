@@ -242,7 +242,10 @@ class _JournalEntryPresentationViewState
       icon: Icon(
         Icons.more_vert,
         color: hasPhoto ? colors.surface : colors.inkMuted,
+        size: 20,
       ),
+      padding: EdgeInsets.zero,
+      splashRadius: 18,
       onSelected: (action) {
         if (action == 'edit') {
           onEdit();
@@ -259,12 +262,20 @@ class _JournalEntryPresentationViewState
       ],
     );
     if (!hasPhoto) return button;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colors.inkPrimary.withValues(alpha: 0.55),
+    // Softer, tighter backdrop — a low-alpha tint that reads as seamless
+    // glass rather than a conspicuous solid disc, sized to the button's
+    // own (now-reduced) footprint via SizedBox rather than the larger
+    // default Material tap-target circle.
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colors.inkPrimary.withValues(alpha: 0.32),
+        ),
+        child: button,
       ),
-      child: button,
     );
   }
 }
