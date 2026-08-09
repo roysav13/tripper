@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/paper_card.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/presentation/journal_widgets.dart';
 import 'package:tripper/l10n/app_localizations.dart';
@@ -279,5 +280,31 @@ void main() {
     // be the very first one (Place 0) — some later day is now closer to
     // the viewport's center.
     expect(lastCentered!.first.id, isNot('e0'));
+  });
+
+  testWidgets(
+      'a grouped-day card renders the same height as a single-entry card',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        JournalGalleryTimeline(
+          entries: [
+            _e('single', DateTime(2026, 7, 19), placeName: 'Krabi'),
+            _e('a', DateTime(2026, 7, 20), placeName: 'Phuket'),
+            _e('b', DateTime(2026, 7, 20, 12), placeName: 'Phuket'),
+          ],
+          selectedEntryId: null,
+          onTapDay: (_, __) {},
+          onCenteredDayChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cards = find.byType(PaperCard);
+    expect(cards, findsNWidgets(2));
+    final singleCardHeight = tester.getSize(cards.at(0)).height;
+    final groupedCardHeight = tester.getSize(cards.at(1)).height;
+    expect(groupedCardHeight, singleCardHeight);
   });
 }

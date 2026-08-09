@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:tripper/core/theme/app_colors.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
@@ -436,4 +438,68 @@ void main() {
     expect(find.text('Second entry, no photo'), findsOneWidget);
     expect(find.text('Only entry photo'), findsNothing);
   });
+
+  testWidgets('tapping a photo in the carousel opens the full-screen viewer',
+      (tester) async {
+    final dir = Directory.systemTemp.createTempSync('journal_photo_tap');
+    addTearDown(() {
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // OS cleans up temp dirs — don't fail the test over a lock.
+      }
+    });
+    final photo = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+
+    // Warm the cache BEFORE any pump — both the carousel's own Image and
+    // the full-screen viewer's PhotoView key off the same FileImage, and
+    // PhotoView's default loading state is an indeterminate
+    // CircularProgressIndicator whose repeating animation would otherwise
+    // keep pumpAndSettle from ever settling under flutter test's
+    // fake-async zone (same reasoning as
+    // journal_photo_viewer_test.dart's _warmImageCache).
+    await tester.runAsync(() => _warmImageCache(photo));
+
+    await _open<void>(
+      tester,
+      entries: [
+        _e(
+          'a',
+          summary: 'Has a photo',
+          photos: [JournalPhoto(id: 'p1', filePath: photo.path)],
+        ),
+      ],
+      initialIndex: 0,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Image).first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PhotoViewGallery), findsOneWidget);
+  });
+}
+
+/// Decodes [file] and seats it in the global [imageCache] via a real
+/// event-loop turn — see journal_photo_viewer_test.dart's identical helper
+/// for the full explanation.
+Future<void> _warmImageCache(File file) {
+  final provider = FileImage(file);
+  final stream = provider.resolve(ImageConfiguration.empty);
+  final completer = Completer<void>();
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, synchronousCall) {
+      stream.removeListener(listener);
+      completer.complete();
+    },
+    onError: (error, stackTrace) {
+      stream.removeListener(listener);
+      completer.completeError(error, stackTrace);
+    },
+  );
+  stream.addListener(listener);
+  return completer.future;
 }

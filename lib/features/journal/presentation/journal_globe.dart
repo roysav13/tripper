@@ -165,6 +165,15 @@ class _JournalGlobeState extends State<JournalGlobe> {
             size: entry.hasPhotos ? _photoHaloDotSize : _haloDotSize,
             color: colors.accent.withValues(alpha: _haloAlpha),
           ),
+          // The halo's hit-rect is strictly larger than the core dot's and
+          // is tested first (added first, same coordinates so depth ties,
+          // and the package's sort is only stable for small point counts)
+          // — the package marks a click "handled" on the first hit
+          // regardless of whether that point has a handler, so a halo
+          // with no onTap silently swallows taps meant for the dot below
+          // it. Left null for photo entries — _PhotoDot's own
+          // GestureDetector handles those; wiring both would double-fire.
+          onTap: entry.hasPhotos ? null : onTap,
         ),
       );
       if (entry.hasPhotos) {

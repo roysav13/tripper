@@ -413,25 +413,25 @@ class _JournalEntryPresentationPageState
                   _handedOff = false;
                 }),
                 children: [
-                  for (final photo in photos)
+                  for (var i = 0; i < photos.length; i++)
                     GestureDetector(
                       onTap: () => showJournalPhotoViewer(
                         context,
                         photos: photos,
-                        initialIndex: _currentPhoto,
-                        onPageChanged: (i) =>
-                            setState(() => _currentPhoto = i),
+                        initialIndex: i,
+                        onPageChanged: (newIndex) {
+                          if (mounted && _photoController.hasClients) {
+                            _photoController.jumpToPage(newIndex);
+                          }
+                        },
                       ),
-                      child: Hero(
-                        tag: photo.id,
-                        child: Image.file(
-                          File(photo.filePath),
-                          width: double.infinity,
-                          height: height,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Container(color: colors.paper),
-                        ),
+                      child: Image.file(
+                        File(photos[i].filePath),
+                        width: double.infinity,
+                        height: height,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Container(color: colors.paper),
                       ),
                     ),
                 ],

@@ -72,8 +72,6 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
             backgroundDecoration: BoxDecoration(color: colors.inkPrimary),
             builder: (context, index) => PhotoViewGalleryPageOptions(
               imageProvider: FileImage(File(widget.photos[index].filePath)),
-              heroAttributes:
-                  PhotoViewHeroAttributes(tag: widget.photos[index].id),
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2,
             ),
