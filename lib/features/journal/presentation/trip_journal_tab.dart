@@ -88,6 +88,18 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                   liveFollowEntryId: _liveFollowEntryId,
                   onEntryTap: (entry) =>
                       setState(() => _selectedEntryId = entry.id),
+                  onClusterTap: (clusterEntries) {
+                    setState(() => _selectedEntryId = clusterEntries.first.id);
+                    showJournalEntryPresentationSheet(
+                      context,
+                      tripId: widget.trip.id,
+                      entries: clusterEntries,
+                      initialIndex: 0,
+                      onPageChanged: (index) => setState(
+                        () => _selectedEntryId = clusterEntries[index].id,
+                      ),
+                    );
+                  },
                   renderGlobe: widget.renderGlobe,
                 ),
         ),
