@@ -86,6 +86,30 @@ void main() {
     expect(find.text('Arrived in Krabi'), findsOneWidget);
   });
 
+  testWidgets(
+      'the stats line renders as a floating overlay, not a separate '
+      'header — add and toggle actions still reachable', (tester) async {
+    await _pump(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Arrived in Krabi',
+          loggedAt: DateTime(2026, 7, 20),
+          createdAt: DateTime(2026, 7, 20),
+        ),
+      ],
+    );
+
+    // journalStatsLine: "{entries} entries · {places} places visited",
+    // MonoText uppercases it. 1 entry, 0 visited places (FakePlaceRepository
+    // is empty in _pump's setup).
+    expect(find.text('1 ENTRIES · 0 PLACES VISITED'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.byIcon(Icons.map_outlined), findsOneWidget);
+  });
+
   testWidgets('toggling to map view swaps the timeline for the map',
       (tester) async {
     await _pump(
