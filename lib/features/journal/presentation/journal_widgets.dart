@@ -109,28 +109,6 @@ class JournalGalleryCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (entry.photos.length > 1)
-                          PositionedDirectional(
-                            top: 6,
-                            end: 6,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color:
-                                    colors.inkPrimary.withValues(alpha: 0.72),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsetsDirectional.symmetric(
-                                  horizontal: 5,
-                                  vertical: 1,
-                                ),
-                                child: MonoText(
-                                  '${entry.photos.length}',
-                                  color: colors.surface,
-                                ),
-                              ),
-                            ),
-                          ),
                         PositionedDirectional(
                           start: 8,
                           end: 8,
@@ -450,7 +428,17 @@ class _GroupedGalleryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final first = day.first;
-    final photoEntry = day.firstWhere((e) => e.hasPhotos, orElse: () => first);
+    // The cover is the day's LATEST entry with a photo, not just the
+    // first-with-photo in list order — day isn't guaranteed to be sorted
+    // by time (groupEntriesByDay preserves original entry order).
+    final photoEntry = day.where((e) => e.hasPhotos).fold<JournalEntry?>(
+              null,
+              (latest, e) =>
+                  latest == null || e.loggedAt.isAfter(latest.loggedAt)
+                      ? e
+                      : latest,
+            ) ??
+        first;
     final placeName = first.placeName;
     final hasPhoto = photoEntry.hasPhotos;
 

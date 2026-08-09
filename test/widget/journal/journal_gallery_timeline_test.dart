@@ -4,10 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/paper_card.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
+import 'package:tripper/features/journal/domain/journal_photo.dart';
 import 'package:tripper/features/journal/presentation/journal_widgets.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
-JournalEntry _e(String id, DateTime loggedAt, {String? placeName}) =>
+JournalEntry _e(
+  String id,
+  DateTime loggedAt, {
+  String? placeName,
+  List<JournalPhoto> photos = const [],
+}) =>
     JournalEntry(
       id: id,
       tripId: 't1',
@@ -15,6 +21,7 @@ JournalEntry _e(String id, DateTime loggedAt, {String? placeName}) =>
       loggedAt: loggedAt,
       createdAt: loggedAt,
       placeName: placeName,
+      photos: photos,
     );
 
 Widget _wrap(Widget child, {double height = 200}) => MaterialApp(
@@ -112,6 +119,43 @@ void main() {
     await tester.tap(find.text('6'));
     expect(tappedDay?.length, 6);
     expect(tappedIndex, 0);
+  });
+
+  testWidgets(
+      "a grouped card's cover photo is the day's latest entry with a "
+      'photo, not the first one in list order', (tester) async {
+    final entries = [
+      // Deliberately out of chronological order in the input list, and
+      // with the earliest entry (not the last) having a photo too — the
+      // cover must still be 'evening', the latest, not 'morning', the
+      // first-with-a-photo.
+      _e(
+        'morning',
+        DateTime(2026, 7, 20, 9),
+        photos: const [JournalPhoto(id: 'p-morning', filePath: '/tmp/a.jpg')],
+      ),
+      _e('brunch', DateTime(2026, 7, 20, 11)),
+      _e(
+        'evening',
+        DateTime(2026, 7, 20, 20),
+        photos: const [JournalPhoto(id: 'p-evening', filePath: '/tmp/b.jpg')],
+      ),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        JournalGalleryTimeline(
+          entries: entries,
+          selectedEntryId: null,
+          onTapDay: (_, __) {},
+          onCenteredDayChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final image = tester.widget<Image>(find.byType(Image));
+    final fileImage = image.image as FileImage;
+    expect(fileImage.file.path, '/tmp/b.jpg');
   });
 
   testWidgets('entries on different days each get their own dot and card',
