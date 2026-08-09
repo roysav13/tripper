@@ -123,6 +123,15 @@ class _JournalGlobeState extends State<JournalGlobe> {
   bool _initialized = false;
   String? _focusedEntryId;
 
+  /// Set once _handleZoomChanged has requested the higher-res surface
+  /// texture (see shouldRequestHighResGlobeSurface) — guards against
+  /// re-requesting it on every subsequent zoom-changed callback past
+  /// highResGlobeZoomThreshold. Deliberately never reset: once loaded,
+  /// the higher-res texture stays active for the rest of the session
+  /// even if the user zooms back out (approved design: avoids repeated
+  /// ~32MP decodes from ordinary zoom in/out fiddling).
+  bool _highResRequested = false;
+
   /// True once the sphere has actually decoded its surface texture and has
   /// something real to paint — driven by
   /// [FlutterEarthGlobeController.onSphereReady], NOT [onLoaded] (which
@@ -347,6 +356,13 @@ class _JournalGlobeState extends State<JournalGlobe> {
   void _handleZoomChanged(double zoom) {
     final controller = _controller;
     if (controller == null) return;
+    if (shouldRequestHighResGlobeSurface(
+      zoom: zoom,
+      alreadyRequested: _highResRequested,
+    )) {
+      _highResRequested = true;
+      controller.loadSurface(const AssetImage('assets/globe/earth_day_high.jpg'));
+    }
     final compensation = 1 / math.pow(2, zoom);
     for (final entry in widget.entries) {
       if (!entry.hasLocation) continue;
