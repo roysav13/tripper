@@ -177,7 +177,9 @@ class _JournalEntryPresentationViewState
                         ),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: i == _currentPage ? colors.accent : colors.hairline,
+                          color: i == _currentPage
+                              ? colors.accent
+                              : colors.hairline,
                         ),
                       ),
                   ],
@@ -352,8 +354,8 @@ class _JournalEntryPresentationPageState
                       const SizedBox(height: 4),
                       Text(
                         placeName,
-                        style:
-                            AppTextStyles.title.copyWith(color: colors.inkPrimary),
+                        style: AppTextStyles.title
+                            .copyWith(color: colors.inkPrimary),
                       ),
                     ],
                     const SizedBox(height: 12),

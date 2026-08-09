@@ -45,7 +45,8 @@ Future<void> _warmImageCache(File file) {
 }
 
 void main() {
-  testWidgets('opens a full-screen PhotoViewGallery at the given index, '
+  testWidgets(
+      'opens a full-screen PhotoViewGallery at the given index, '
       'reports page changes, and closes on tap', (tester) async {
     final dir = Directory.systemTemp.createTempSync('journal_photo_viewer');
     addTearDown(() {
@@ -57,10 +58,8 @@ void main() {
         // OS cleans up temp dirs — don't fail the test over a lock.
       }
     });
-    final photoA = File('${dir.path}/a.png')
-      ..writeAsBytesSync(_pngBytes);
-    final photoB = File('${dir.path}/b.png')
-      ..writeAsBytesSync(_pngBytes);
+    final photoA = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
+    final photoB = File('${dir.path}/b.png')..writeAsBytesSync(_pngBytes);
     final photos = [
       JournalPhoto(id: 'p1', filePath: photoA.path),
       JournalPhoto(id: 'p2', filePath: photoB.path),

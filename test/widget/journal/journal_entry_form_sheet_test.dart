@@ -50,7 +50,8 @@ Future<FakeJournalRepository> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('saving without a summary creates the entry with an empty '
+  testWidgets(
+      'saving without a summary creates the entry with an empty '
       'summary', (tester) async {
     final repo = await _pump(tester);
     await tester.tap(find.text('Save'));

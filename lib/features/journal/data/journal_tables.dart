@@ -8,6 +8,7 @@ class JournalEntries extends Table {
   TextColumn get id => text()();
   TextColumn get tripId =>
       text().references(Trips, #id, onDelete: KeyAction.cascade)();
+
   /// min: 0, not 1 — entries auto-created by markPlaceVisited (a place
   /// marked visited outside the journal) start with an empty summary,
   /// shown as "Not written yet" until the user fills it in. The manual

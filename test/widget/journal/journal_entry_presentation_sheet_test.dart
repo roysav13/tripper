@@ -114,7 +114,8 @@ void main() {
     expect(find.byType(PageView), findsOneWidget);
   });
 
-  testWidgets('multi-entry: swiping changes the visible entry and fires '
+  testWidgets(
+      'multi-entry: swiping changes the visible entry and fires '
       'onPageChanged', (tester) async {
     int? lastPage;
     await _open<void>(
@@ -152,9 +153,11 @@ void main() {
       entries: [_e('a', summary: 'No photo here')],
       initialIndex: 0,
     );
-    final noPhotoHeight =
-        tester.getSize(find.byType(AnimatedContainer)).height;
-    final screenHeight = MediaQuery.of(tester.element(find.byType(AnimatedContainer))).size.height;
+    final noPhotoHeight = tester.getSize(find.byType(AnimatedContainer)).height;
+    final screenHeight =
+        MediaQuery.of(tester.element(find.byType(AnimatedContainer)))
+            .size
+            .height;
 
     // Photo-less should be ~0.4 of screen height
     expect(noPhotoHeight, closeTo(screenHeight * 0.4, 1));
@@ -191,7 +194,10 @@ void main() {
     await tester.pump();
 
     final photoHeight = tester.getSize(find.byType(AnimatedContainer)).height;
-    final photoScreenHeight = MediaQuery.of(tester.element(find.byType(AnimatedContainer))).size.height;
+    final photoScreenHeight =
+        MediaQuery.of(tester.element(find.byType(AnimatedContainer)))
+            .size
+            .height;
 
     // Photo entry should be ~0.7 of screen height
     expect(photoHeight, closeTo(photoScreenHeight * 0.7, 1));
@@ -206,7 +212,11 @@ void main() {
 
   testWidgets('Edit closes the sheet and opens the entry form pre-filled',
       (tester) async {
-    await _open<void>(tester, entries: [_e('a', summary: 'Edit me')], initialIndex: 0);
+    await _open<void>(
+      tester,
+      entries: [_e('a', summary: 'Edit me')],
+      initialIndex: 0,
+    );
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
@@ -219,7 +229,8 @@ void main() {
     expect(find.text('Edit me'), findsOneWidget); // pre-filled summary field
   });
 
-  testWidgets('Delete, after confirming, removes the entry and closes the sheet',
+  testWidgets(
+      'Delete, after confirming, removes the entry and closes the sheet',
       (tester) async {
     final repo = FakeJournalRepository([_e('a')]);
     await _open<void>(tester, entries: [_e('a')], initialIndex: 0, repo: repo);
