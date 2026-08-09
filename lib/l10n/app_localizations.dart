@@ -970,6 +970,12 @@ abstract class AppLocalizations {
   /// **'List view'**
   String get listViewToggle;
 
+  /// No description provided for @faceNorthTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Face north'**
+  String get faceNorthTooltip;
+
   /// No description provided for @pickOnMap.
   ///
   /// In en, this message translates to:

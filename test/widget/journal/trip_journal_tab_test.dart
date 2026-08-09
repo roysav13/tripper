@@ -278,4 +278,41 @@ void main() {
     // SectionLabel uppercases its text.
     expect(find.text('NEW ENTRY'), findsOneWidget);
   });
+
+  testWidgets(
+      'the face-north button only shows in globe mode and bumps '
+      "JournalGlobe's resetToNorthSignal on tap", (tester) async {
+    await _pump(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Arrived',
+          loggedAt: DateTime(2026, 7, 20),
+          createdAt: DateTime(2026, 7, 20),
+          lat: 8.0,
+          lng: 98.8,
+        ),
+      ],
+    );
+
+    expect(find.byIcon(Icons.explore_outlined), findsOneWidget);
+    final before = tester
+        .widget<JournalGlobe>(find.byType(JournalGlobe))
+        .resetToNorthSignal;
+
+    await tester.tap(find.byIcon(Icons.explore_outlined));
+    await tester.pumpAndSettle();
+
+    final after = tester
+        .widget<JournalGlobe>(find.byType(JournalGlobe))
+        .resetToNorthSignal;
+    expect(after, isNot(before));
+
+    // Switching to map mode hides the globe-only control.
+    await tester.tap(find.byIcon(Icons.map_outlined));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.explore_outlined), findsNothing);
+  });
 }

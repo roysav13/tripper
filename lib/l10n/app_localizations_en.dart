@@ -494,6 +494,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listViewToggle => 'List view';
 
   @override
+  String get faceNorthTooltip => 'Face north';
+
+  @override
   String get pickOnMap => 'Pick on map';
 
   @override

@@ -63,6 +63,7 @@ class JournalGlobe extends StatefulWidget {
     required this.entries,
     this.selectedEntryId,
     this.liveFollowEntryId,
+    this.resetToNorthSignal,
     this.onEntryTap,
     this.renderGlobe = true,
   });
@@ -82,6 +83,13 @@ class JournalGlobe extends StatefulWidget {
   /// already supplies the perceived motion; stacking a separate eased
   /// pan on top would fight it and look laggy, not smooth).
   final String? liveFollowEntryId;
+
+  /// Bumped by the coordinating parent (a plain incrementing counter, not
+  /// a meaningful value on its own — only *changes* matter) each time the
+  /// user taps the "face north" button. Any change re-centers the globe
+  /// on the equator/prime-meridian, animated the same way a deliberate
+  /// tap-to-entry focus is.
+  final Object? resetToNorthSignal;
 
   final void Function(JournalEntry entry)? onEntryTap;
   final bool renderGlobe;
@@ -117,6 +125,9 @@ class _JournalGlobeState extends State<JournalGlobe> {
     }
     if (widget.selectedEntryId != oldWidget.selectedEntryId) {
       _maybeFocusSelected();
+    }
+    if (widget.resetToNorthSignal != oldWidget.resetToNorthSignal) {
+      _resetToNorth();
     }
     if (!_sameEntryIds(oldWidget.entries)) {
       _syncPoints(oldWidget.entries);
@@ -450,6 +461,28 @@ class _JournalGlobeState extends State<JournalGlobe> {
       GlobeCoordinates(latest.lat!, latest.lng!),
       animate: true,
       duration: instant ? Duration.zero : const Duration(milliseconds: 600),
+    );
+  }
+
+  /// Re-centers on the equator/prime-meridian — the sphere's natural
+  /// unrotated orientation, north pole up. Driven through the same
+  /// focusOnCoordinates path as every other programmatic focus in this
+  /// file (see _maybeFollowLive's comment on why animate: true is always
+  /// used) rather than the package's own `controller.resetRotation()`,
+  /// which snaps instantly with no easing — inconsistent with how every
+  /// other deliberate action here (tap-to-entry) feels. Clears
+  /// _focusedEntryId: after this reset the globe is no longer actually
+  /// pointed at whatever entry was last focused, so a later re-selection
+  /// of that same entry must be free to re-animate there instead of being
+  /// skipped as a no-op.
+  void _resetToNorth() {
+    final controller = _controller;
+    if (controller == null || !controller.isReady) return;
+    _focusedEntryId = null;
+    controller.focusOnCoordinates(
+      const GlobeCoordinates(0, 0),
+      animate: true,
+      duration: const Duration(milliseconds: 600),
     );
   }
 
