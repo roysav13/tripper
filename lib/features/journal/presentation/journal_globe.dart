@@ -49,6 +49,32 @@ const _haloAlpha = 0.28;
 // to the sphere's surface.
 const _arcCurveScale = 0.4;
 
+// The zoom level past which the globe swaps to a higher-resolution
+// surface texture (see _buildController's maxZoom comment for why the
+// base texture softens at high zoom — this routes more real detail into
+// view instead of just resampling the same fixed-resolution source
+// larger). zoom's range is [minZoom (-1.0 default), maxZoom (3.5)]; 1.5
+// is partway through the zoom-in range, chosen so the swap happens
+// before the softening becomes very visible rather than only at the
+// very top of the range.
+const highResGlobeZoomThreshold = 1.5;
+
+/// Whether [JournalGlobe] should request the higher-resolution surface
+/// texture — true exactly once, the first time [zoom] crosses
+/// [highResGlobeZoomThreshold], given the caller already tracks whether
+/// that request has been made ([alreadyRequested]) so it isn't repeated
+/// on every subsequent zoom-changed callback above the threshold. A
+/// top-level, GPU-independent function so this decision is unit-testable
+/// without a real FlutterEarthGlobeController — see
+/// test/unit/journal/journal_globe_zoom_test.dart.
+@visibleForTesting
+bool shouldRequestHighResGlobeSurface({
+  required double zoom,
+  required bool alreadyRequested,
+}) {
+  return !alreadyRequested && zoom > highResGlobeZoomThreshold;
+}
+
 /// flutter_earth_globe renders via GPU fragment shaders, which widget tests
 /// can't render. Tests pass `renderGlobe: false` to get tappable
 /// entry-icon scaffolding without ever constructing
