@@ -34,13 +34,23 @@ const _plainDotSize = 2.5;
 // plain dots.
 const _plainBorderSize = 4.0;
 const _photoBorderSize = 15.0;
-const _haloDotSize = 7.0;
+const _haloDotSize = 5.0;
 const _photoDotDiameter = 26.0;
-const _photoHaloDotSize = 9.0;
+const _photoHaloDotSize = 7.0;
 // Monochrome teal — CLAUDE.md's two-accents rule (teal for actions/
 // places, rust reserved for warnings only) means the halo has to be a
 // low-alpha version of the same accent, not a new hue.
 const _haloAlpha = 0.28;
+
+// A cluster marker (multiple close-together entries collapsed into one
+// tappable dot) is deliberately sized between a plain dot and a photo
+// dot — big enough to read as "this is a group, not a single entry" via
+// its count badge, without being as visually heavy as a photo thumbnail.
+// Starting values for on-device tuning, same as every other size
+// constant in this file.
+const _clusterDotDiameter = 30.0;
+const _clusterHaloSize = 11.0;
+const _clusterBorderSize = 17.0;
 
 // Globe.GL-style arcs default the curve height (via the point_connection
 // package's own curveScale=1.5 default) to something that reads as a
@@ -102,6 +112,7 @@ class JournalGlobe extends StatefulWidget {
     this.selectedEntryId,
     this.liveFollowEntryId,
     this.onEntryTap,
+    this.onClusterTap,
     this.renderGlobe = true,
   });
 
@@ -122,6 +133,14 @@ class JournalGlobe extends StatefulWidget {
   final String? liveFollowEntryId;
 
   final void Function(JournalEntry entry)? onEntryTap;
+
+  /// Fired when a cluster marker (multiple geographically-close entries
+  /// collapsed into one dot — see groupEntriesByProximity) is tapped,
+  /// with that cluster's member entries in chronological order. Distinct
+  /// from [onEntryTap], which only ever fires for a single, unclustered
+  /// entry's own dot.
+  final void Function(List<JournalEntry> entries)? onClusterTap;
+
   final bool renderGlobe;
 
   @override
@@ -132,6 +151,19 @@ class _JournalGlobeState extends State<JournalGlobe> {
   FlutterEarthGlobeController? _controller;
   bool _initialized = false;
   String? _focusedEntryId;
+
+  /// The clusters (see groupEntriesByProximity) actually rendered as
+  /// points right now — the source of truth for which point IDs to
+  /// remove on the next resync. Rebuilt every time _addPoints runs.
+  List<List<JournalEntry>> _lastClusters = [];
+
+  /// The zoom "band" (see _clusterBandFor) as of the last time clusters
+  /// were recomputed. A changed band means the same entries may now
+  /// group differently, so _handleZoomChanged triggers a full
+  /// remove-and-re-add instead of just rescaling existing points in
+  /// place. Set once _addPoints first runs (see controller.onLoaded
+  /// below); null beforehand.
+  int? _lastClusterBand;
 
   /// Set once _handleZoomChanged has requested the higher-res surface
   /// texture (see shouldRequestHighResGlobeSurface) — guards against
@@ -180,7 +212,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       _maybeFocusSelected();
     }
     if (!_sameEntryIds(oldWidget.entries)) {
-      _syncPoints(oldWidget.entries);
+      _syncPoints();
       if (widget.selectedEntryId == null && widget.liveFollowEntryId == null) {
         _maybeFocusLatest();
       }
@@ -217,18 +249,14 @@ class _JournalGlobeState extends State<JournalGlobe> {
   // controller.rotationController itself when unmounted; disposing it
   // again ourselves double-frees the same AnimationController and
   // crashes ("AnimationController.dispose() called more than once").
-  void _syncPoints(List<JournalEntry> previous) {
+  void _syncPoints() {
     final controller = _controller;
     if (controller == null) return;
     for (final connection in controller.connections.toList()) {
       controller.removePointConnection(connection.id);
     }
-    for (final entry in previous) {
-      if (entry.hasLocation) {
-        controller.removePoint(entry.id);
-        controller.removePoint('${entry.id}-halo');
-        controller.removePoint('${entry.id}-border');
-      }
+    for (final cluster in _lastClusters) {
+      _removeClusterPoints(controller, cluster);
     }
     _addPoints(controller);
   }
@@ -240,108 +268,164 @@ class _JournalGlobeState extends State<JournalGlobe> {
     // size — otherwise they'd render at the raw, uncompensated base size
     // until the next zoom gesture happens to fire onZoomChanged.
     final compensation = 1 / math.pow(2, controller.zoom);
-    for (final entry in widget.entries) {
-      if (!entry.hasLocation) continue;
-      final onTap =
-          widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
-      // Halo, then border ring, then the dot/photo widget itself — three
-      // native layers (halo and border both native points; the photo
-      // case's actual "dot" is the labelBuilder widget below, not a
-      // native point) added in back-to-front order so they paint (and
-      // therefore sit) correctly stacked — this needs on-device
-      // confirmation like every other dot-visual change in this file;
-      // the package's actual draw order isn't guaranteed by its public
-      // API, only inferred from insertion order + depth-tie stability.
-      controller.addPoint(
-        Point(
-          id: '${entry.id}-halo',
-          coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-          style: PointStyle(
-            size: (entry.hasPhotos ? _photoHaloDotSize : _haloDotSize) *
-                compensation,
-            color: colors.accent.withValues(alpha: _haloAlpha),
-          ),
-          // The halo's hit-rect is strictly larger than the core dot's and
-          // is tested first (added first, same coordinates so depth ties,
-          // and the package's sort is only stable for small point counts)
-          // — the package marks a click "handled" on the first hit
-          // regardless of whether that point has a handler, so a halo
-          // with no onTap silently swallows taps meant for the dot below
-          // it. Left null for photo entries — _PhotoDot's own
-          // GestureDetector handles those; wiring both would double-fire.
-          onTap: entry.hasPhotos ? null : onTap,
-        ),
-      );
-      // Border ring: PointStyle has no border/stroke property, so a
-      // solid, slightly-larger circle painted directly behind the core
-      // (or, for a photo entry, just past the photo widget's own edge)
-      // simulates an outline — giving the flat dot definition against
-      // the globe's own busy, variable-brightness texture instead of
-      // just a soft color blob.
-      controller.addPoint(
-        Point(
-          id: '${entry.id}-border',
-          coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-          style: PointStyle(
-            size: (entry.hasPhotos ? _photoBorderSize : _plainBorderSize) *
-                compensation,
-            color: colors.surface,
-          ),
-          onTap: entry.hasPhotos ? null : onTap,
-        ),
-      );
-      if (entry.hasPhotos) {
+    final clusters = groupEntriesByProximity(widget.entries, controller.zoom);
+    for (final cluster in clusters) {
+      if (cluster.length == 1) {
+        final entry = cluster.single;
+        final onTap =
+            widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
+        // Halo, then border ring, then the dot/photo widget itself —
+        // three native layers (halo and border both native points; the
+        // photo case's actual "dot" is the labelBuilder widget below,
+        // not a native point) added in back-to-front order so they
+        // paint (and therefore sit) correctly stacked — this needs
+        // on-device confirmation like every other dot-visual change in
+        // this file; the package's actual draw order isn't guaranteed
+        // by its public API, only inferred from insertion order +
+        // depth-tie stability.
         controller.addPoint(
           Point(
-            id: entry.id,
+            id: '${entry.id}-halo',
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-            label: entry.placeName ?? entry.summary,
-            // Photo dots stay widget-rendered — the package has no
-            // native way to show an image on a point. size: 0 suppresses
-            // the (otherwise pointless) native dot underneath it.
-            style: const PointStyle(size: 0),
-            isLabelVisible: true,
-            // Centers a _photoDotDiameter-square widget exactly on the
-            // point: the package positions labelBuilder output at
-            // `left = pos.dx - labelOffset.dx - width/2`,
-            // `top = pos.dy - labelOffset.dy - height`.
-            labelOffset: const Offset(0, -_photoDotDiameter / 2),
-            labelBuilder: (context, point, isHovering, isVisible) =>
-                _PhotoDot(filePath: entry.photos.first.filePath, onTap: onTap),
-            // Point.onTap is intentionally left unset — see _PhotoDot's
-            // own GestureDetector. Setting both would double-fire
-            // onEntryTap for taps landing in the native point's small
-            // residual hit region.
+            style: PointStyle(
+              size: (entry.hasPhotos ? _photoHaloDotSize : _haloDotSize) *
+                  compensation,
+              color: colors.accent.withValues(alpha: _haloAlpha),
+            ),
+            // The halo's hit-rect is strictly larger than the core
+            // dot's and is tested first (added first, same coordinates
+            // so depth ties, and the package's sort is only stable for
+            // small point counts) — the package marks a click "handled"
+            // on the first hit regardless of whether that point has a
+            // handler, so a halo with no onTap silently swallows taps
+            // meant for the dot below it. Left null for photo entries —
+            // _PhotoDot's own GestureDetector handles those; wiring
+            // both would double-fire.
+            onTap: entry.hasPhotos ? null : onTap,
           ),
         );
-      } else {
+        // Border ring: PointStyle has no border/stroke property, so a
+        // solid, slightly-larger circle painted directly behind the
+        // core (or, for a photo entry, just past the photo widget's own
+        // edge) simulates an outline — giving the flat dot definition
+        // against the globe's own busy, variable-brightness texture
+        // instead of just a soft color blob.
         controller.addPoint(
           Point(
-            id: entry.id,
+            id: '${entry.id}-border',
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
-            label: entry.placeName ?? entry.summary,
-            // Native GPU-rendered dot: cheap, and perfectly in sync with
-            // the sphere's rotation every frame by construction (the
-            // shader paints it — no separate widget-position recompute
-            // pass, unlike the labelBuilder path above). A prior round
-            // made every dot widget-rendered instead, purely to dodge
-            // the package's built-in zoom-scaling, and that made
-            // rotation noticeably less smooth (every dot's position
-            // became a real widget rebuild on every animation frame).
-            // _handleZoomChanged counteracts the zoom-scaling directly
-            // instead, so this can stay native/cheap AND zoom-stable.
             style: PointStyle(
-              size: _plainDotSize * compensation,
-              color: colors.accent,
+              size: (entry.hasPhotos ? _photoBorderSize : _plainBorderSize) *
+                  compensation,
+              color: colors.surface,
             ),
-            // No labelBuilder for this one, so tap must be wired
-            // directly on the Point — the package's own native
-            // hit-testing (sized from PointStyle.size) drives it.
-            onTap: onTap,
+            onTap: entry.hasPhotos ? null : onTap,
+          ),
+        );
+        if (entry.hasPhotos) {
+          controller.addPoint(
+            Point(
+              id: entry.id,
+              coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+              label: entry.placeName ?? entry.summary,
+              // Photo dots stay widget-rendered — the package has no
+              // native way to show an image on a point. size: 0
+              // suppresses the (otherwise pointless) native dot
+              // underneath it.
+              style: const PointStyle(size: 0),
+              isLabelVisible: true,
+              // Centers a _photoDotDiameter-square widget exactly on
+              // the point: the package positions labelBuilder output at
+              // `left = pos.dx - labelOffset.dx - width/2`,
+              // `top = pos.dy - labelOffset.dy - height`.
+              labelOffset: const Offset(0, -_photoDotDiameter / 2),
+              labelBuilder: (context, point, isHovering, isVisible) =>
+                  _PhotoDot(
+                filePath: entry.photos.first.filePath,
+                onTap: onTap,
+              ),
+              // Point.onTap is intentionally left unset — see
+              // _PhotoDot's own GestureDetector. Setting both would
+              // double-fire onEntryTap for taps landing in the native
+              // point's small residual hit region.
+            ),
+          );
+        } else {
+          controller.addPoint(
+            Point(
+              id: entry.id,
+              coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+              label: entry.placeName ?? entry.summary,
+              // Native GPU-rendered dot: cheap, and perfectly in sync
+              // with the sphere's rotation every frame by construction
+              // (the shader paints it — no separate widget-position
+              // recompute pass, unlike the labelBuilder path above). A
+              // prior round made every dot widget-rendered instead,
+              // purely to dodge the package's built-in zoom-scaling,
+              // and that made rotation noticeably less smooth (every
+              // dot's position became a real widget rebuild on every
+              // animation frame). _handleZoomChanged counteracts the
+              // zoom-scaling directly instead, so this can stay
+              // native/cheap AND zoom-stable.
+              style: PointStyle(
+                size: _plainDotSize * compensation,
+                color: colors.accent,
+              ),
+              // No labelBuilder for this one, so tap must be wired
+              // directly on the Point — the package's own native
+              // hit-testing (sized from PointStyle.size) drives it.
+              onTap: onTap,
+            ),
+          );
+        }
+      } else {
+        final key = _clusterKey(cluster);
+        final (centroidLat, centroidLng) = _clusterCentroid(cluster);
+        final onTap = widget.onClusterTap == null
+            ? null
+            : () => widget.onClusterTap!(cluster);
+        controller.addPoint(
+          Point(
+            id: '$key-halo',
+            coordinates: GlobeCoordinates(centroidLat, centroidLng),
+            style: PointStyle(
+              size: _clusterHaloSize * compensation,
+              color: colors.accent.withValues(alpha: _haloAlpha),
+            ),
+            // No onTap here — same reasoning as the photo-dot halo
+            // above: _ClusterDot's own GestureDetector (via the
+            // labelBuilder below) handles the tap; wiring both would
+            // double-fire.
+          ),
+        );
+        controller.addPoint(
+          Point(
+            id: '$key-border',
+            coordinates: GlobeCoordinates(centroidLat, centroidLng),
+            style: PointStyle(
+              size: _clusterBorderSize * compensation,
+              color: colors.surface,
+            ),
+          ),
+        );
+        controller.addPoint(
+          Point(
+            id: key,
+            coordinates: GlobeCoordinates(centroidLat, centroidLng),
+            label: '${cluster.length} entries',
+            // Widget-rendered, same reasoning as the photo dot: the
+            // package has no native way to show a count badge on a
+            // point. size: 0 suppresses the native dot underneath it.
+            style: const PointStyle(size: 0),
+            isLabelVisible: true,
+            labelOffset: const Offset(0, -_clusterDotDiameter / 2),
+            labelBuilder: (context, point, isHovering, isVisible) =>
+                _ClusterDot(count: cluster.length, onTap: onTap),
           ),
         );
       }
     }
+    _lastClusters = clusters;
     for (final (start, end) in journeyConnections(widget.entries)) {
       controller.addPointConnection(
         PointConnection(
@@ -378,19 +462,45 @@ class _JournalGlobeState extends State<JournalGlobe> {
       _highResRequested = true;
       controller.loadSurface(const AssetImage(_highResGlobeTexture));
     }
+    final band = _clusterBandFor(zoom);
+    if (band != _lastClusterBand) {
+      // Crossing into a different clustering band means the same
+      // entries may now group differently (a cluster might split apart,
+      // or two clusters might merge) — a full remove-and-re-add is
+      // needed, not just a resize of the existing points, since the
+      // set of point IDs itself can change (see _clusterKey).
+      _lastClusterBand = band;
+      _syncPoints();
+      return;
+    }
     final compensation = 1 / math.pow(2, zoom);
-    for (final entry in widget.entries) {
-      if (!entry.hasLocation) continue;
-      final haloBase = entry.hasPhotos ? _photoHaloDotSize : _haloDotSize;
-      final borderBase = entry.hasPhotos ? _photoBorderSize : _plainBorderSize;
-      _rescalePoint(controller, '${entry.id}-halo', haloBase * compensation);
-      _rescalePoint(
-        controller,
-        '${entry.id}-border',
-        borderBase * compensation,
-      );
-      if (!entry.hasPhotos) {
-        _rescalePoint(controller, entry.id, _plainDotSize * compensation);
+    for (final cluster in _lastClusters) {
+      if (cluster.length == 1) {
+        final entry = cluster.single;
+        final haloBase = entry.hasPhotos ? _photoHaloDotSize : _haloDotSize;
+        final borderBase =
+            entry.hasPhotos ? _photoBorderSize : _plainBorderSize;
+        _rescalePoint(controller, '${entry.id}-halo', haloBase * compensation);
+        _rescalePoint(
+          controller,
+          '${entry.id}-border',
+          borderBase * compensation,
+        );
+        if (!entry.hasPhotos) {
+          _rescalePoint(controller, entry.id, _plainDotSize * compensation);
+        }
+      } else {
+        final key = _clusterKey(cluster);
+        _rescalePoint(
+          controller,
+          '$key-halo',
+          _clusterHaloSize * compensation,
+        );
+        _rescalePoint(
+          controller,
+          '$key-border',
+          _clusterBorderSize * compensation,
+        );
       }
     }
   }
@@ -405,6 +515,53 @@ class _JournalGlobeState extends State<JournalGlobe> {
     final point = controller.points[index];
     if (point.style.size == newSize) return;
     point.style = point.style.copyWith(size: newSize);
+  }
+
+  /// A stable identifier for a cluster's points, built from its member
+  /// entry ids sorted ascending — deterministic regardless of the
+  /// cluster's own internal (chronological) order, so the same set of
+  /// entries always maps to the same point IDs across rebuilds. A
+  /// cluster of size 1 never uses this — it keeps using that entry's own
+  /// id directly, identical to pre-clustering behavior.
+  String _clusterKey(List<JournalEntry> cluster) =>
+      (cluster.map((e) => e.id).toList()..sort()).join('+');
+
+  /// The simple arithmetic-mean centroid of a cluster's coordinates —
+  /// sufficient at cluster scale (tens of km at most, given
+  /// groupEntriesByProximity's threshold curve); points that far apart
+  /// never cluster together in the first place, so this never needs to
+  /// handle continental-scale spans where a naive mean would misbehave.
+  (double, double) _clusterCentroid(List<JournalEntry> cluster) {
+    var latSum = 0.0;
+    var lngSum = 0.0;
+    for (final entry in cluster) {
+      latSum += entry.lat!;
+      lngSum += entry.lng!;
+    }
+    return (latSum / cluster.length, lngSum / cluster.length);
+  }
+
+  /// Which zoom "band" a given zoom falls into, for deciding when
+  /// clustering needs to be recomputed (see _lastClusterBand) — each
+  /// whole zoom step is its own band, matching groupEntriesByProximity's
+  /// threshold curve halving roughly every 1.0 zoom step.
+  int _clusterBandFor(double zoom) => zoom.floor();
+
+  void _removeClusterPoints(
+    FlutterEarthGlobeController controller,
+    List<JournalEntry> cluster,
+  ) {
+    if (cluster.length == 1) {
+      final entry = cluster.single;
+      controller.removePoint(entry.id);
+      controller.removePoint('${entry.id}-halo');
+      controller.removePoint('${entry.id}-border');
+    } else {
+      final key = _clusterKey(cluster);
+      controller.removePoint(key);
+      controller.removePoint('$key-halo');
+      controller.removePoint('$key-border');
+    }
   }
 
   FlutterEarthGlobeController _buildController() {
@@ -426,20 +583,21 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // actually has detail for — the sphere is rasterized by resampling
       // that fixed-resolution texture (see RotatingGlobeState.buildSphere),
       // so zooming past its native detail only blurs pre-existing pixels
-      // larger, it doesn't reveal anything sharper. 3.5 (~11x) is chosen
+      // larger, it doesn't reveal anything sharper. 3.5 (~11x) was chosen
       // to sit close to where a 4000px-wide equirectangular texture's own
       // texel density starts to noticeably soften under this package's
-      // per-pixel bilinear resampling — meaningfully closer than the
-      // package's own 2.5 default, without diving deep into visible
-      // blur. This value is about the BASE tier's softening point only —
-      // a higher-resolution tier (earth_day_high.jpg, 8000x4000) now
-      // loads automatically past highResGlobeZoomThreshold, so the
-      // texture actually visible for most of this maxZoom range isn't
-      // the one this comment's math is about.
-      maxZoom: 3.5,
+      // per-pixel bilinear resampling. That was about the BASE tier's
+      // softening point only — a higher-resolution tier
+      // (earth_day_high.jpg, 8000x4000) now loads automatically past
+      // highResGlobeZoomThreshold, moving the practical softening point
+      // out further, so maxZoom is raised to 5 (~32x) to actually use
+      // that tier's extra headroom instead of capping the range at the
+      // base tier's old limit.
+      maxZoom: 5,
     );
     controller.onLoaded = () {
       _addPoints(controller);
+      _lastClusterBand = controller.zoom.floor();
       if (widget.selectedEntryId != null) {
         _maybeFocusSelected();
       } else {
@@ -727,6 +885,47 @@ class _PhotoDot extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => ColoredBox(color: colors.paper),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A circular, filled marker with a count badge, rendered at a cluster's
+/// centroid via Point.labelBuilder (the package has no built-in way to
+/// show text on a point) — the multi-entry equivalent of a plain native
+/// dot. Wraps itself in a GestureDetector — see the comment on
+/// Point.onTap in _addPoints for why tap handling lives here instead of
+/// on the Point itself.
+class _ClusterDot extends StatelessWidget {
+  const _ClusterDot({required this.count, this.onTap});
+
+  final int count;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: _clusterDotDiameter,
+        height: _clusterDotDiameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colors.accent,
+          border: Border.all(color: colors.surface, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: colors.inkPrimary.withValues(alpha: 0.35),
+              blurRadius: 4,
+              offset: const Offset(0, 1.5),
+            ),
+          ],
+        ),
+        child: Center(
+          child: MonoText('$count', color: colors.surface),
         ),
       ),
     );
