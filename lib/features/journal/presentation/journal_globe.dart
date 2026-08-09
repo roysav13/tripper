@@ -13,6 +13,15 @@ import '../../../core/theme/app_colors.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
+// Base sizes — what the dot/halo should look like at zoom 0. The package
+// scales every native PointStyle.size by `radius/150` (radius already
+// includes zoom: radius = baseRadius * 2^zoom), so without correction
+// these balloon linearly with zoom — a halo sized here for a comfortable
+// look at zoom 0 becomes a room-filling blob at high zoom. _handleZoomChanged
+// below counteracts that every time zoom changes, keeping the on-screen
+// size roughly what it was at zoom 0 (the one look this was ever actually
+// tuned for) — the same way a map pin stays a constant screen size as you
+// zoom a real map, rather than growing into the streets it's marking.
 const _plainDotSize = 2.5;
 const _haloDotSize = 6.0;
 const _photoDotDiameter = 26.0;
@@ -21,6 +30,13 @@ const _photoHaloDotSize = 8.0;
 // places, rust reserved for warnings only) means the halo has to be a
 // low-alpha version of the same accent, not a new hue.
 const _haloAlpha = 0.28;
+
+// Globe.GL-style arcs default the curve height (via the point_connection
+// package's own curveScale=1.5 default) to something that reads as a
+// steep, ballistic arc — closer to a flight path than a route line on the
+// same globe you're standing on. This flattens the arc noticeably closer
+// to the sphere's surface.
+const _arcCurveScale = 0.4;
 
 /// flutter_earth_globe renders via GPU fragment shaders, which widget tests
 /// can't render. Tests pass `renderGlobe: false` to get tappable
@@ -148,6 +164,11 @@ class _JournalGlobeState extends State<JournalGlobe> {
 
   void _addPoints(FlutterEarthGlobeController controller) {
     final colors = context.colors;
+    // Points added while already zoomed in (e.g. an entry's location is
+    // edited mid-session) must start at the CURRENT zoom's compensated
+    // size — otherwise they'd render at the raw, uncompensated base size
+    // until the next zoom gesture happens to fire onZoomChanged.
+    final compensation = 1 / math.pow(2, controller.zoom);
     for (final entry in widget.entries) {
       if (!entry.hasLocation) continue;
       final onTap =
@@ -162,7 +183,8 @@ class _JournalGlobeState extends State<JournalGlobe> {
           id: '${entry.id}-halo',
           coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
           style: PointStyle(
-            size: entry.hasPhotos ? _photoHaloDotSize : _haloDotSize,
+            size: (entry.hasPhotos ? _photoHaloDotSize : _haloDotSize) *
+                compensation,
             color: colors.accent.withValues(alpha: _haloAlpha),
           ),
           // The halo's hit-rect is strictly larger than the core dot's and
@@ -209,16 +231,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
             // Native GPU-rendered dot: cheap, and perfectly in sync with
             // the sphere's rotation every frame by construction (the
             // shader paints it — no separate widget-position recompute
-            // pass, unlike the labelBuilder path above). This is the
-            // fix for rotation jank: the prior round made every dot
-            // widget-rendered for zoom-independent sizing, which made
-            // rotation noticeably less smooth since every dot's
-            // position had to be recomputed as a real widget rebuild on
-            // every animation frame. Trade-off accepted: these dots
-            // will grow with zoom again (the package's own internal,
-            // undocumented zoom-scaling factor) — smoothness was
-            // prioritized over that.
-            style: PointStyle(size: _plainDotSize, color: colors.accent),
+            // pass, unlike the labelBuilder path above). A prior round
+            // made every dot widget-rendered instead, purely to dodge
+            // the package's built-in zoom-scaling, and that made
+            // rotation noticeably less smooth (every dot's position
+            // became a real widget rebuild on every animation frame).
+            // _handleZoomChanged counteracts the zoom-scaling directly
+            // instead, so this can stay native/cheap AND zoom-stable.
+            style: PointStyle(
+              size: _plainDotSize * compensation,
+              color: colors.accent,
+            ),
             // No labelBuilder for this one, so tap must be wired
             // directly on the Point — the package's own native
             // hit-testing (sized from PointStyle.size) drives it.
@@ -233,6 +256,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
           id: '${start.id}->${end.id}',
           start: GlobeCoordinates(start.lat!, start.lng!),
           end: GlobeCoordinates(end.lat!, end.lng!),
+          curveScale: _arcCurveScale,
           style: PointConnectionStyle(
             color: colors.accent.withValues(alpha: 0.6),
             lineWidth: 1.5,
@@ -240,6 +264,42 @@ class _JournalGlobeState extends State<JournalGlobe> {
         ),
       );
     }
+  }
+
+  /// Counteracts the package's built-in zoom-scaling of native
+  /// PointStyle.size (see the comment on the size constants above) so
+  /// dots and halos stay roughly the same on-screen size across the zoom
+  /// range instead of ballooning at high zoom. Mutates the existing Point
+  /// objects' style in place — cheap (no addPoint/removePoint churn), and
+  /// picked up by the next paint without an explicit setState here: this
+  /// only ever runs from FlutterEarthGlobe's onZoomChanged, which the
+  /// package always calls synchronously just before its own setState for
+  /// the same zoom change, so the mutation lands before that repaint reads
+  /// it (confirmed by reading rotating_globe.dart's zoom handlers).
+  void _handleZoomChanged(double zoom) {
+    final controller = _controller;
+    if (controller == null) return;
+    final compensation = 1 / math.pow(2, zoom);
+    for (final entry in widget.entries) {
+      if (!entry.hasLocation) continue;
+      final haloBase = entry.hasPhotos ? _photoHaloDotSize : _haloDotSize;
+      _rescalePoint(controller, '${entry.id}-halo', haloBase * compensation);
+      if (!entry.hasPhotos) {
+        _rescalePoint(controller, entry.id, _plainDotSize * compensation);
+      }
+    }
+  }
+
+  void _rescalePoint(
+    FlutterEarthGlobeController controller,
+    String id,
+    double newSize,
+  ) {
+    final index = controller.points.indexWhere((p) => p.id == id);
+    if (index == -1) return;
+    final point = controller.points[index];
+    if (point.style.size == newSize) return;
+    point.style = point.style.copyWith(size: newSize);
   }
 
   FlutterEarthGlobeController _buildController() {
@@ -255,10 +315,20 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // so the whole globe renders evenly lit.
       surfaceLightingEnabled: false,
       surface: const AssetImage('assets/globe/earth_day.jpg'),
-      // Default is 2.5 (~5.7x, radius = baseRadius * 2^zoom) — too shallow
-      // to make individual streets/landmarks near a pin legible. 5 is
-      // ~32x.
-      maxZoom: 5,
+      // Default is 2.5 (~5.7x, radius = baseRadius * 2^zoom). A prior
+      // round raised this to 5 (~32x) for legibility, but that pushes far
+      // past what the bundled 2048x1024 earth_day.jpg texture actually
+      // has detail for — the sphere is rasterized by resampling that
+      // fixed-resolution texture (see RotatingGlobeState.buildSphere),
+      // so zooming past its native detail only blurs pre-existing pixels
+      // larger, it doesn't reveal anything sharper. 3.5 (~11x) is chosen
+      // to sit close to where a 2048px-wide equirectangular texture's own
+      // texel density starts to noticeably soften under this package's
+      // per-pixel bilinear resampling — meaningfully closer than the
+      // package's own 2.5 default, without diving deep into visible
+      // blur. Revisiting this needs either a higher-resolution texture
+      // asset or an on-device call on how much softening is acceptable.
+      maxZoom: 3.5,
     );
     controller.onLoaded = () {
       _addPoints(controller);
@@ -397,7 +467,11 @@ class _JournalGlobeState extends State<JournalGlobe> {
             .toDouble();
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(size: size),
-          child: FlutterEarthGlobe(controller: _controller!, radius: radius),
+          child: FlutterEarthGlobe(
+            controller: _controller!,
+            radius: radius,
+            onZoomChanged: _handleZoomChanged,
+          ),
         );
       },
     );
