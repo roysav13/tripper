@@ -23,9 +23,18 @@ import '../domain/journal_entry_queries.dart';
 // tuned for) — the same way a map pin stays a constant screen size as you
 // zoom a real map, rather than growing into the streets it's marking.
 const _plainDotSize = 2.5;
-const _haloDotSize = 6.0;
+// A ring between the halo and the core, giving the flat native dot a
+// visible outline — PointStyle has no border property, so this is a
+// second, larger, opaque circle painted directly behind the core (see
+// the layering comment in _addPoints). The photo dot's own widget
+// already has an accent border; its native ring sits further out, just
+// past the widget's edge, for the same "outlined pin" look as the
+// plain dots.
+const _plainBorderSize = 4.0;
+const _photoBorderSize = 15.0;
+const _haloDotSize = 7.0;
 const _photoDotDiameter = 26.0;
-const _photoHaloDotSize = 8.0;
+const _photoHaloDotSize = 9.0;
 // Monochrome teal — CLAUDE.md's two-accents rule (teal for actions/
 // places, rust reserved for warnings only) means the halo has to be a
 // low-alpha version of the same accent, not a new hue.
@@ -157,6 +166,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       if (entry.hasLocation) {
         controller.removePoint(entry.id);
         controller.removePoint('${entry.id}-halo');
+        controller.removePoint('${entry.id}-border');
       }
     }
     _addPoints(controller);
@@ -173,11 +183,14 @@ class _JournalGlobeState extends State<JournalGlobe> {
       if (!entry.hasLocation) continue;
       final onTap =
           widget.onEntryTap == null ? null : () => widget.onEntryTap!(entry);
-      // Halo: a larger, low-alpha native point at the same coordinates as
-      // the dot below, added first so it paints (and therefore sits)
-      // behind it — this needs on-device confirmation like every other
-      // dot-visual change in this file; the package's actual draw order
-      // isn't guaranteed by its public API.
+      // Halo, then border ring, then the dot/photo widget itself — three
+      // native layers (halo and border both native points; the photo
+      // case's actual "dot" is the labelBuilder widget below, not a
+      // native point) added in back-to-front order so they paint (and
+      // therefore sit) correctly stacked — this needs on-device
+      // confirmation like every other dot-visual change in this file;
+      // the package's actual draw order isn't guaranteed by its public
+      // API, only inferred from insertion order + depth-tie stability.
       controller.addPoint(
         Point(
           id: '${entry.id}-halo',
@@ -195,6 +208,24 @@ class _JournalGlobeState extends State<JournalGlobe> {
           // with no onTap silently swallows taps meant for the dot below
           // it. Left null for photo entries — _PhotoDot's own
           // GestureDetector handles those; wiring both would double-fire.
+          onTap: entry.hasPhotos ? null : onTap,
+        ),
+      );
+      // Border ring: PointStyle has no border/stroke property, so a
+      // solid, slightly-larger circle painted directly behind the core
+      // (or, for a photo entry, just past the photo widget's own edge)
+      // simulates an outline — giving the flat dot definition against
+      // the globe's own busy, variable-brightness texture instead of
+      // just a soft color blob.
+      controller.addPoint(
+        Point(
+          id: '${entry.id}-border',
+          coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
+          style: PointStyle(
+            size: (entry.hasPhotos ? _photoBorderSize : _plainBorderSize) *
+                compensation,
+            color: colors.surface,
+          ),
           onTap: entry.hasPhotos ? null : onTap,
         ),
       );
@@ -283,7 +314,13 @@ class _JournalGlobeState extends State<JournalGlobe> {
     for (final entry in widget.entries) {
       if (!entry.hasLocation) continue;
       final haloBase = entry.hasPhotos ? _photoHaloDotSize : _haloDotSize;
+      final borderBase = entry.hasPhotos ? _photoBorderSize : _plainBorderSize;
       _rescalePoint(controller, '${entry.id}-halo', haloBase * compensation);
+      _rescalePoint(
+        controller,
+        '${entry.id}-border',
+        borderBase * compensation,
+      );
       if (!entry.hasPhotos) {
         _rescalePoint(controller, entry.id, _plainDotSize * compensation);
       }
@@ -501,6 +538,19 @@ class _PhotoDot extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: colors.accent, width: 1.5),
+          // A widget-rendered dot, unlike the native plain-dot points,
+          // so a real BoxShadow is available here without any zoom-
+          // scaling risk (this stays a fixed pixel size regardless of
+          // zoom, same as the rest of this widget) — a soft lift off
+          // the globe surface, matching the "give it more character"
+          // ask alongside the native halo/border layers behind it.
+          boxShadow: [
+            BoxShadow(
+              color: colors.inkPrimary.withValues(alpha: 0.35),
+              blurRadius: 4,
+              offset: const Offset(0, 1.5),
+            ),
+          ],
         ),
         child: ClipOval(
           child: Image.file(
