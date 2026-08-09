@@ -373,7 +373,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // package's own 2.5 default, without diving deep into visible
       // blur. Revisiting this needs either a higher-resolution texture
       // asset or an on-device call on how much softening is acceptable.
-      maxZoom: 8,
+      maxZoom: 3.5,
     );
     controller.onLoaded = () {
       _addPoints(controller);
