@@ -7,6 +7,7 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
+import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
@@ -239,5 +240,30 @@ void main() {
 
     expect(find.text('Thai spot'), findsNothing);
     expect(find.text('Japan spot'), findsOneWidget);
+  });
+
+  testWidgets(
+      'stat labels stay centered even when the longest one wraps to two '
+      'lines', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+        home: const Scaffold(
+          body: SizedBox(
+            width: 200, // narrow enough to force "Places visited" to wrap
+            child: PlaceStatsHeader(countries: 3, visited: 12, days: 20),
+          ),
+        ),
+      ),
+    );
+    final label = tester.widget<Text>(find.text('PLACES VISITED'));
+    expect(label.textAlign, TextAlign.center);
   });
 }

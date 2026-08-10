@@ -303,6 +303,7 @@ class PlaceStatsHeader extends StatelessWidget {
       children: [
         Text(
           value,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: AppFonts.mono,
             fontSize: 24,
@@ -313,6 +314,7 @@ class PlaceStatsHeader extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label.toUpperCase(),
+          textAlign: TextAlign.center,
           style: AppTextStyles.sectionLabel.copyWith(color: colors.inkMuted),
         ),
       ],
