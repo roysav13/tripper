@@ -384,9 +384,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
           start: GlobeCoordinates(start.lat!, start.lng!),
           end: GlobeCoordinates(end.lat!, end.lng!),
           curveScale: _arcCurveScale,
+          // Thin white dashed lines radiating between visited places —
+          // matches the reference travel-map style (assets/globe/
+          // card_design_presentation.png): colors.surface reads as
+          // near-white against the globe's own busy satellite-style
+          // texture in light mode, and adapts to the theme in dark mode
+          // the same way the dot border rings already do.
           style: PointConnectionStyle(
-            color: colors.accent.withValues(alpha: 0.6),
-            lineWidth: 1.5,
+            type: PointConnectionType.dashed,
+            color: colors.surface.withValues(alpha: 0.8),
+            lineWidth: 1.0,
+            dashSize: 4,
           ),
         ),
       );
