@@ -41,13 +41,14 @@ const _haloAlpha = 0.28;
 // widget-rendered one — so its position stays perfectly in sync with
 // rotation every frame instead of lagging a frame behind on a separate
 // widget rebuild pass (the same reason plain dots are native; see
-// _addPoints' comment on the core dot). Deliberately sized bigger than
-// a plain dot so it still reads as "a group, not a single entry" even
-// without a widget-rendered badge. Starting values for on-device
-// tuning, same as every other size constant in this file.
-const _clusterCoreSize = 5.0;
-const _clusterHaloSize = 11.0;
-const _clusterBorderSize = 17.0;
+// _addPoints' comment on the core dot). Only modestly bigger than a
+// plain dot (roughly the same halo/border/core proportions, just scaled
+// up ~30-40%) — big enough to notice as "not quite a normal dot" without
+// reading as a wildly different, oversized marker. Starting values for
+// on-device tuning, same as every other size constant in this file.
+const _clusterCoreSize = 3.5;
+const _clusterHaloSize = 6.5;
+const _clusterBorderSize = 5.5;
 
 // Globe.GL-style arcs default the curve height (via the point_connection
 // package's own curveScale=1.5 default) to something that reads as a
