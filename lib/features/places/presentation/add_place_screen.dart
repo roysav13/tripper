@@ -11,8 +11,10 @@ import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../data/geocoding_service.dart';
+import '../domain/place.dart';
 import 'map_style.dart';
 import 'place_providers.dart';
+import 'place_widgets.dart';
 
 /// One-screen add-place flow: search as you type, tap a result and a
 /// prefilled save card slides up. Long-press drops a manual pin.
@@ -92,7 +94,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   bool _nameError = false;
   bool _saving = false;
 
-  String _notes = '';
+  final _description = TextEditingController();
+  PlaceCategory? _category;
 
   @override
   void initState() {
@@ -102,7 +105,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     if (widget.initialName != null || widget.initialLat != null) {
       _composing = true;
       _name.text = widget.initialName ?? '';
-      _notes = widget.initialNotes ?? '';
+      _description.text = widget.initialNotes ?? '';
       _country = widget.initialCountry ?? '';
       _city = widget.initialCity ?? '';
       if (widget.initialLat != null && widget.initialLng != null) {
@@ -117,6 +120,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     _mapController?.dispose();
     _search.dispose();
     _name.dispose();
+    _description.dispose();
     super.dispose();
   }
 
@@ -362,6 +366,32 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             ),
           ],
           const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final category in PlaceCategory.values)
+                ChoiceChip(
+                  avatar: Icon(placeCategoryIcon(category), size: 16),
+                  label: Text(placeCategoryLabel(l10n, category)),
+                  selected: _category == category,
+                  onSelected: (_) => setState(
+                    () => _category = _category == category ? null : category,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _description,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+              labelText: l10n.placeFormDescription,
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -486,7 +516,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           lat: _picked?.latitude,
           lng: _picked?.longitude,
           tripId: _tripId,
-          notes: _notes,
+          notes: _description.text,
+          category: _category,
         );
     if (mounted) Navigator.of(context).pop();
   }

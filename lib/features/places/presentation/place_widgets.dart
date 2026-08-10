@@ -9,6 +9,39 @@ import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/place.dart';
 
+IconData placeCategoryIcon(PlaceCategory category) => switch (category) {
+      PlaceCategory.hotel => Icons.hotel_outlined,
+      PlaceCategory.restaurant => Icons.restaurant_outlined,
+      PlaceCategory.coffeeShop => Icons.local_cafe_outlined,
+      PlaceCategory.bar => Icons.local_bar_outlined,
+      PlaceCategory.attraction => Icons.local_activity_outlined,
+      PlaceCategory.museum => Icons.museum_outlined,
+      PlaceCategory.amusementPark => Icons.attractions_outlined,
+      PlaceCategory.trek => Icons.hiking_outlined,
+      PlaceCategory.beach => Icons.beach_access_outlined,
+      PlaceCategory.shopping => Icons.shopping_bag_outlined,
+      PlaceCategory.nature => Icons.park_outlined,
+      PlaceCategory.other => Icons.category_outlined,
+    };
+
+String placeCategoryLabel(AppLocalizations l10n, PlaceCategory category) =>
+    switch (category) {
+      PlaceCategory.hotel => l10n.catHotel,
+      PlaceCategory.restaurant => l10n.catRestaurant,
+      PlaceCategory.coffeeShop => l10n.catCoffeeShop,
+      PlaceCategory.bar => l10n.catBar,
+      PlaceCategory.attraction => l10n.catAttraction,
+      PlaceCategory.museum => l10n.catMuseum,
+      PlaceCategory.amusementPark => l10n.catAmusementPark,
+      PlaceCategory.trek => l10n.catTrek,
+      PlaceCategory.beach => l10n.catBeach,
+      // Reuses Expense's category strings where the word is identical —
+      // one translation to maintain, not two.
+      PlaceCategory.shopping => l10n.catShopping,
+      PlaceCategory.nature => l10n.catNature,
+      PlaceCategory.other => l10n.catOther,
+    };
+
 /// Wishlist row: white card, teal pin, faint check target on the right.
 /// Visited row: recessed paper card, gray, visited date, tap check to undo.
 class PlaceRowCard extends StatelessWidget {

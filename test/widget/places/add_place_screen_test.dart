@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/data/geocoding_service.dart';
+import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/add_place_screen.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
@@ -157,5 +158,34 @@ void main() {
 
     expect(find.text('Give the trip a name'), findsOneWidget);
     expect(await repo.watchAll().first, isEmpty);
+  });
+
+  testWidgets('picking a category and typing a description saves both',
+      (tester) async {
+    final repo = FakePlaceRepository([]);
+    await tester.pumpWidget(_app(FakeGeocoder([_railay]), repo));
+
+    await tester.enterText(find.byType(TextField).first, 'railay');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Railay Beach'));
+    await tester.pumpAndSettle();
+
+    // The AppBar's search field is also a TextField and sorts after the
+    // save card's fields in the element tree, so target the description
+    // field by its label rather than by `.last`.
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == 'Description',
+      ),
+      'A description',
+    );
+    await tester.tap(find.text('Restaurant'));
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = (await repo.watchAll().first).single;
+    expect(saved.category, PlaceCategory.restaurant);
+    expect(saved.notes, 'A description');
   });
 }

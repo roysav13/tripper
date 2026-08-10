@@ -81,4 +81,24 @@ void main() {
     expect(places.single.name, 'Railay East viewpoint');
     expect(places.single.country, 'Thailand');
   });
+
+  testWidgets('editing sets a category and a description', (tester) async {
+    final repo = FakePlaceRepository([_place]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Attraction'));
+    await tester.enterText(find.byType(TextField).last, 'Great sunset spot');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = (await repo.watchAll().first).single;
+    expect(saved.category, PlaceCategory.attraction);
+    expect(saved.notes, 'Great sunset spot');
+  });
 }

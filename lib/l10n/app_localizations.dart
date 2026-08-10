@@ -964,6 +964,72 @@ abstract class AppLocalizations {
   /// **'Link to a trip'**
   String get placeFormTrip;
 
+  /// No description provided for @placeFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get placeFormDescription;
+
+  /// No description provided for @catHotel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotel'**
+  String get catHotel;
+
+  /// No description provided for @catRestaurant.
+  ///
+  /// In en, this message translates to:
+  /// **'Restaurant'**
+  String get catRestaurant;
+
+  /// No description provided for @catCoffeeShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee Shop'**
+  String get catCoffeeShop;
+
+  /// No description provided for @catBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get catBar;
+
+  /// No description provided for @catAttraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Attraction'**
+  String get catAttraction;
+
+  /// No description provided for @catMuseum.
+  ///
+  /// In en, this message translates to:
+  /// **'Museum'**
+  String get catMuseum;
+
+  /// No description provided for @catAmusementPark.
+  ///
+  /// In en, this message translates to:
+  /// **'Amusement Park'**
+  String get catAmusementPark;
+
+  /// No description provided for @catTrek.
+  ///
+  /// In en, this message translates to:
+  /// **'Trek'**
+  String get catTrek;
+
+  /// No description provided for @catBeach.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach'**
+  String get catBeach;
+
+  /// No description provided for @catNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get catNature;
+
   /// No description provided for @mapViewToggle.
   ///
   /// In en, this message translates to:

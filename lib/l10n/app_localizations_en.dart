@@ -493,6 +493,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placeFormTrip => 'Link to a trip';
 
   @override
+  String get placeFormDescription => 'Description';
+
+  @override
+  String get catHotel => 'Hotel';
+
+  @override
+  String get catRestaurant => 'Restaurant';
+
+  @override
+  String get catCoffeeShop => 'Coffee Shop';
+
+  @override
+  String get catBar => 'Bar';
+
+  @override
+  String get catAttraction => 'Attraction';
+
+  @override
+  String get catMuseum => 'Museum';
+
+  @override
+  String get catAmusementPark => 'Amusement Park';
+
+  @override
+  String get catTrek => 'Trek';
+
+  @override
+  String get catBeach => 'Beach';
+
+  @override
+  String get catNature => 'Nature';
+
+  @override
   String get mapViewToggle => 'Map view';
 
   @override

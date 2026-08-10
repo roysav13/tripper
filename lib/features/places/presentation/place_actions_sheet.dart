@@ -9,6 +9,7 @@ import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
 import 'place_providers.dart';
 import 'place_visit_actions.dart';
+import 'place_widgets.dart';
 
 /// Tap a place row or map pin -> actions: toggle visited, edit, delete.
 Future<void> showPlaceActionsSheet(
@@ -153,7 +154,9 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
   late final TextEditingController _name;
   late final TextEditingController _country;
   late final TextEditingController _city;
+  final _description = TextEditingController();
   String? _tripId;
+  PlaceCategory? _category;
   bool _nameError = false;
   bool _saving = false;
 
@@ -164,6 +167,8 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
     _country = TextEditingController(text: widget.place.country);
     _city = TextEditingController(text: widget.place.city);
     _tripId = widget.place.tripId;
+    _description.text = widget.place.notes;
+    _category = widget.place.category;
   }
 
   @override
@@ -171,6 +176,7 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
     _name.dispose();
     _country.dispose();
     _city.dispose();
+    _description.dispose();
     super.dispose();
   }
 
@@ -218,6 +224,29 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (final category in PlaceCategory.values)
+              ChoiceChip(
+                avatar: Icon(placeCategoryIcon(category), size: 16),
+                label: Text(placeCategoryLabel(l10n, category)),
+                selected: _category == category,
+                onSelected: (_) => setState(
+                  () => _category = _category == category ? null : category,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TextField(
+          controller: _description,
+          maxLines: 3,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(labelText: l10n.placeFormDescription),
+        ),
         if (trips.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
           Text(l10n.placeFormTrip),
@@ -262,6 +291,8 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
             country: _country.text,
             city: _city.text,
             tripId: () => _tripId,
+            category: () => _category,
+            notes: _description.text,
           ),
         );
     if (mounted) Navigator.of(context).pop();
