@@ -904,6 +904,18 @@ abstract class AppLocalizations {
   /// **'View on map'**
   String get placeViewOnMap;
 
+  /// No description provided for @placeOpenInGoogleMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Google Maps'**
+  String get placeOpenInGoogleMaps;
+
+  /// No description provided for @placeOpenMapsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open Google Maps.'**
+  String get placeOpenMapsFailed;
+
   /// No description provided for @placeUnvisit.
   ///
   /// In en, this message translates to:

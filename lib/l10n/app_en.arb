@@ -179,6 +179,8 @@
   "placesBeenSection": "Been there",
   "placeMarkVisited": "Mark as visited",
   "placeViewOnMap": "View on map",
+  "placeOpenInGoogleMaps": "Open in Google Maps",
+  "placeOpenMapsFailed": "Couldn't open Google Maps.",
   "placeUnvisit": "Move back to wishlist",
   "visitedOn": "Visited {date}",
   "@visitedOn": {

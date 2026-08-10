@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/sharing/maps_link.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
@@ -55,8 +57,20 @@ class _PlaceActions extends ConsumerWidget {
                 ].join(' · '),
               ),
             ),
+            if (place.notes.trim().isNotEmpty)
+              Padding(
+                key: const Key('place-description'),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Text(
+                  place.notes,
+                  style: TextStyle(color: colors.inkSecondary),
+                ),
+              ),
             const Divider(),
-            if (place.hasLocation)
+            if (place.hasLocation) ...[
               ListTile(
                 leading: const Icon(Icons.map_outlined),
                 title: Text(l10n.placeViewOnMap),
@@ -70,6 +84,27 @@ class _PlaceActions extends ConsumerWidget {
                   context.go('/places');
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: Text(l10n.placeOpenInGoogleMaps),
+                onTap: () async {
+                  // Resolve everything from context BEFORE the await —
+                  // this sheet's own context becomes unreliable once the
+                  // pop below settles, and launchUrl is a real async gap.
+                  final messenger = ScaffoldMessenger.of(context);
+                  final failedMessage = l10n.placeOpenMapsFailed;
+                  Navigator.of(context).pop();
+                  final launched = await launchUrl(
+                    googleMapsUri(place.lat!, place.lng!),
+                    mode: LaunchMode.externalApplication,
+                  );
+                  if (!launched) {
+                    messenger
+                        .showSnackBar(SnackBar(content: Text(failedMessage)));
+                  }
+                },
+              ),
+            ],
             ListTile(
               leading: Icon(
                 place.isVisited

@@ -101,4 +101,55 @@ void main() {
     expect(saved.category, PlaceCategory.attraction);
     expect(saved.notes, 'Great sunset spot');
   });
+
+  testWidgets('description shows in the actions sheet when set',
+      (tester) async {
+    final repo = FakePlaceRepository([
+      _place.copyWith(notes: 'A lovely lookout'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A lovely lookout'), findsOneWidget);
+    expect(find.byKey(const Key('place-description')), findsOneWidget);
+  });
+
+  testWidgets('no description line when notes is empty', (tester) async {
+    final repo = FakePlaceRepository([_place]); // _place has no notes
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('place-description')), findsNothing);
+  });
+
+  testWidgets('Google Maps action only appears for a located place',
+      (tester) async {
+    final located = _place.copyWith(lat: () => 8.0119, lng: () => 98.8378);
+    final repo = FakePlaceRepository([located]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open in Google Maps'), findsOneWidget);
+  });
+
+  testWidgets('no Google Maps action for a place with no location',
+      (tester) async {
+    final repo = FakePlaceRepository([_place]); // _place has no lat/lng
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open in Google Maps'), findsNothing);
+  });
 }

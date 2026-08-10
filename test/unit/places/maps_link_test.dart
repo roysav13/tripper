@@ -73,4 +73,19 @@ void main() {
       expect(link.name, 'Colosseum');
     });
   });
+
+  group('googleMapsUri', () {
+    test('builds a maps.google.com search URL from coordinates', () {
+      final uri = googleMapsUri(8.0119, 98.8378);
+      expect(
+        uri.toString(),
+        'https://www.google.com/maps/search/?api=1&query=8.0119,98.8378',
+      );
+    });
+
+    test('handles negative coordinates', () {
+      final uri = googleMapsUri(-33.8688, 151.2093);
+      expect(uri.queryParameters['query'], '-33.8688,151.2093');
+    });
+  });
 }

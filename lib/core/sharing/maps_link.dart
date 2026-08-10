@@ -145,3 +145,11 @@ class MapsLinkService {
 
 final mapsLinkServiceProvider =
     Provider<MapsLinkService>((ref) => MapsLinkService(http.Client()));
+
+/// Builds a Google Maps URL that opens [lat],[lng] directly — the
+/// opposite direction from [parseMapsShare]: this app already HAS
+/// coordinates and wants to hand off to the real Maps app/website, not
+/// parse an incoming link. Always the same well-known URL shape, never
+/// fetched or cached.
+Uri googleMapsUri(double lat, double lng) =>
+    Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');

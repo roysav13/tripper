@@ -461,6 +461,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placeViewOnMap => 'View on map';
 
   @override
+  String get placeOpenInGoogleMaps => 'Open in Google Maps';
+
+  @override
+  String get placeOpenMapsFailed => 'Couldn\'t open Google Maps.';
+
+  @override
   String get placeUnvisit => 'Move back to wishlist';
 
   @override
