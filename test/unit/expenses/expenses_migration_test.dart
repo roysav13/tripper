@@ -35,10 +35,33 @@ CREATE TABLE expenses (
   created_at INTEGER NOT NULL
 )''';
 
+  /// The pre-v12 places table — before Places.category existed. A fresh
+  /// `AppDatabase` creates places at its CURRENT shape (via `onCreate`),
+  /// category column included, so any `onUpgrade` replay with `from` in
+  /// [5, 12) below would otherwise make the migration's own (correct)
+  /// places.category addColumn step collide with a column this synthetic
+  /// setup already has — unrelated to what these tests actually cover.
+  const createPreCategoryPlaces = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+)''';
+
   test('v6 -> v7 creates the expenses table and preserves existing data',
       () async {
     // A v6 install: no expenses table at all.
     await db.customStatement('DROP TABLE expenses');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await db.migration.onUpgrade(Migrator(db), 6, 7);
@@ -53,6 +76,8 @@ CREATE TABLE expenses (
       '(= not yet converted), keeping the rows', () async {
     await db.customStatement('DROP TABLE expenses');
     await db.customStatement(createV7Expenses);
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
     await db.customStatement(
       'INSERT INTO expenses (id, trip_id, amount_minor, currency, category, '
@@ -79,6 +104,8 @@ CREATE TABLE expenses (
       'just created (regression: crashed with "duplicate column name" '
       'for anyone skipping a version)', () async {
     await db.customStatement('DROP TABLE expenses');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await expectLater(

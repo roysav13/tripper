@@ -25,6 +25,10 @@ class Places extends Table {
   TextColumn get notes => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime()();
 
+  /// Index into PlaceCategory enum; null = uncategorized (existing rows,
+  /// or a place the user hasn't categorized yet).
+  IntColumn get category => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

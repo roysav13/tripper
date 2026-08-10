@@ -3,6 +3,22 @@ import 'package:flutter/foundation.dart';
 /// Wishlist carries the color; visited recedes to gray (design decision).
 enum PlaceStatus { wantToGo, beenThere }
 
+/// Order is stable — stored as index in the DB. Append only.
+enum PlaceCategory {
+  hotel,
+  restaurant,
+  coffeeShop,
+  bar,
+  attraction,
+  museum,
+  amusementPark,
+  trek,
+  beach,
+  shopping,
+  nature,
+  other,
+}
+
 @immutable
 class Place {
   const Place({
@@ -16,6 +32,7 @@ class Place {
     this.visitedAt,
     this.tripId,
     this.notes = '',
+    this.category,
   });
 
   final String id;
@@ -28,6 +45,12 @@ class Place {
   final DateTime? visitedAt;
   final String? tripId;
   final String notes;
+
+  /// Null = uncategorized — every place that existed before this field
+  /// shipped has no category, and that's a real, distinct state from
+  /// "Other" (defaulting old rows to "Other" would invent a fact nobody
+  /// entered).
+  final PlaceCategory? category;
 
   bool get isVisited => status == PlaceStatus.beenThere;
   bool get hasLocation => lat != null && lng != null;
@@ -42,6 +65,7 @@ class Place {
     DateTime? Function()? visitedAt,
     String? Function()? tripId,
     String? notes,
+    PlaceCategory? Function()? category,
   }) {
     return Place(
       id: id,
@@ -54,6 +78,7 @@ class Place {
       visitedAt: visitedAt == null ? this.visitedAt : visitedAt(),
       tripId: tripId == null ? this.tripId : tripId(),
       notes: notes ?? this.notes,
+      category: category == null ? this.category : category(),
     );
   }
 
@@ -69,7 +94,8 @@ class Place {
       other.status == status &&
       other.visitedAt == visitedAt &&
       other.tripId == tripId &&
-      other.notes == notes;
+      other.notes == notes &&
+      other.category == category;
 
   @override
   int get hashCode => Object.hash(
@@ -83,6 +109,7 @@ class Place {
         visitedAt,
         tripId,
         notes,
+        category,
       );
 }
 

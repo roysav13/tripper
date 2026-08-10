@@ -26,6 +26,7 @@ part 'app_database.g.dart';
 ///   v9 — ItineraryItems (M5.7, feature since withdrawn — see below)
 ///   v10 — JournalEntries + JournalPhotos (Journal feature)
 ///   v11 — JournalEntries.placeId (Place<->JournalEntry correlation)
+///   v12 — Places.category (place categorization + filtering)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -52,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -83,6 +84,8 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.createTable(places);
+          } else if (from < 12) {
+            await m.addColumn(places, places.category);
           }
           if (from < 7) {
             // Created at the current definition — conversion columns

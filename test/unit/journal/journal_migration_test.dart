@@ -30,12 +30,35 @@ CREATE TABLE journal_entries (
   created_at INTEGER NOT NULL
 )''';
 
+  /// The pre-v12 places table — before Places.category existed. A fresh
+  /// `AppDatabase` creates places at its CURRENT shape (via `onCreate`),
+  /// category column included, so any `onUpgrade` replay with `from` in
+  /// [5, 12) below would otherwise make the migration's own (correct)
+  /// places.category addColumn step collide with a column this synthetic
+  /// setup already has — unrelated to what these tests actually cover.
+  const createPreCategoryPlaces = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+)''';
+
   test(
       'v9 -> v10 creates journal_entries and journal_photos, preserves '
       'existing trips', () async {
     // A v9 install: neither journal table exists yet (child first — FK).
     await db.customStatement('DROP TABLE journal_photos');
     await db.customStatement('DROP TABLE journal_entries');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await db.migration.onUpgrade(Migrator(db), 9, 10);
@@ -52,6 +75,8 @@ CREATE TABLE journal_entries (
     await db.customStatement('DROP TABLE journal_photos');
     await db.customStatement('DROP TABLE journal_entries');
     await db.customStatement(createV10JournalEntries);
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
     await db.customStatement(
       'INSERT INTO journal_entries (id, trip_id, summary, logged_at, '
@@ -74,6 +99,8 @@ CREATE TABLE journal_entries (
       'anyone skipping a version)', () async {
     await db.customStatement('DROP TABLE journal_photos');
     await db.customStatement('DROP TABLE journal_entries');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await expectLater(

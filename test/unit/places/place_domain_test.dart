@@ -60,4 +60,26 @@ void main() {
       expect(stats.visited, 0);
     });
   });
+
+  group('Place category', () {
+    test('copyWith sets and clears category', () {
+      const place = Place(id: 'p1', name: 'Test');
+      expect(place.category, isNull);
+
+      final categorized =
+          place.copyWith(category: () => PlaceCategory.restaurant);
+      expect(categorized.category, PlaceCategory.restaurant);
+
+      final cleared = categorized.copyWith(category: () => null);
+      expect(cleared.category, isNull);
+    });
+
+    test('equality includes category', () {
+      const a = Place(id: 'p1', name: 'Test', category: PlaceCategory.hotel);
+      const b = Place(id: 'p1', name: 'Test', category: PlaceCategory.hotel);
+      const c = Place(id: 'p1', name: 'Test', category: PlaceCategory.trek);
+      expect(a, b);
+      expect(a, isNot(c));
+    });
+  });
 }

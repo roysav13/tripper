@@ -1525,6 +1525,12 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<int> category = GeneratedColumn<int>(
+      'category', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1537,7 +1543,8 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
         visitedAt,
         tripId,
         notes,
-        createdAt
+        createdAt,
+        category
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1600,6 +1607,10 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    }
     return context;
   }
 
@@ -1631,6 +1642,8 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}notes'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}category']),
     );
   }
 
@@ -1658,6 +1671,10 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
   final String? tripId;
   final String notes;
   final DateTime createdAt;
+
+  /// Index into PlaceCategory enum; null = uncategorized (existing rows,
+  /// or a place the user hasn't categorized yet).
+  final int? category;
   const PlaceRow(
       {required this.id,
       required this.name,
@@ -1669,7 +1686,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       this.visitedAt,
       this.tripId,
       required this.notes,
-      required this.createdAt});
+      required this.createdAt,
+      this.category});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1692,6 +1710,9 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
     }
     map['notes'] = Variable<String>(notes);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<int>(category);
+    }
     return map;
   }
 
@@ -1711,6 +1732,9 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           tripId == null && nullToAbsent ? const Value.absent() : Value(tripId),
       notes: Value(notes),
       createdAt: Value(createdAt),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
     );
   }
 
@@ -1729,6 +1753,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       tripId: serializer.fromJson<String?>(json['tripId']),
       notes: serializer.fromJson<String>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      category: serializer.fromJson<int?>(json['category']),
     );
   }
   @override
@@ -1746,6 +1771,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       'tripId': serializer.toJson<String?>(tripId),
       'notes': serializer.toJson<String>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'category': serializer.toJson<int?>(category),
     };
   }
 
@@ -1760,7 +1786,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           Value<DateTime?> visitedAt = const Value.absent(),
           Value<String?> tripId = const Value.absent(),
           String? notes,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<int?> category = const Value.absent()}) =>
       PlaceRow(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -1773,6 +1800,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
         tripId: tripId.present ? tripId.value : this.tripId,
         notes: notes ?? this.notes,
         createdAt: createdAt ?? this.createdAt,
+        category: category.present ? category.value : this.category,
       );
   PlaceRow copyWithCompanion(PlacesCompanion data) {
     return PlaceRow(
@@ -1787,6 +1815,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       tripId: data.tripId.present ? data.tripId.value : this.tripId,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      category: data.category.present ? data.category.value : this.category,
     );
   }
 
@@ -1803,14 +1832,15 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           ..write('visitedAt: $visitedAt, ')
           ..write('tripId: $tripId, ')
           ..write('notes: $notes, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('category: $category')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, name, lat, lng, country, city, status,
-      visitedAt, tripId, notes, createdAt);
+      visitedAt, tripId, notes, createdAt, category);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1825,7 +1855,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           other.visitedAt == this.visitedAt &&
           other.tripId == this.tripId &&
           other.notes == this.notes &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.category == this.category);
 }
 
 class PlacesCompanion extends UpdateCompanion<PlaceRow> {
@@ -1840,6 +1871,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
   final Value<String?> tripId;
   final Value<String> notes;
   final Value<DateTime> createdAt;
+  final Value<int?> category;
   final Value<int> rowid;
   const PlacesCompanion({
     this.id = const Value.absent(),
@@ -1853,6 +1885,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     this.tripId = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PlacesCompanion.insert({
@@ -1867,6 +1900,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     this.tripId = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime createdAt,
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -1884,6 +1918,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     Expression<String>? tripId,
     Expression<String>? notes,
     Expression<DateTime>? createdAt,
+    Expression<int>? category,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1898,6 +1933,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       if (tripId != null) 'trip_id': tripId,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
+      if (category != null) 'category': category,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1914,6 +1950,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       Value<String?>? tripId,
       Value<String>? notes,
       Value<DateTime>? createdAt,
+      Value<int?>? category,
       Value<int>? rowid}) {
     return PlacesCompanion(
       id: id ?? this.id,
@@ -1927,6 +1964,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       tripId: tripId ?? this.tripId,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      category: category ?? this.category,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1967,6 +2005,9 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (category.present) {
+      map['category'] = Variable<int>(category.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1987,6 +2028,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
           ..write('tripId: $tripId, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
+          ..write('category: $category, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5537,6 +5579,7 @@ typedef $$PlacesTableCreateCompanionBuilder = PlacesCompanion Function({
   Value<String?> tripId,
   Value<String> notes,
   required DateTime createdAt,
+  Value<int?> category,
   Value<int> rowid,
 });
 typedef $$PlacesTableUpdateCompanionBuilder = PlacesCompanion Function({
@@ -5551,6 +5594,7 @@ typedef $$PlacesTableUpdateCompanionBuilder = PlacesCompanion Function({
   Value<String?> tripId,
   Value<String> notes,
   Value<DateTime> createdAt,
+  Value<int?> category,
   Value<int> rowid,
 });
 
@@ -5639,6 +5683,9 @@ class $$PlacesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
 
   $$TripsTableFilterComposer get tripId {
     final $$TripsTableFilterComposer composer = $composerBuilder(
@@ -5742,6 +5789,9 @@ class $$PlacesTableOrderingComposer
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
   $$TripsTableOrderingComposer get tripId {
     final $$TripsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -5801,6 +5851,9 @@ class $$PlacesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
 
   $$TripsTableAnnotationComposer get tripId {
     final $$TripsTableAnnotationComposer composer = $composerBuilder(
@@ -5900,6 +5953,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             Value<String?> tripId = const Value.absent(),
             Value<String> notes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<int?> category = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlacesCompanion(
@@ -5914,6 +5968,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             tripId: tripId,
             notes: notes,
             createdAt: createdAt,
+            category: category,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -5928,6 +5983,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             Value<String?> tripId = const Value.absent(),
             Value<String> notes = const Value.absent(),
             required DateTime createdAt,
+            Value<int?> category = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlacesCompanion.insert(
@@ -5942,6 +5998,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             tripId: tripId,
             notes: notes,
             createdAt: createdAt,
+            category: category,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

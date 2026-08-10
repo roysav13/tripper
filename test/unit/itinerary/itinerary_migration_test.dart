@@ -23,9 +23,32 @@ void main() {
       'completion_prompt_shown, created_at) '
       "VALUES ('t1', 'Thailand', 0, 0, 0, 0)";
 
+  /// The pre-v12 places table — before Places.category existed. A fresh
+  /// `AppDatabase` creates places at its CURRENT shape (via `onCreate`),
+  /// category column included, so any `onUpgrade` replay with `from` in
+  /// [5, 12) below would otherwise make the migration's own (correct)
+  /// places.category addColumn step collide with a column this synthetic
+  /// setup already has — unrelated to what these tests actually cover.
+  const createPreCategoryPlaces = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+)''';
+
   test('v8 -> v9 creates the itinerary table and keeps existing data',
       () async {
     await db.customStatement('DROP TABLE itinerary_items');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await db.migration.onUpgrade(Migrator(db), 8, 9);
@@ -40,6 +63,8 @@ void main() {
       'created, no duplicate columns)', () async {
     await db.customStatement('DROP TABLE itinerary_items');
     await db.customStatement('DROP TABLE expenses');
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createPreCategoryPlaces);
     await db.customStatement(insertTrip);
 
     await expectLater(

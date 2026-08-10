@@ -51,6 +51,7 @@ class FakePlaceRepository implements PlaceRepository {
     double? lng,
     String? tripId,
     String notes = '',
+    PlaceCategory? category,
   }) async {
     final place = Place(
       id: 'fake-${_places.length}',
@@ -61,6 +62,7 @@ class FakePlaceRepository implements PlaceRepository {
       lng: lng,
       tripId: tripId,
       notes: notes,
+      category: category,
     );
     emit([..._places, place]);
     return place.id;
