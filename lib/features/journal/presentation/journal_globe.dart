@@ -377,16 +377,31 @@ class _JournalGlobeState extends State<JournalGlobe> {
       }
     }
     _lastClusters = clusters;
-    _addConnections(controller, compensation);
+    _addConnections(controller, controller.zoom);
   }
 
   /// Draws the journey line's arcs — split out from _addPoints so
   /// _handleZoomChanged can also call it (see there for why).
-  void _addConnections(
-    FlutterEarthGlobeController controller,
-    double compensation,
-  ) {
+  ///
+  /// Unlike dot/halo sizing (which just holds apparent size constant
+  /// across zoom via a single `1/2^zoom` compensation), the line
+  /// deliberately uses three different falloff curves so its look
+  /// actively changes with zoom rather than merely not-growing:
+  /// - `_lineWidthCompensation` falls off *faster* than the dot curve
+  ///   (base 2.3 vs 2.0), so the line gets thinner than its rest-zoom
+  ///   width as you zoom in, not just constant.
+  /// - `_dashCompensation` uses the same base-2.0 curve as dots, so each
+  ///   individual dash's length stays roughly constant.
+  /// - `_dashSpacingCompensation` falls off much faster still (base
+  ///   3.2), so the gap between dashes shrinks quicker than the dashes
+  ///   themselves — the dash pattern reads as denser at higher zoom,
+  ///   not just smaller. All three bases are starting values for
+  ///   on-device tuning, same as every other constant in this file.
+  void _addConnections(FlutterEarthGlobeController controller, double zoom) {
     final colors = context.colors;
+    final lineWidthCompensation = 1 / math.pow(2.3, zoom);
+    final dashCompensation = 1 / math.pow(2.0, zoom);
+    final dashSpacingCompensation = 1 / math.pow(3.2, zoom);
     for (final (start, end) in journeyConnections(widget.entries)) {
       controller.addPointConnection(
         PointConnection(
@@ -399,17 +414,13 @@ class _JournalGlobeState extends State<JournalGlobe> {
           // card_design_presentation.png): colors.surface reads as
           // near-white against the globe's own busy satellite-style
           // texture in light mode, and adapts to the theme in dark mode
-          // the same way the dot border rings already do. lineWidth and
-          // dashSize are compensated the same way dot/halo sizes are
-          // (see _handleZoomChanged's doc comment) — the package scales
-          // both by radius/150 same as PointStyle.size, so without this
-          // the line grows visibly thicker (and its dashes stretch
-          // longer) as you zoom in.
+          // the same way the dot border rings already do.
           style: PointConnectionStyle(
             type: PointConnectionType.dashed,
-            color: colors.surface.withValues(alpha: 0.8),
-            lineWidth: 1.0 * compensation,
-            dashSize: 4.0 * compensation,
+            color: colors.surface.withValues(alpha: 0.85),
+            lineWidth: 2.0 * lineWidthCompensation,
+            dashSize: 4.0 * dashCompensation,
+            spacing: 8.0 * dashSpacingCompensation,
           ),
         ),
       );
@@ -487,7 +498,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
     for (final connection in controller.connections.toList()) {
       controller.removePointConnection(connection.id);
     }
-    _addConnections(controller, compensation);
+    _addConnections(controller, zoom);
   }
 
   void _rescalePoint(
