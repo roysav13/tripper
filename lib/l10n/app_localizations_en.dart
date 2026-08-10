@@ -222,6 +222,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String expenseGroupWeekOf(String date) {
+    return 'Week of $date';
+  }
+
+  @override
   String get settingsHomeCurrency => 'Home currency';
 
   @override

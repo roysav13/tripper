@@ -90,6 +90,10 @@
   "@expensesRatesAsOf": {
     "placeholders": { "date": { "type": "String" } }
   },
+  "expenseGroupWeekOf": "Week of {date}",
+  "@expenseGroupWeekOf": {
+    "placeholders": { "date": { "type": "String" } }
+  },
   "settingsHomeCurrency": "Home currency",
   "settingsHomeCurrencyHint": "Converts mixed-currency trip totals into one figure. Needs a connection the first time; converted amounts are then stored and work offline. Leave empty to just list each currency.",
   "settingsHomeCurrencyOff": "Off",

@@ -80,7 +80,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Total: 12.50 + 300.00 + 7.50 = 320.00
-    expect(find.text('320.00 ILS'), findsOneWidget);
+    // Also appears in the (single) group's own header, which mirrors the
+    // page total for this single-group fixture.
+    expect(find.text('320.00 ILS'), findsWidgets);
     // Breakdown: stay 300.00 first, then food 20.00 (bare numbers —
     // single-currency trip, so the code would be noise).
     expect(find.text('300.00'), findsWidgets);
@@ -125,7 +127,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('≈ 100.00 ILS'), findsOneWidget); // the row
-    expect(find.text('≈ 200.00 ILS'), findsOneWidget); // combined total
+    // Also appears in the (single) group's own header, same reasoning.
+    expect(find.text('≈ 200.00 ILS'), findsWidgets); // combined total
     expect(find.textContaining('not converted yet'), findsNothing);
   });
 
@@ -139,8 +142,8 @@ void main() {
     await tester.pumpWidget(await _app(repo, homeCurrency: 'ILS'));
     await tester.pumpAndSettle();
 
-    expect(find.text('≈ 100.00 ILS'), findsOneWidget);
-    expect(find.text('1 expense not converted yet'), findsOneWidget);
+    expect(find.text('≈ 100.00 ILS'), findsWidgets);
+    expect(find.text('1 expense not converted yet'), findsWidgets);
   });
 
   testWidgets('every expense row shows its own currency code', (tester) async {
@@ -277,5 +280,132 @@ void main() {
 
     expect(find.text('Add expense'), findsNothing);
     expect(find.text('Search currency'), findsOneWidget);
+  });
+
+  testWidgets(
+      'expenses spanning multiple days render one group header per day, '
+      'newest first', (tester) async {
+    final repo = FakeExpenseRepository([
+      Expense(
+        id: 'a',
+        tripId: 't1',
+        amountMinor: 1000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1),
+        notes: 'Day1',
+      ),
+      Expense(
+        id: 'b',
+        tripId: 't1',
+        amountMinor: 2000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 3),
+        notes: 'Day3',
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SAT, AUG 1'), findsOneWidget);
+    expect(find.text('MON, AUG 3'), findsOneWidget);
+  });
+
+  testWidgets(
+      'only the newest group is expanded by default; tapping a header '
+      'toggles it', (tester) async {
+    final repo = FakeExpenseRepository([
+      Expense(
+        id: 'a',
+        tripId: 't1',
+        amountMinor: 1000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1),
+        notes: 'OldDay',
+      ),
+      Expense(
+        id: 'b',
+        tripId: 't1',
+        amountMinor: 2000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 3),
+        notes: 'NewDay',
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('NewDay'), findsOneWidget);
+    expect(find.text('OldDay'), findsNothing);
+
+    await tester.tap(find.text('SAT, AUG 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('OldDay'), findsOneWidget);
+
+    await tester.tap(find.text('MON, AUG 3'));
+    await tester.pumpAndSettle();
+    expect(find.text('NewDay'), findsNothing);
+  });
+
+  testWidgets(
+      'each group totals only its own expenses in the home currency, not '
+      'the trip-wide sum', (tester) async {
+    final repo = FakeExpenseRepository([
+      Expense(
+        id: 'a1',
+        tripId: 't1',
+        amountMinor: 10000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1),
+      ),
+      Expense(
+        id: 'a2',
+        tripId: 't1',
+        amountMinor: 1000,
+        currency: 'USD',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1),
+        convertedAmountMinor: 5000,
+        convertedCurrency: 'ILS',
+      ),
+      Expense(
+        id: 'b1',
+        tripId: 't1',
+        amountMinor: 3000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 3),
+      ),
+      Expense(
+        id: 'b2',
+        tripId: 't1',
+        amountMinor: 400,
+        currency: 'USD',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 3),
+        convertedAmountMinor: 2000,
+        convertedCurrency: 'ILS',
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo, homeCurrency: 'ILS'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('SAT, AUG 1')); // expand the older group too
+    await tester.pumpAndSettle();
+
+    expect(find.text('≈ 150.00 ILS'), findsOneWidget); // Aug 1: 100 + 50
+    // Also appears on expense a2's own row (10.00 USD -> 50.00 ILS) now
+    // that Aug 1 is expanded too — a coincidental match between that
+    // unrelated row's converted amount and this group's total, same
+    // "expected duplicate" reasoning as Step 1's edited assertions.
+    expect(find.text('≈ 50.00 ILS'), findsWidgets); // Aug 3: 30 + 20
+    expect(
+      find.text('≈ 200.00 ILS'),
+      findsOneWidget,
+    ); // trip-wide, summary card
   });
 }

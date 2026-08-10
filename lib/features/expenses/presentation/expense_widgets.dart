@@ -6,9 +6,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
+import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/currencies.dart';
 import '../domain/expense.dart';
+import '../domain/expense_grouping.dart';
 
 IconData expenseCategoryIcon(ExpenseCategory category) => switch (category) {
       ExpenseCategory.transport => Icons.directions_bus_outlined,
@@ -291,5 +293,86 @@ class ExpenseRowCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// A collapsible group's header: the period's label, its total (home
+/// currency when the group mixes currencies and one is set, otherwise one
+/// line per currency — see [ExpenseGroup.homeCurrencyTotal]), and an
+/// expand/collapse chevron. Tapping anywhere on the header toggles
+/// [expanded].
+class ExpenseGroupHeader extends StatelessWidget {
+  const ExpenseGroupHeader({
+    super.key,
+    required this.group,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final ExpenseGroup group;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
+    final pending = group.homeCurrencyTotal?.pendingCount ?? 0;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.symmetric(vertical: AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: SectionLabel(_label(l10n, group))),
+                MonoText(_totalText(group)),
+                const SizedBox(width: AppSpacing.xs),
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 18,
+                  color: colors.inkMuted,
+                ),
+              ],
+            ),
+            if (pending > 0)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: MonoText(
+                  l10n.expensesConversionPending(pending),
+                  muted: true,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _label(AppLocalizations l10n, ExpenseGroup group) =>
+      switch (group.granularity) {
+        ExpenseGroupGranularity.day =>
+          DateFormat('EEE, MMM d').format(group.periodStart),
+        ExpenseGroupGranularity.week => l10n.expenseGroupWeekOf(
+            DateFormat('MMM d').format(group.periodStart),
+          ),
+        ExpenseGroupGranularity.month =>
+          DateFormat('MMMM yyyy').format(group.periodStart),
+      };
+
+  String _totalText(ExpenseGroup group) {
+    final home = group.homeCurrencyTotal;
+    if (home != null) {
+      return '≈ ${formatMinor(home.amountMinor, digits: minorDigitsFor(group.homeCurrency))} '
+          '${group.homeCurrency}';
+    }
+    return group.perCurrencyTotals
+        .map(
+          (t) =>
+              '${formatMinor(t.amountMinor, digits: minorDigitsFor(t.currency))} ${t.currency}',
+        )
+        .join(' · ');
   }
 }

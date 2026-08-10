@@ -466,6 +466,12 @@ abstract class AppLocalizations {
   /// **'Rates from {date}'**
   String expensesRatesAsOf(String date);
 
+  /// No description provided for @expenseGroupWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {date}'**
+  String expenseGroupWeekOf(String date);
+
   /// No description provided for @settingsHomeCurrency.
   ///
   /// In en, this message translates to:

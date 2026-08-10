@@ -11,28 +11,41 @@ import '../../../core/widgets/error_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
 import '../domain/expense.dart';
+import '../domain/expense_grouping.dart';
 import 'currency_picker.dart';
 import 'expense_form_sheet.dart';
 import 'expense_providers.dart';
 import 'expense_widgets.dart';
 
 /// Spend tab inside a trip's detail screen (M5.5).
-class TripExpensesTab extends ConsumerWidget {
+class TripExpensesTab extends ConsumerStatefulWidget {
   const TripExpensesTab({super.key, required this.trip});
 
   final Trip trip;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TripExpensesTab> createState() => _TripExpensesTabState();
+}
+
+class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
+  /// Which groups (keyed by [ExpenseGroup.periodStart]) are expanded.
+  /// Seeded once, on the first build that has groups, to contain only the
+  /// newest group — collapse/expand after that is purely the user's own
+  /// taps. In-memory only; resets on remount, same as every other
+  /// transient UI toggle in this app.
+  Set<DateTime>? _expandedGroups;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
-    final asyncExpenses = ref.watch(tripExpensesProvider(trip.id));
+    final asyncExpenses = ref.watch(tripExpensesProvider(widget.trip.id));
     final expenses = asyncExpenses.valueOrNull ?? const <Expense>[];
-    final summary = ref.watch(tripExpenseSummaryProvider(trip.id));
+    final summary = ref.watch(tripExpenseSummaryProvider(widget.trip.id));
 
     if (asyncExpenses.hasError) {
       return ErrorState(
-        onRetry: () => ref.invalidate(tripExpensesProvider(trip.id)),
+        onRetry: () => ref.invalidate(tripExpensesProvider(widget.trip.id)),
       );
     }
 
@@ -42,13 +55,19 @@ class TripExpensesTab extends ConsumerWidget {
         title: l10n.expensesEmptyTitle,
         body: l10n.expensesEmptyBody,
         ctaLabel: l10n.expensesEmptyCta,
-        onCta: () => _addExpense(
-          context,
-          ref,
-          tripId: trip.id,
-          defaultCurrency: summary.mainCurrency,
-        ),
+        onCta: () => _addExpense(defaultCurrency: summary.mainCurrency),
       );
+    }
+
+    final groups = groupExpenses(widget.trip, expenses, summary.homeCurrency);
+    // Guard against seeding from a transient empty-groups build: the
+    // expenses stream is `async*` (see FakeExpenseRepository.watchForTrip),
+    // so the very first build can land before it emits, with `expenses`
+    // (and thus `groups`) empty even though real data is on the way. Only
+    // seed once real groups exist, so the newest group ends up expanded
+    // instead of the seed permanently locking onto `{}`.
+    if (groups.isNotEmpty) {
+      _expandedGroups ??= {groups.first.periodStart};
     }
 
     return Scaffold(
@@ -57,12 +76,7 @@ class TripExpensesTab extends ConsumerWidget {
         tooltip: l10n.expensesEmptyCta,
         backgroundColor: colors.accent,
         foregroundColor: colors.surface,
-        onPressed: () => _addExpense(
-          context,
-          ref,
-          tripId: trip.id,
-          defaultCurrency: summary.mainCurrency,
-        ),
+        onPressed: () => _addExpense(defaultCurrency: summary.mainCurrency),
         child: const Icon(Icons.add),
       ),
       body: ListView(
@@ -77,62 +91,64 @@ class TripExpensesTab extends ConsumerWidget {
                 summary.homeCurrency.isEmpty && summary.totals.length > 1,
           ),
           const SizedBox(height: AppSpacing.lg),
-          for (final expense in expenses)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-              child: ExpenseRowCard(
-                expense: expense,
-                onTap: () => showExpenseFormSheet(
-                  context,
-                  tripId: trip.id,
-                  existing: expense,
-                  defaultCurrency: summary.mainCurrency,
-                ),
-                onDelete: () => _delete(context, ref, expense),
-              ),
+          for (final group in groups) ...[
+            ExpenseGroupHeader(
+              group: group,
+              expanded: _expandedGroups!.contains(group.periodStart),
+              onTap: () => setState(() {
+                final isExpanded = _expandedGroups!.contains(group.periodStart);
+                if (isExpanded) {
+                  _expandedGroups!.remove(group.periodStart);
+                } else {
+                  _expandedGroups!.add(group.periodStart);
+                }
+              }),
             ),
+            if (_expandedGroups!.contains(group.periodStart))
+              for (final expense in group.expenses)
+                Padding(
+                  padding:
+                      const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+                  child: ExpenseRowCard(
+                    expense: expense,
+                    onTap: () => showExpenseFormSheet(
+                      context,
+                      tripId: widget.trip.id,
+                      existing: expense,
+                      defaultCurrency: summary.mainCurrency,
+                    ),
+                    onDelete: () => _delete(expense),
+                  ),
+                ),
+            const SizedBox(height: AppSpacing.md),
+          ],
         ],
       ),
     );
   }
 
-  /// Both the FAB and the empty-state CTA route through here: a home
-  /// currency is required before the first "add expense" attempt that
-  /// finds one unset (group totals need a single currency to total into —
-  /// see docs/superpowers/specs/2026-08-10-spend-improvements-design.md).
-  /// Dismissing the picker cancels the whole add attempt; once set, this
-  /// never interrupts again since homeCurrencyProvider is a single
-  /// app-wide setting, not per-trip.
-  Future<void> _addExpense(
-    BuildContext context,
-    WidgetRef ref, {
-    required String tripId,
-    String? defaultCurrency,
-  }) async {
+  Future<void> _addExpense({String? defaultCurrency}) async {
     final home = ref.read(homeCurrencyProvider);
     if (home.isEmpty) {
       final chosen = await showCurrencyPicker(context, allowNone: false);
       if (chosen == null) return;
       await ref.read(homeCurrencyProvider.notifier).set(chosen);
     }
-    if (!context.mounted) return;
+    if (!mounted) return;
+    // unawaited: fire-and-forget sheet presentation, matching the
+    // convention already established in expense_providers.dart — the lint
+    // (unawaited_futures) otherwise flags this call.
     unawaited(
       showExpenseFormSheet(
         context,
-        tripId: tripId,
+        tripId: widget.trip.id,
         defaultCurrency: defaultCurrency,
       ),
     );
   }
 
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    Expense expense,
-  ) async {
+  Future<void> _delete(Expense expense) async {
     final l10n = AppLocalizations.of(context)!;
-    // Resolve everything from ref/context BEFORE the await — the same
-    // use-after-dispose class of bug that bit the vault link dialog.
     final repo = ref.read(expenseRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
     await repo.deleteExpense(expense.id);
