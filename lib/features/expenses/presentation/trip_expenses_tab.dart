@@ -149,6 +149,26 @@ class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
 
   Future<void> _delete(Expense expense) async {
     final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteExpenseTitle),
+        content: Text(l10n.deleteExpenseBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.menuDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    // Resolve everything from ref/context BEFORE the next await — the same
+    // use-after-dispose class of bug that bit the vault link dialog.
     final repo = ref.read(expenseRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
     await repo.deleteExpense(expense.id);

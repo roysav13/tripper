@@ -221,6 +221,8 @@
   "editPlaceTitle": "Edit place",
   "deletePlaceTitle": "Delete this place?",
   "deletePlaceBody": "The place is removed from your lists and the map.",
+  "deleteExpenseTitle": "Delete this expense?",
+  "deleteExpenseBody": "This removes it from the trip's total.",
   "tripCompleteTitle": "Trip finished — update your map?",
   "tripCompleteBody": "{trip} is over. Mark the places you got to as visited:",
   "@tripCompleteBody": {

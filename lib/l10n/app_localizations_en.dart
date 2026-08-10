@@ -563,6 +563,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'The place is removed from your lists and the map.';
 
   @override
+  String get deleteExpenseTitle => 'Delete this expense?';
+
+  @override
+  String get deleteExpenseBody => 'This removes it from the trip\'s total.';
+
+  @override
   String get tripCompleteTitle => 'Trip finished — update your map?';
 
   @override

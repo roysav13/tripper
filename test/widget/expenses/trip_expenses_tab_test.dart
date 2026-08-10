@@ -183,7 +183,7 @@ void main() {
     expect(find.text('Not mine'), findsNothing);
   });
 
-  testWidgets('deleting a row removes it and confirms via snackbar',
+  testWidgets('deleting a row asks for confirmation before removing it',
       (tester) async {
     final repo = FakeExpenseRepository([_expense(id: 'a', notes: 'Taxi')]);
     await tester.pumpWidget(await _app(repo));
@@ -193,9 +193,30 @@ void main() {
     await tester.tap(find.byIcon(Icons.close).first);
     await tester.pumpAndSettle();
 
+    // Still present until confirmed.
+    expect(find.text('Taxi'), findsOneWidget);
+    expect(find.text('Delete this expense?'), findsOneWidget);
+
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+
     expect(tester.takeException(), isNull);
     expect(find.text('Taxi'), findsNothing);
     expect(find.text('Expense deleted.'), findsOneWidget);
+  });
+
+  testWidgets('cancelling the delete confirmation keeps the expense',
+      (tester) async {
+    final repo = FakeExpenseRepository([_expense(id: 'a', notes: 'Taxi')]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.close).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Taxi'), findsOneWidget);
   });
 
   testWidgets('a stream failure shows the error state with retry',

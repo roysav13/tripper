@@ -1078,6 +1078,18 @@ abstract class AppLocalizations {
   /// **'The place is removed from your lists and the map.'**
   String get deletePlaceBody;
 
+  /// No description provided for @deleteExpenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this expense?'**
+  String get deleteExpenseTitle;
+
+  /// No description provided for @deleteExpenseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes it from the trip\'s total.'**
+  String get deleteExpenseBody;
+
   /// No description provided for @tripCompleteTitle.
   ///
   /// In en, this message translates to:
