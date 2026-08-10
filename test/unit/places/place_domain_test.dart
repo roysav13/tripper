@@ -61,6 +61,47 @@ void main() {
     });
   });
 
+  group('filterPlaces', () {
+    final places = [
+      const Place(id: 'a', name: 'A', country: 'Thailand', category: PlaceCategory.hotel),
+      const Place(id: 'b', name: 'B', country: 'Thailand', category: PlaceCategory.restaurant),
+      const Place(id: 'c', name: 'C', country: 'Japan', category: PlaceCategory.hotel),
+      const Place(id: 'd', name: 'D', country: 'Japan', category: null),
+    ];
+
+    test('no filters returns everything', () {
+      expect(filterPlaces(places), hasLength(4));
+    });
+
+    test('category filter is OR within the set', () {
+      final result = filterPlaces(
+        places,
+        categories: {PlaceCategory.hotel, PlaceCategory.restaurant},
+      );
+      expect(result.map((p) => p.id), ['a', 'b', 'c']);
+    });
+
+    test('country filter is OR within the set', () {
+      final result = filterPlaces(places, countries: {'Japan'});
+      expect(result.map((p) => p.id), ['c', 'd']);
+    });
+
+    test('category and country filters combine with AND', () {
+      final result = filterPlaces(
+        places,
+        categories: {PlaceCategory.hotel},
+        countries: {'Japan'},
+      );
+      expect(result.map((p) => p.id), ['c']);
+    });
+
+    test('an uncategorized place never matches an active category filter',
+        () {
+      final result = filterPlaces(places, categories: {PlaceCategory.hotel});
+      expect(result.any((p) => p.id == 'd'), isFalse);
+    });
+  });
+
   group('Place category', () {
     test('copyWith sets and clears category', () {
       const place = Place(id: 'p1', name: 'Test');

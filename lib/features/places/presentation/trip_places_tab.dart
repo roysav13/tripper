@@ -14,15 +14,23 @@ import 'place_visit_actions.dart';
 import 'place_widgets.dart';
 
 /// Places tab inside a trip's detail screen (fills the M1 shell).
-class TripPlacesTab extends ConsumerWidget {
+class TripPlacesTab extends ConsumerStatefulWidget {
   const TripPlacesTab({super.key, required this.trip});
 
   final Trip trip;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TripPlacesTab> createState() => _TripPlacesTabState();
+}
+
+class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
+  Set<PlaceCategory> _categoryFilter = {};
+  Set<String> _countryFilter = {};
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final asyncPlaces = ref.watch(tripPlacesProvider(trip.id));
+    final asyncPlaces = ref.watch(tripPlacesProvider(widget.trip.id));
     final places = asyncPlaces.valueOrNull ?? const <Place>[];
 
     if (asyncPlaces.hasValue && places.isEmpty) {
@@ -31,11 +39,16 @@ class TripPlacesTab extends ConsumerWidget {
         title: l10n.tripPlacesEmptyTitle,
         body: l10n.tripPlacesEmptyBody,
         ctaLabel: l10n.placesEmptyCta,
-        onCta: () => AddPlaceScreen.open(context, tripId: trip.id),
+        onCta: () => AddPlaceScreen.open(context, tripId: widget.trip.id),
       );
     }
 
-    final sorted = sortForList(places);
+    final filtered = filterPlaces(
+      places,
+      categories: _categoryFilter,
+      countries: _countryFilter,
+    );
+    final sorted = sortForList(filtered);
     final visitedCount = places.where((p) => p.isVisited).length;
 
     return ListView(
@@ -47,6 +60,14 @@ class TripPlacesTab extends ConsumerWidget {
             l10n.tripPlacesProgress(visitedCount, places.length),
           ),
         ),
+        PlaceFilterBar(
+          places: places,
+          selectedCategories: _categoryFilter,
+          selectedCountries: _countryFilter,
+          onCategoriesChanged: (v) => setState(() => _categoryFilter = v),
+          onCountriesChanged: (v) => setState(() => _countryFilter = v),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         for (final place in sorted)
           Padding(
             padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
@@ -61,7 +82,7 @@ class TripPlacesTab extends ConsumerWidget {
         OutlinedButton.icon(
           icon: const Icon(Icons.add, size: 16),
           label: Text(l10n.placesEmptyCta),
-          onPressed: () => AddPlaceScreen.open(context, tripId: trip.id),
+          onPressed: () => AddPlaceScreen.open(context, tripId: widget.trip.id),
         ),
       ],
     );

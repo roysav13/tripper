@@ -42,6 +42,92 @@ String placeCategoryLabel(AppLocalizations l10n, PlaceCategory category) =>
       PlaceCategory.other => l10n.catOther,
     };
 
+/// Category + country filter chips — a controlled widget, all state lives
+/// in the parent screen. Only categories/countries actually present in
+/// [places] render a chip, so there's never a dead-end filter option.
+class PlaceFilterBar extends StatelessWidget {
+  const PlaceFilterBar({
+    super.key,
+    required this.places,
+    required this.selectedCategories,
+    required this.selectedCountries,
+    required this.onCategoriesChanged,
+    required this.onCountriesChanged,
+  });
+
+  final List<Place> places;
+  final Set<PlaceCategory> selectedCategories;
+  final Set<String> selectedCountries;
+  final ValueChanged<Set<PlaceCategory>> onCategoriesChanged;
+  final ValueChanged<Set<String>> onCountriesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final categories = {
+      for (final p in places)
+        if (p.category != null) p.category!,
+    }.toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+    final countries = {
+      for (final p in places)
+        if (p.country.trim().isNotEmpty) p.country,
+    }.toList()
+      ..sort();
+
+    if (categories.isEmpty && countries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (categories.isNotEmpty)
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final category in categories)
+                FilterChip(
+                  avatar: Icon(placeCategoryIcon(category), size: 16),
+                  label: Text(placeCategoryLabel(l10n, category)),
+                  selected: selectedCategories.contains(category),
+                  onSelected: (selected) => onCategoriesChanged(
+                    selected
+                        ? {...selectedCategories, category}
+                        : selectedCategories
+                            .where((c) => c != category)
+                            .toSet(),
+                  ),
+                ),
+            ],
+          ),
+        if (categories.isNotEmpty && countries.isNotEmpty)
+          const SizedBox(height: AppSpacing.sm),
+        if (countries.isNotEmpty)
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final country in countries)
+                FilterChip(
+                  label: Text(country),
+                  selected: selectedCountries.contains(country),
+                  onSelected: (selected) => onCountriesChanged(
+                    selected
+                        ? {...selectedCountries, country}
+                        : selectedCountries
+                            .where((c) => c != country)
+                            .toSet(),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
 /// Wishlist row: white card, teal pin, faint check target on the right.
 /// Visited row: recessed paper card, gray, visited date, tap check to undo.
 class PlaceRowCard extends StatelessWidget {

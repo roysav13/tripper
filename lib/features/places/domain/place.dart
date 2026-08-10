@@ -129,6 +129,23 @@ List<Place> sortForList(List<Place> places) {
   return [...want, ...been];
 }
 
+/// Places matching the filter: AND across the two dimensions, OR within
+/// each (an empty set for a dimension means that dimension doesn't
+/// filter at all). Pure — unit-tested without widgets.
+List<Place> filterPlaces(
+  List<Place> places, {
+  Set<PlaceCategory> categories = const {},
+  Set<String> countries = const {},
+}) {
+  return [
+    for (final p in places)
+      if ((categories.isEmpty ||
+              (p.category != null && categories.contains(p.category))) &&
+          (countries.isEmpty || countries.contains(p.country)))
+        p,
+  ];
+}
+
 /// Trophy-case stats over existing data — no new entities (SPEC §3.1).
 ({int countries, int visited}) visitedStats(List<Place> places) {
   final visited = places.where((p) => p.isVisited).toList();

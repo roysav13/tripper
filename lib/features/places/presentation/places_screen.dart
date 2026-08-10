@@ -17,23 +17,36 @@ import 'place_visit_actions.dart';
 import 'place_widgets.dart';
 import 'places_map_view.dart';
 
-class PlacesScreen extends ConsumerWidget {
+class PlacesScreen extends ConsumerStatefulWidget {
   const PlacesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlacesScreen> createState() => _PlacesScreenState();
+}
+
+class _PlacesScreenState extends ConsumerState<PlacesScreen> {
+  Set<PlaceCategory> _categoryFilter = {};
+  Set<String> _countryFilter = {};
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final asyncPlaces = ref.watch(placeListProvider);
     final places = asyncPlaces.valueOrNull ?? const <Place>[];
+    final filtered = filterPlaces(
+      places,
+      categories: _categoryFilter,
+      countries: _countryFilter,
+    );
     final stats = ref.watch(placeStatsProvider);
     final trips = ref.watch(tripListProvider).valueOrNull ?? [];
     final tripNames = {for (final t in trips) t.id: t.name};
     final mapMode = ref.watch(placesMapModeProvider);
 
-    final want = places.where((p) => !p.isVisited).toList()
+    final want = filtered.where((p) => !p.isVisited).toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final been = sortForList(places).where((p) => p.isVisited).toList();
+    final been = sortForList(filtered).where((p) => p.isVisited).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -58,10 +71,10 @@ class PlacesScreen extends ConsumerWidget {
       ),
       body: _body(
         context,
-        ref,
         l10n,
         asyncPlaces,
         places,
+        filtered,
         want,
         been,
         stats,
@@ -73,10 +86,10 @@ class PlacesScreen extends ConsumerWidget {
 
   Widget _body(
     BuildContext context,
-    WidgetRef ref,
     AppLocalizations l10n,
     AsyncValue<List<Place>> asyncPlaces,
     List<Place> places,
+    List<Place> filtered,
     List<Place> want,
     List<Place> been,
     ({int countries, int visited, int days}) stats,
@@ -99,7 +112,7 @@ class PlacesScreen extends ConsumerWidget {
     }
     if (mapMode) {
       return PlacesMapView(
-        places: places,
+        places: filtered,
         focusPlaceId: ref.watch(selectedPlaceIdProvider),
         onFocusHandled: () =>
             ref.read(selectedPlaceIdProvider.notifier).state = null,
@@ -114,6 +127,14 @@ class PlacesScreen extends ConsumerWidget {
           visited: stats.visited,
           days: stats.days,
         ),
+        const SizedBox(height: AppSpacing.lg),
+        PlaceFilterBar(
+          places: places,
+          selectedCategories: _categoryFilter,
+          selectedCountries: _countryFilter,
+          onCategoriesChanged: (v) => setState(() => _categoryFilter = v),
+          onCountriesChanged: (v) => setState(() => _countryFilter = v),
+        ),
         if (want.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsetsDirectional.only(
@@ -125,7 +146,7 @@ class PlacesScreen extends ConsumerWidget {
               accent: true,
             ),
           ),
-          for (final place in want) _row(context, ref, place, tripNames),
+          for (final place in want) _row(context, place, tripNames),
         ],
         if (been.isNotEmpty) ...[
           Padding(
@@ -137,7 +158,7 @@ class PlacesScreen extends ConsumerWidget {
               '${l10n.placesBeenSection} · ${been.length}',
             ),
           ),
-          for (final place in been) _row(context, ref, place, tripNames),
+          for (final place in been) _row(context, place, tripNames),
         ],
       ],
     );
@@ -145,7 +166,6 @@ class PlacesScreen extends ConsumerWidget {
 
   Widget _row(
     BuildContext context,
-    WidgetRef ref,
     Place place,
     Map<String, String> tripNames,
   ) {

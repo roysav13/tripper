@@ -202,4 +202,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('BEEN THERE · 1'), findsOneWidget);
   });
+
+  testWidgets('category filter narrows the visible list', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(id: 'a', name: 'Hotel A', category: PlaceCategory.hotel),
+        const Place(
+          id: 'b',
+          name: 'Cafe B',
+          category: PlaceCategory.coffeeShop,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsOneWidget);
+
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsNothing);
+  });
+
+  testWidgets('country filter narrows the visible list', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        _p('Thai spot', country: 'Thailand'),
+        _p('Japan spot', country: 'Japan'),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Japan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Thai spot'), findsNothing);
+    expect(find.text('Japan spot'), findsOneWidget);
+  });
 }
