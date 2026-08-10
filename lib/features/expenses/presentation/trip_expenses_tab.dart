@@ -29,11 +29,20 @@ class TripExpensesTab extends ConsumerStatefulWidget {
 
 class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
   /// Which groups (keyed by [ExpenseGroup.periodStart]) are expanded.
-  /// Seeded once, on the first build that has groups, to contain only the
-  /// newest group — collapse/expand after that is purely the user's own
-  /// taps. In-memory only; resets on remount, same as every other
-  /// transient UI toggle in this app.
-  Set<DateTime>? _expandedGroups;
+  /// Seeded, on the first build that has groups, to contain only the
+  /// newest group — after that, any key that's new since the previous
+  /// build (see [_knownGroups]) is auto-expanded too, on top of whatever
+  /// the user has toggled by hand. In-memory only; resets on remount, same
+  /// as every other transient UI toggle in this app.
+  Set<DateTime> _expandedGroups = {};
+
+  /// Keys seen as of the last build with real data — null until the first
+  /// non-empty build. Used to detect newly-appeared group keys (a new
+  /// expense on a new day, or a granularity flip changing every group's
+  /// key shape) so they auto-expand instead of silently rendering
+  /// collapsed. See docs/superpowers/plans/2026-08-10-spend-improvements.md
+  /// final-review findings.
+  Set<DateTime>? _knownGroups;
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +75,20 @@ class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
     // (and thus `groups`) empty even though real data is on the way. Only
     // seed once real groups exist, so the newest group ends up expanded
     // instead of the seed permanently locking onto `{}`.
-    if (groups.isNotEmpty) {
-      _expandedGroups ??= {groups.first.periodStart};
+    //
+    // After that first seed, any group key that wasn't present in the
+    // previous build's group set is newly-appeared — a new expense landed
+    // on a day (or week/month bucket) with no prior group — and gets
+    // auto-expanded too, rather than silently rendering collapsed.
+    final currentKeys = {for (final group in groups) group.periodStart};
+    if (_knownGroups == null) {
+      if (groups.isNotEmpty) {
+        _expandedGroups = {groups.first.periodStart};
+        _knownGroups = currentKeys;
+      }
+    } else {
+      _expandedGroups.addAll(currentKeys.difference(_knownGroups!));
+      _knownGroups = currentKeys;
     }
 
     return Scaffold(
@@ -80,7 +101,12 @@ class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
         child: const Icon(Icons.add),
       ),
       body: ListView(
-        padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+        padding: const EdgeInsetsDirectional.only(
+          start: AppSpacing.lg,
+          end: AppSpacing.lg,
+          top: AppSpacing.lg,
+          bottom: 88,
+        ),
         children: [
           ExpenseSummaryCard(
             totals: summary.totals,
@@ -94,17 +120,17 @@ class _TripExpensesTabState extends ConsumerState<TripExpensesTab> {
           for (final group in groups) ...[
             ExpenseGroupHeader(
               group: group,
-              expanded: _expandedGroups!.contains(group.periodStart),
+              expanded: _expandedGroups.contains(group.periodStart),
               onTap: () => setState(() {
-                final isExpanded = _expandedGroups!.contains(group.periodStart);
+                final isExpanded = _expandedGroups.contains(group.periodStart);
                 if (isExpanded) {
-                  _expandedGroups!.remove(group.periodStart);
+                  _expandedGroups.remove(group.periodStart);
                 } else {
-                  _expandedGroups!.add(group.periodStart);
+                  _expandedGroups.add(group.periodStart);
                 }
               }),
             ),
-            if (_expandedGroups!.contains(group.periodStart))
+            if (_expandedGroups.contains(group.periodStart))
               for (final expense in group.expenses)
                 Padding(
                   padding:

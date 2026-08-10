@@ -228,5 +228,39 @@ void main() {
       expect(group.homeCurrencyTotal!.pendingCount, 1);
       expect(group.homeCurrency, 'ILS');
     });
+
+    test(
+        'homeCurrencyTotal is non-null for a single-currency group when the '
+        'TRIP as a whole mixes currencies, even though that specific group '
+        "doesn't (final-review finding: the mixing check must be trip-wide, "
+        'not per-group, so the whole column of group headers stays '
+        'comparable instead of silently switching units row to row)', () {
+      final expenses = [
+        // Day 1: ILS only — single-currency, in isolation.
+        _expense(
+            id: 'a',
+            date: DateTime(2026, 3, 1),
+            amountMinor: 1000,
+            currency: 'ILS',),
+        // Day 2: USD only — also single-currency, in isolation. But the
+        // trip overall mixes ILS and USD across these two days.
+        _expense(
+            id: 'b',
+            date: DateTime(2026, 3, 2),
+            amountMinor: 500,
+            currency: 'USD',),
+      ];
+      final groups = groupExpenses(_tripSpanning(5), expenses, 'ILS');
+      expect(groups, hasLength(2));
+      // Under the old per-group check this would have been null (day 2 is
+      // internally single-currency); under the trip-wide check it must be
+      // a real, computed total.
+      final day2 =
+          groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 2));
+      expect(day2.homeCurrencyTotal, isNotNull);
+      final day1 =
+          groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 1));
+      expect(day1.homeCurrencyTotal, isNotNull);
+    });
   });
 }

@@ -67,6 +67,9 @@ void main() {
     await tester.pumpWidget(await _app(FakeExpenseRepository()));
     await tester.pumpAndSettle();
     expect(find.text('Track what this trip costs'), findsOneWidget);
+    // Design spec: the FAB only appears once there's something to add to —
+    // the empty state has its own CTA instead.
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('total and category breakdown render with exact amounts',
@@ -428,5 +431,82 @@ void main() {
       find.text('≈ 200.00 ILS'),
       findsOneWidget,
     ); // trip-wide, summary card
+  });
+
+  testWidgets('a week-granularity group header renders its label',
+      (tester) async {
+    // _trip has no start/end dates, so granularity falls back to the
+    // expense date spread: these two dates are ~32 days apart, landing in
+    // the week-granularity range (22-90 days). No existing test at the
+    // widget level exercised week (or month) grouping, so the
+    // expenseGroupWeekOf ARB string shipped with zero rendering coverage.
+    final repo = FakeExpenseRepository([
+      Expense(
+        id: 'a',
+        tripId: 't1',
+        amountMinor: 1000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 7, 1),
+      ),
+      Expense(
+        id: 'b',
+        tripId: 't1',
+        amountMinor: 2000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1),
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    // Not hand-computing the exact Monday date — just proving the label
+    // renders at all (SectionLabel upper-cases it: "WEEK OF ...").
+    expect(find.textContaining('WEEK OF'), findsWidgets);
+  });
+
+  testWidgets(
+      'a new expense added via the FAB is visible immediately, with no '
+      'manual expand/collapse — regression test for the final-review '
+      'finding that _expandedGroups only ever seeded once, so a newly '
+      'appeared group (a new expense on a new day) rendered collapsed',
+      (tester) async {
+    final repo = FakeExpenseRepository([
+      Expense(
+        id: 'old',
+        tripId: 't1',
+        amountMinor: 1000,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: DateTime(2026, 8, 1), // an older day than "today"
+        notes: 'OldDay',
+      ),
+    ]);
+    // Home currency pre-set so the FAB opens the form directly, and
+    // matches the only expense's currency so the form's currency field
+    // (pre-filled from summary.mainCurrency) needs no picker interaction.
+    await tester.pumpWidget(await _app(repo, homeCurrency: 'ILS'));
+    await tester.pumpAndSettle();
+
+    // Only one group exists so far, so it's expanded by default.
+    expect(find.text('OldDay'), findsOneWidget);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Add expense'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Amount'), '25');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Note (optional)'),
+      'NewToday',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    // The new expense lands on "today" (the fixed clock, Aug 5) — a group
+    // that didn't exist in any previous build. It must render expanded
+    // immediately: no tap on any group header.
+    expect(find.text('NewToday'), findsOneWidget);
   });
 }

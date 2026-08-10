@@ -77,11 +77,15 @@ class ExpenseGroup {
   final String homeCurrency;
 
   /// This group's total in [homeCurrency] — null when [homeCurrency] is
-  /// empty, OR when this group doesn't itself mix currencies (mirrors
+  /// empty, OR when the trip as a whole doesn't mix currencies (mirrors
   /// ExpenseSummaryCard's own rule: a single-currency total is already the
   /// exact answer, and a second "converted" line would just be redundant
-  /// noise). [HomeTotal.pendingCount] reports how many of this group's
-  /// expenses aren't converted into it yet.
+  /// noise). This check is deliberately trip-wide, not per-group: on a
+  /// trip that mixes currencies overall, every group header shows a
+  /// home-currency total — even a group that's internally single-currency
+  /// — so the whole column stays comparable instead of silently switching
+  /// units row to row. [HomeTotal.pendingCount] reports how many of this
+  /// group's expenses aren't converted into it yet.
   final HomeTotal? homeCurrencyTotal;
 }
 
@@ -96,6 +100,7 @@ List<ExpenseGroup> groupExpenses(
 ) {
   if (expenses.isEmpty) return const [];
   final granularity = granularityFor(trip, expenses);
+  final tripMixesCurrencies = usesMultipleCurrencies(expenses);
   final buckets = <DateTime, List<Expense>>{};
   for (final expense in expenses) {
     final key = _periodStart(expense.date, granularity);
@@ -110,10 +115,9 @@ List<ExpenseGroup> groupExpenses(
         expenses: buckets[key]!,
         perCurrencyTotals: totalsByCurrency(buckets[key]!),
         homeCurrency: homeCurrency,
-        homeCurrencyTotal:
-            homeCurrency.isEmpty || !usesMultipleCurrencies(buckets[key]!)
-                ? null
-                : homeTotal(buckets[key]!, homeCurrency),
+        homeCurrencyTotal: homeCurrency.isEmpty || !tripMixesCurrencies
+            ? null
+            : homeTotal(buckets[key]!, homeCurrency),
       ),
   ];
 }
