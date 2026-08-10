@@ -377,6 +377,16 @@ class _JournalGlobeState extends State<JournalGlobe> {
       }
     }
     _lastClusters = clusters;
+    _addConnections(controller, compensation);
+  }
+
+  /// Draws the journey line's arcs — split out from _addPoints so
+  /// _handleZoomChanged can also call it (see there for why).
+  void _addConnections(
+    FlutterEarthGlobeController controller,
+    double compensation,
+  ) {
+    final colors = context.colors;
     for (final (start, end) in journeyConnections(widget.entries)) {
       controller.addPointConnection(
         PointConnection(
@@ -389,12 +399,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
           // card_design_presentation.png): colors.surface reads as
           // near-white against the globe's own busy satellite-style
           // texture in light mode, and adapts to the theme in dark mode
-          // the same way the dot border rings already do.
+          // the same way the dot border rings already do. lineWidth and
+          // dashSize are compensated the same way dot/halo sizes are
+          // (see _handleZoomChanged's doc comment) — the package scales
+          // both by radius/150 same as PointStyle.size, so without this
+          // the line grows visibly thicker (and its dashes stretch
+          // longer) as you zoom in.
           style: PointConnectionStyle(
             type: PointConnectionType.dashed,
             color: colors.surface.withValues(alpha: 0.8),
-            lineWidth: 1.0,
-            dashSize: 4,
+            lineWidth: 1.0 * compensation,
+            dashSize: 4.0 * compensation,
           ),
         ),
       );
@@ -462,6 +477,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
         _rescalePoint(controller, key, _clusterCoreSize * compensation);
       }
     }
+    // PointConnection.style is immutable (unlike Point.style, which
+    // _rescalePoint mutates in place above) — there's no in-place
+    // rescale available, so keeping the journey line's width/dash size
+    // zoom-compensated means removing and re-adding every connection on
+    // every zoom-changed callback, not just on a cluster-band crossing.
+    // Cheap at trip-scale entry counts (same reasoning as elsewhere in
+    // this file for O(n²) clustering).
+    for (final connection in controller.connections.toList()) {
+      controller.removePointConnection(connection.id);
+    }
+    _addConnections(controller, compensation);
   }
 
   void _rescalePoint(
