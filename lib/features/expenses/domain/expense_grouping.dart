@@ -11,7 +11,7 @@ enum ExpenseGroupGranularity { day, week, month }
 /// constant in this codebase, meant for on-device tuning once it's visible
 /// against a real trip.
 const _weekGranularityMaxDays = 21;
-const _monthGranularityMaxDays = 89;
+const _monthGranularityMaxDays = 90;
 
 /// Which granularity the Spend tab should group at, based on how long the
 /// trip spans. Uses [Trip.startDate]/[Trip.endDate] when both are set (the

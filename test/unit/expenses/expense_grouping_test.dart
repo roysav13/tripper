@@ -10,7 +10,7 @@ Trip _tripSpanning(int days) => Trip(
       name: 'Thailand',
       destinations: ['Krabi'],
       startDate: DateTime(2026, 1, 1),
-      endDate: DateTime(2026, 1, 1).add(Duration(days: days - 1)),
+      endDate: DateTime(2026, 1, days),
     );
 
 Expense _expense({
@@ -36,16 +36,20 @@ void main() {
   group('granularityFor', () {
     test('trip spanning 21 days or fewer groups by day', () {
       expect(granularityFor(_tripSpanning(1), []), ExpenseGroupGranularity.day);
-      expect(granularityFor(_tripSpanning(21), []), ExpenseGroupGranularity.day);
+      expect(
+          granularityFor(_tripSpanning(21), []), ExpenseGroupGranularity.day,);
     });
 
     test('trip spanning 22 to 90 days groups by week', () {
-      expect(granularityFor(_tripSpanning(22), []), ExpenseGroupGranularity.week);
-      expect(granularityFor(_tripSpanning(90), []), ExpenseGroupGranularity.week);
+      expect(
+          granularityFor(_tripSpanning(22), []), ExpenseGroupGranularity.week,);
+      expect(
+          granularityFor(_tripSpanning(90), []), ExpenseGroupGranularity.week,);
     });
 
     test('trip spanning more than 90 days groups by month', () {
-      expect(granularityFor(_tripSpanning(91), []), ExpenseGroupGranularity.month);
+      expect(
+          granularityFor(_tripSpanning(91), []), ExpenseGroupGranularity.month,);
     });
 
     test('falls back to the expense date spread when the trip has no dates',
@@ -54,15 +58,15 @@ void main() {
         _expense(id: 'a', date: DateTime(2026, 3, 1)),
         _expense(id: 'b', date: DateTime(2026, 3, 5)),
       ];
-      expect(
-          granularityFor(_tripNoDates, shortSpread), ExpenseGroupGranularity.day);
+      expect(granularityFor(_tripNoDates, shortSpread),
+          ExpenseGroupGranularity.day,);
 
       final longSpread = [
         _expense(id: 'a', date: DateTime(2026, 1, 1)),
         _expense(id: 'b', date: DateTime(2026, 6, 1)),
       ];
       expect(granularityFor(_tripNoDates, longSpread),
-          ExpenseGroupGranularity.month);
+          ExpenseGroupGranularity.month,);
     });
 
     test('no trip dates and no expenses defaults to day, does not crash', () {
@@ -118,16 +122,27 @@ void main() {
     test('per-currency totals are computed per group, not across groups', () {
       final expenses = [
         _expense(
-            id: 'a', date: DateTime(2026, 3, 1), amountMinor: 1000, currency: 'ILS'),
+            id: 'a',
+            date: DateTime(2026, 3, 1),
+            amountMinor: 1000,
+            currency: 'ILS',),
         _expense(
-            id: 'b', date: DateTime(2026, 3, 1), amountMinor: 500, currency: 'USD'),
+            id: 'b',
+            date: DateTime(2026, 3, 1),
+            amountMinor: 500,
+            currency: 'USD',),
         _expense(
-            id: 'c', date: DateTime(2026, 3, 2), amountMinor: 300, currency: 'ILS'),
+            id: 'c',
+            date: DateTime(2026, 3, 2),
+            amountMinor: 300,
+            currency: 'ILS',),
       ];
       final groups = groupExpenses(_tripSpanning(5), expenses, '');
-      final day2 = groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 2));
+      final day2 =
+          groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 2));
       expect(day2.perCurrencyTotals, [(currency: 'ILS', amountMinor: 300)]);
-      final day1 = groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 1));
+      final day1 =
+          groups.firstWhere((g) => g.periodStart == DateTime(2026, 3, 1));
       expect(day1.perCurrencyTotals, hasLength(2));
     });
 
@@ -141,17 +156,23 @@ void main() {
     });
 
     test(
-        "homeCurrencyTotal is null for a single-currency group even with a "
-        "home currency set — matches ExpenseSummaryCard's own rule that a "
-        "single-currency total needs no second, redundant 'converted' line",
+        'homeCurrencyTotal is null for a single-currency group even with a '
+        'home currency set — matches ExpenseSummaryCard\'s own rule that a '
+        'single-currency total needs no second, redundant \'converted\' line',
         () {
       final groups = groupExpenses(
         _tripSpanning(5),
         [
           _expense(
-              id: 'a', date: DateTime(2026, 3, 1), amountMinor: 1000, currency: 'ILS'),
+              id: 'a',
+              date: DateTime(2026, 3, 1),
+              amountMinor: 1000,
+              currency: 'ILS',),
           _expense(
-              id: 'b', date: DateTime(2026, 3, 1), amountMinor: 500, currency: 'ILS'),
+              id: 'b',
+              date: DateTime(2026, 3, 1),
+              amountMinor: 500,
+              currency: 'ILS',),
         ],
         'ILS',
       );
@@ -163,7 +184,10 @@ void main() {
         'pending, per group, only when that group mixes currencies', () {
       final expenses = [
         _expense(
-            id: 'a', date: DateTime(2026, 3, 1), amountMinor: 10000, currency: 'ILS'),
+            id: 'a',
+            date: DateTime(2026, 3, 1),
+            amountMinor: 10000,
+            currency: 'ILS',),
         _expense(
           id: 'b',
           date: DateTime(2026, 3, 1),
@@ -173,7 +197,10 @@ void main() {
           convertedCurrency: 'ILS',
         ),
         _expense(
-            id: 'c', date: DateTime(2026, 3, 1), amountMinor: 500, currency: 'EUR'),
+            id: 'c',
+            date: DateTime(2026, 3, 1),
+            amountMinor: 500,
+            currency: 'EUR',),
       ];
       final group = groupExpenses(_tripSpanning(5), expenses, 'ILS').single;
       expect(group.homeCurrencyTotal!.amountMinor, 20000);
