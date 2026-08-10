@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/app_database.dart';
 import 'package:tripper/features/places/data/place_repository.dart';
+import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/trips/data/trip_repository.dart';
 
 void main() {
@@ -69,6 +70,32 @@ void main() {
     final place =
         (await repo.watchAll().first).singleWhere((p) => p.id == placeId);
     expect(place.tripId, isNull);
+  });
+
+  test(
+      'category survives the enum<->int index round trip through create, '
+      'update, and clear', () async {
+    // Cross-task issue (final review): category?.index / values[index] is
+    // the only place the enum<->int conversion happens, and nothing
+    // exercised it — widget tests all mock at FakePlaceRepository, which
+    // stores the enum directly. Deleting the category write in updatePlace
+    // would silently wipe category on every edit and leave the suite green.
+    final id = await repo.createPlace(
+      name: 'Railay viewpoint',
+      category: PlaceCategory.hotel,
+    );
+    var place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.category, PlaceCategory.hotel);
+
+    await repo.updatePlace(
+      place.copyWith(category: () => PlaceCategory.restaurant),
+    );
+    place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.category, PlaceCategory.restaurant);
+
+    await repo.updatePlace(place.copyWith(category: () => null));
+    place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.category, isNull);
   });
 
   test('watchForTrip only emits that trip\'s places', () async {

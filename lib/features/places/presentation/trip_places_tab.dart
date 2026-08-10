@@ -43,10 +43,40 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
       );
     }
 
+    // Cross-task issue (final review): a filter chip only renders for
+    // categories/countries actually present in `places`. If the last place
+    // matching an active filter is edited or deleted, its chip disappears
+    // but the stale selection lingered in state forever (StatefulShellRoute
+    // keeps this State alive across navigation) — stranding the list empty
+    // with no visible way to recover. Prune the selection against what's
+    // still present every build, and write the pruned result back so the
+    // filter bar's displayed selection never outlives its chip.
+    final availableCategories = {
+      for (final p in places)
+        if (p.category != null) p.category!,
+    };
+    final availableCountries = {
+      for (final p in places)
+        if (p.country.trim().isNotEmpty) p.country,
+    };
+    final prunedCategories = _categoryFilter.intersection(availableCategories);
+    final prunedCountries = _countryFilter.intersection(availableCountries);
+    if (prunedCategories.length != _categoryFilter.length ||
+        prunedCountries.length != _countryFilter.length) {
+      // Mutating state synchronously inside build() throws — defer to
+      // after this frame completes.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _categoryFilter = prunedCategories;
+          _countryFilter = prunedCountries;
+        });
+      });
+    }
     final filtered = filterPlaces(
       places,
-      categories: _categoryFilter,
-      countries: _countryFilter,
+      categories: prunedCategories,
+      countries: prunedCountries,
     );
     final sorted = sortForList(filtered);
     final visitedCount = places.where((p) => p.isVisited).length;

@@ -60,4 +60,56 @@ void main() {
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsNothing);
   });
+
+  testWidgets(
+      'stale category selection is pruned once its only match is edited '
+      'away, so the list recovers without a restart', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Hotel A',
+        tripId: 't1',
+        category: PlaceCategory.hotel,
+      ),
+      const Place(
+        id: 'b',
+        name: 'Cafe B',
+        tripId: 't1',
+        category: PlaceCategory.coffeeShop,
+      ),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    // Filter down to Hotel — Cafe B drops out of the list.
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsNothing);
+
+    // Simulate the underlying data changing so no place in this trip is a
+    // Hotel anymore — the Hotel chip disappears, but without the fix the
+    // stale selection would keep the list stuck empty forever.
+    repo.emit([
+      const Place(
+        id: 'a',
+        name: 'Hotel A',
+        tripId: 't1',
+        category: PlaceCategory.restaurant,
+      ),
+      const Place(
+        id: 'b',
+        name: 'Cafe B',
+        tripId: 't1',
+        category: PlaceCategory.coffeeShop,
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    // The now-absent "Hotel" chip is gone, and both places are visible
+    // again — the stale selection was pruned, not left stranding the list.
+    expect(find.text('Hotel'), findsNothing);
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsOneWidget);
+  });
 }
