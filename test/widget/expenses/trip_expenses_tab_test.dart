@@ -224,4 +224,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a floating add-expense button is shown when there are expenses',
+      (tester) async {
+    final repo = FakeExpenseRepository([_expense(id: 'a')]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping the FAB with no home currency set asks for one before '
+      'opening the expense form', (tester) async {
+    final repo = FakeExpenseRepository([_expense(id: 'a')]);
+    await tester.pumpWidget(await _app(repo)); // homeCurrency: '' (default)
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add expense'), findsNothing);
+    expect(find.text('Search currency'), findsOneWidget);
+
+    await tester.tap(find.text('USD'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add expense'), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping the FAB with a home currency already set opens the form '
+      'directly', (tester) async {
+    final repo = FakeExpenseRepository([_expense(id: 'a')]);
+    await tester.pumpWidget(await _app(repo, homeCurrency: 'ILS'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add expense'), findsOneWidget);
+  });
+
+  testWidgets(
+      'the empty-state CTA also asks for a home currency first when unset',
+      (tester) async {
+    await tester.pumpWidget(await _app(FakeExpenseRepository()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add an expense'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add expense'), findsNothing);
+    expect(find.text('Search currency'), findsOneWidget);
+  });
 }

@@ -1,12 +1,17 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/settings/settings_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
 import '../domain/expense.dart';
+import 'currency_picker.dart';
 import 'expense_form_sheet.dart';
 import 'expense_providers.dart';
 import 'expense_widgets.dart';
@@ -20,6 +25,7 @@ class TripExpensesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
     final asyncExpenses = ref.watch(tripExpensesProvider(trip.id));
     final expenses = asyncExpenses.valueOrNull ?? const <Expense>[];
     final summary = ref.watch(tripExpenseSummaryProvider(trip.id));
@@ -36,49 +42,86 @@ class TripExpensesTab extends ConsumerWidget {
         title: l10n.expensesEmptyTitle,
         body: l10n.expensesEmptyBody,
         ctaLabel: l10n.expensesEmptyCta,
-        onCta: () => showExpenseFormSheet(context, tripId: trip.id),
+        onCta: () => _addExpense(
+          context,
+          ref,
+          tripId: trip.id,
+          defaultCurrency: summary.mainCurrency,
+        ),
       );
     }
 
-    return ListView(
-      padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
-      children: [
-        ExpenseSummaryCard(
-          totals: summary.totals,
-          breakdown: summary.breakdown,
-          home: summary.home,
-          homeCurrency: summary.homeCurrency,
-          // Mixed currencies but conversion switched off: say so, rather
-          // than leaving the missing combined total unexplained.
-          showConversionOffHint:
-              summary.homeCurrency.isEmpty && summary.totals.length > 1,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton(
+        tooltip: l10n.expensesEmptyCta,
+        backgroundColor: colors.accent,
+        foregroundColor: colors.surface,
+        onPressed: () => _addExpense(
+          context,
+          ref,
+          tripId: trip.id,
+          defaultCurrency: summary.mainCurrency,
         ),
-        const SizedBox(height: AppSpacing.lg),
-        for (final expense in expenses)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-            child: ExpenseRowCard(
-              expense: expense,
-              onTap: () => showExpenseFormSheet(
-                context,
-                tripId: trip.id,
-                existing: expense,
-                defaultCurrency: summary.mainCurrency,
+        child: const Icon(Icons.add),
+      ),
+      body: ListView(
+        padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+        children: [
+          ExpenseSummaryCard(
+            totals: summary.totals,
+            breakdown: summary.breakdown,
+            home: summary.home,
+            homeCurrency: summary.homeCurrency,
+            showConversionOffHint:
+                summary.homeCurrency.isEmpty && summary.totals.length > 1,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          for (final expense in expenses)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+              child: ExpenseRowCard(
+                expense: expense,
+                onTap: () => showExpenseFormSheet(
+                  context,
+                  tripId: trip.id,
+                  existing: expense,
+                  defaultCurrency: summary.mainCurrency,
+                ),
+                onDelete: () => _delete(context, ref, expense),
               ),
-              onDelete: () => _delete(context, ref, expense),
             ),
-          ),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.add, size: 16),
-          label: Text(l10n.expensesEmptyCta),
-          onPressed: () => showExpenseFormSheet(
-            context,
-            tripId: trip.id,
-            defaultCurrency: summary.mainCurrency,
-          ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  /// Both the FAB and the empty-state CTA route through here: a home
+  /// currency is required before the first "add expense" attempt that
+  /// finds one unset (group totals need a single currency to total into —
+  /// see docs/superpowers/specs/2026-08-10-spend-improvements-design.md).
+  /// Dismissing the picker cancels the whole add attempt; once set, this
+  /// never interrupts again since homeCurrencyProvider is a single
+  /// app-wide setting, not per-trip.
+  Future<void> _addExpense(
+    BuildContext context,
+    WidgetRef ref, {
+    required String tripId,
+    String? defaultCurrency,
+  }) async {
+    final home = ref.read(homeCurrencyProvider);
+    if (home.isEmpty) {
+      final chosen = await showCurrencyPicker(context, allowNone: false);
+      if (chosen == null) return;
+      await ref.read(homeCurrencyProvider.notifier).set(chosen);
+    }
+    if (!context.mounted) return;
+    unawaited(
+      showExpenseFormSheet(
+        context,
+        tripId: tripId,
+        defaultCurrency: defaultCurrency,
+      ),
     );
   }
 
