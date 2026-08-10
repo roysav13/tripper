@@ -9,6 +9,7 @@ import 'package:flutter_earth_globe/point_connection.dart';
 import 'package:flutter_earth_globe/point_connection_style.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
@@ -36,12 +37,15 @@ const _haloDotSize = 5.0;
 const _haloAlpha = 0.28;
 
 // A cluster marker (multiple close-together entries collapsed into one
-// tappable dot) is deliberately sized between a plain dot and a photo
-// dot — big enough to read as "this is a group, not a single entry" via
-// its count badge, without being as visually heavy as a photo thumbnail.
-// Starting values for on-device tuning, same as every other size
-// constant in this file.
-const _clusterDotDiameter = 30.0;
+// tappable dot) is a native point like a plain dot — not a
+// widget-rendered one — so its position stays perfectly in sync with
+// rotation every frame instead of lagging a frame behind on a separate
+// widget rebuild pass (the same reason plain dots are native; see
+// _addPoints' comment on the core dot). Deliberately sized bigger than
+// a plain dot so it still reads as "a group, not a single entry" even
+// without a widget-rendered badge. Starting values for on-device
+// tuning, same as every other size constant in this file.
+const _clusterCoreSize = 5.0;
 const _clusterHaloSize = 11.0;
 const _clusterBorderSize = 17.0;
 
@@ -251,6 +255,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
 
   void _addPoints(FlutterEarthGlobeController controller) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     // Points added while already zoomed in (e.g. an entry's location is
     // edited mid-session) must start at the CURRENT zoom's compensated
     // size — otherwise they'd render at the raw, uncompensated base size
@@ -332,10 +337,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
               size: _clusterHaloSize * compensation,
               color: colors.accent.withValues(alpha: _haloAlpha),
             ),
-            // No onTap here — same reasoning as the photo-dot halo
-            // above: _ClusterDot's own GestureDetector (via the
-            // labelBuilder below) handles the tap; wiring both would
-            // double-fire.
+            onTap: onTap,
           ),
         );
         controller.addPoint(
@@ -346,20 +348,30 @@ class _JournalGlobeState extends State<JournalGlobe> {
               size: _clusterBorderSize * compensation,
               color: colors.surface,
             ),
+            onTap: onTap,
           ),
         );
         controller.addPoint(
           Point(
             id: key,
             coordinates: GlobeCoordinates(centroidLat, centroidLng),
-            // Widget-rendered, same reasoning as the photo dot: the
-            // package has no native way to show a count badge on a
-            // point. size: 0 suppresses the native dot underneath it.
-            style: const PointStyle(size: 0),
+            // Native GPU-rendered dot, same as a plain entry's core —
+            // no separate widget-position recompute pass, so it stays
+            // perfectly in sync with rotation instead of lagging behind
+            // (see the const declarations above). The count is drawn as
+            // a native label (isLabelVisible + label, no labelBuilder)
+            // rather than a widget-rendered badge, for the same reason —
+            // the package draws non-builder labels directly in the same
+            // native paint pass, floating just above the point (matching
+            // how every other point's place-name label already renders).
+            style: PointStyle(
+              size: _clusterCoreSize * compensation,
+              color: colors.accent,
+            ),
+            label: l10n.journalGlobeClusterCount(cluster.length),
             isLabelVisible: true,
-            labelOffset: const Offset(0, -_clusterDotDiameter / 2),
-            labelBuilder: (context, point, isHovering, isVisible) =>
-                _ClusterDot(count: cluster.length, onTap: onTap),
+            labelTextStyle: AppTextStyles.mono.copyWith(color: colors.surface),
+            onTap: onTap,
           ),
         );
       }
@@ -439,6 +451,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
           '$key-border',
           _clusterBorderSize * compensation,
         );
+        _rescalePoint(controller, key, _clusterCoreSize * compensation);
       }
     }
   }
@@ -774,47 +787,6 @@ class _GlobeLoadingIndicatorState extends State<_GlobeLoadingIndicator>
             const SizedBox(height: 12),
             MonoText(l10n.journalGlobeLoading, color: colors.inkMuted),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A circular, filled marker with a count badge, rendered at a cluster's
-/// centroid via Point.labelBuilder (the package has no built-in way to
-/// show text on a point) — the multi-entry equivalent of a plain native
-/// dot. Wraps itself in a GestureDetector — see the comment on
-/// Point.onTap in _addPoints for why tap handling lives here instead of
-/// on the Point itself.
-class _ClusterDot extends StatelessWidget {
-  const _ClusterDot({required this.count, this.onTap});
-
-  final int count;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: _clusterDotDiameter,
-        height: _clusterDotDiameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colors.accent,
-          border: Border.all(color: colors.surface, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: colors.inkPrimary.withValues(alpha: 0.35),
-              blurRadius: 4,
-              offset: const Offset(0, 1.5),
-            ),
-          ],
-        ),
-        child: Center(
-          child: MonoText('$count', color: colors.surface),
         ),
       ),
     );

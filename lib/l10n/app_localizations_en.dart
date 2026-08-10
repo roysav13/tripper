@@ -497,6 +497,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalGlobeLoading => 'Loading globe';
 
   @override
+  String journalGlobeClusterCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get pickOnMap => 'Pick on map';
 
   @override

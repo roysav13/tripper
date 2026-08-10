@@ -976,6 +976,12 @@ abstract class AppLocalizations {
   /// **'Loading globe'**
   String get journalGlobeLoading;
 
+  /// No description provided for @journalGlobeClusterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 entry} other{{count} entries}}'**
+  String journalGlobeClusterCount(int count);
+
   /// No description provided for @pickOnMap.
   ///
   /// In en, this message translates to:

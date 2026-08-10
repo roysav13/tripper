@@ -193,6 +193,10 @@
   "mapViewToggle": "Map view",
   "listViewToggle": "List view",
   "journalGlobeLoading": "Loading globe",
+  "journalGlobeClusterCount": "{count, plural, one{1 entry} other{{count} entries}}",
+  "@journalGlobeClusterCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "pickOnMap": "Pick on map",
   "pickOnMapTitle": "Drop a pin",
   "pickOnMapHint": "Search above, or long-press the map to place the pin",
