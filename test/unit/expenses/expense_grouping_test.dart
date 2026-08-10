@@ -9,8 +9,11 @@ Trip _tripSpanning(int days) => Trip(
       id: 't1',
       name: 'Thailand',
       destinations: ['Krabi'],
-      startDate: DateTime(2026, 1, 1),
-      endDate: DateTime(2026, 1, days),
+      // June 1 anchor: avoids DST transitions (Mar 8 spring-forward, Nov 1 fall-back
+      // in most zones), keeping tests independent of Trip.lengthInDays's pre-existing
+      // DST bug which silently undercounts when a range crosses spring-forward.
+      startDate: DateTime(2026, 6, 1),
+      endDate: DateTime(2026, 6, days),
     );
 
 Expense _expense({
@@ -72,6 +75,24 @@ void main() {
     test('no trip dates and no expenses defaults to day, does not crash', () {
       expect(granularityFor(_tripNoDates, []), ExpenseGroupGranularity.day);
     });
+
+    test(
+        'the expense-date-spread fallback is DST-safe (does not undercount '
+        'a span crossing a spring-forward transition)',
+        () {
+          final expenses = [
+            _expense(id: 'a', date: DateTime(2026, 1, 1)),
+            _expense(id: 'b', date: DateTime(2026, 4, 1)),
+            // crosses Mar DST in most zones
+          ];
+          // Jan 1 -> Apr 1 inclusive is 91 days, which must land in `month` (>90),
+          // not silently undercount to 90 and land in `week`.
+          expect(
+            granularityFor(_tripNoDates, expenses),
+            ExpenseGroupGranularity.month,
+          );
+        },
+    );
   });
 
   group('groupExpenses', () {

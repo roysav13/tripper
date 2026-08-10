@@ -31,10 +31,19 @@ int _expenseDateSpanInDays(List<Expense> expenses) {
   final dates = expenses.map((e) => _dateOnly(e.date));
   final earliest = dates.reduce((a, b) => a.isBefore(b) ? a : b);
   final latest = dates.reduce((a, b) => a.isAfter(b) ? a : b);
-  return latest.difference(earliest).inDays + 1;
+  return _epochDay(latest) - _epochDay(earliest) + 1;
 }
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// Days since the Unix epoch, computed via UTC so this is immune to DST —
+/// unlike `DateTime.difference().inDays` on local-zone DateTimes, which
+/// silently undercounts by a day whenever the range crosses a DST
+/// transition (one "day" in between is only 23 real hours, and .inDays
+/// truncates the resulting non-whole-day Duration down).
+int _epochDay(DateTime d) =>
+    DateTime.utc(d.year, d.month, d.day).millisecondsSinceEpoch ~/
+        Duration.millisecondsPerDay;
 
 /// One period's worth of expenses, ready for the Spend tab's collapsible
 /// group headers.
