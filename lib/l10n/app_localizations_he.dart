@@ -634,6 +634,15 @@ class AppLocalizationsHe extends AppLocalizations {
   String get themeSystem => 'מערכת';
 
   @override
+  String get settingsLanguage => 'שפה';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageHebrew => 'עברית';
+
+  @override
   String get settingsSecurity => 'אבטחה';
 
   @override

@@ -28,6 +28,7 @@ class TripperApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
+      locale: ref.watch(localeProvider),
       routerConfig: router,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -35,7 +36,7 @@ class TripperApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en')],
+      supportedLocales: const [Locale('en'), Locale('he')],
     );
   }
 }
