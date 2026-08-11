@@ -1,0 +1,335 @@
+{
+  "@@locale": "he",
+  "appTitle": "Tripper",
+  "tabTrips": "טיולים",
+  "tabVault": "כספת",
+  "tabPlaces": "מקומות",
+  "tripsEmptyTitle": "תכנן את הטיול הראשון שלך",
+  "tripsEmptyBody": "תאריכים, מסמכים ומקומות — הכול בכיס אחד.",
+  "tripsEmptyCta": "צור טיול",
+  "backupReminderBody": "הטיולים שלך שמורים רק במכשיר הזה. גבה אותם כדי שטלפון שאבד לא יהפוך לטיול שאבד.",
+  "backupReminderCta": "גבה עכשיו",
+  "errorStateTitle": "משהו השתבש בטעינה",
+  "errorStateBody": "הנתונים שלך עדיין בטוחים במכשיר הזה. נסה שוב.",
+  "errorStateRetry": "נסה שוב",
+  "vaultEmptyTitle": "המסמכים שלך, זמינים בכל מקום",
+  "vaultEmptyBody": "דרכון, כרטיסים, הזמנות — נשמרים רק במכשיר הזה.",
+  "vaultEmptyCta": "הוסף מסמך",
+  "placesEmptyTitle": "לאן בפעם הבאה?",
+  "placesEmptyBody": "נהל רשימה של מקומות שתרצה לראות, ואלה שכבר ביקרת בהם.",
+  "placesEmptyCta": "הוסף מקום",
+  "comingSoon": "בקרוב",
+  "sectionActive": "פעילים כעת",
+  "sectionUpcoming": "קרובים",
+  "sectionPlanned": "מתוכננים",
+  "sectionPast": "עברו",
+  "sectionArchived": "בארכיון",
+  "datesTbd": "תאריכים טרם נקבעו",
+  "fromDate": "החל מ-{date}",
+  "@fromDate": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "tripDayOpen": "יום {n}",
+  "@tripDayOpen": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "themeToggleTooltip": "החלף ערכת נושא",
+  "tripDayCount": "יום {n} מתוך {m}",
+  "@tripDayCount": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "m": { "type": "int" }
+    }
+  },
+  "tripFormTitleNew": "טיול חדש",
+  "tripFormTitleEdit": "עריכת טיול",
+  "tripFormName": "שם הטיול",
+  "tripFormDestinations": "יעדים",
+  "tripFormAddDestination": "הוסף יעד",
+  "tripFormAddDestinationHint": "קראבי",
+  "tripFormDates": "תאריכים",
+  "tripFormDatesHint": "אופציונלי — השאר ריק בשלב התכנון, או הזן רק תאריך התחלה לטיולים בכיוון אחד.",
+  "tripFormStartDate": "תאריך התחלה",
+  "tripFormEndDate": "תאריך סיום",
+  "errEndWithoutStart": "קבע קודם תאריך התחלה",
+  "save": "שמירה",
+  "cancel": "ביטול",
+  "errNameRequired": "תן שם לטיול",
+  "errNoDestination": "הוסף יעד אחד לפחות",
+  "errDatesRequired": "בחר תאריכי התחלה וסיום תקינים",
+  "menuEdit": "עריכה",
+  "menuArchive": "העבר לארכיון",
+  "menuUnarchive": "הוצא מהארכיון",
+  "menuDelete": "מחיקה",
+  "deleteTripTitle": "למחוק את הטיול הזה?",
+  "deleteTripBody": "הטיול יימחק. מסמכים ומקומות המקושרים אליו יישמרו.",
+  "tabDocuments": "מסמכים",
+  "tabPlacesInTrip": "מקומות",
+  "tabExpenses": "הוצאות",
+  "expensesEmptyTitle": "עקוב אחרי העלות של הטיול",
+  "expensesEmptyBody": "הוסף את ההוצאות שלך תוך כדי הטיול — הסכום הכולל ופילוח לפי קטגוריות יצטברו כאן.",
+  "expensesEmptyCta": "הוסף הוצאה",
+  "expensesTotal": "סך הכול",
+  "expensesConvertedTotal": "≈ {amount} {currency}",
+  "@expensesConvertedTotal": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "currency": { "type": "String" }
+    }
+  },
+  "expensesConversionPending": "{count, plural, one{1 הוצאה עדיין לא הומרה} two{שתי הוצאות עדיין לא הומרו} many{{count} הוצאות עדיין לא הומרו} other{{count} הוצאות עדיין לא הומרו}}",
+  "@expensesConversionPending": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "expensesConversionOffHint": "הגדר מטבע בית בהגדרות כדי לראות סכום כולל אחד.",
+  "expensesRatesAsOf": "שערים מתאריך {date}",
+  "@expensesRatesAsOf": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "expenseGroupWeekOf": "שבוע {date}",
+  "@expenseGroupWeekOf": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "settingsHomeCurrency": "מטבע בית",
+  "settingsHomeCurrencyHint": "ממיר את סך ההוצאות בטיול, גם אם הן במטבעות שונים, לסכום אחד. נדרש חיבור לאינטרנט בפעם הראשונה בלבד; הסכומים המומרים נשמרים לאחר מכן ופועלים גם ללא חיבור. השאר ריק כדי להציג כל מטבע בנפרד.",
+  "settingsHomeCurrencyOff": "כבוי",
+  "currencyPickerSearch": "חיפוש מטבע",
+  "currencyPickerOffHint": "הצג כל מטבע בנפרד, ללא המרה.",
+  "currencyPickerNoMatch": "לא נמצא מטבע מתאים.",
+  "expenseFormTitle": "הוספת הוצאה",
+  "expenseFormEditTitle": "עריכת הוצאה",
+  "expenseFormAmount": "סכום",
+  "expenseFormCurrency": "מטבע",
+  "expenseFormNotes": "הערה (אופציונלי)",
+  "expenseFormDate": "תאריך",
+  "errAmountRequired": "הזן סכום, לדוגמה 12.30",
+  "errCurrencyRequired": "השתמש בקוד בן 3 אותיות, למשל ILS",
+  "expenseDeleted": "ההוצאה נמחקה.",
+  "catFood": "אוכל",
+  "catActivities": "פעילויות",
+  "catShopping": "קניות",
+  "tripDocsEmptyTitle": "אין מסמכים מקושרים",
+  "tripDocsEmptyBody": "טיסות, לינה וכרטיסים לטיול הזה יופיעו כאן.",
+  "vaultPinnedSection": "מוצמדים · גישה מהירה",
+  "vaultAllSection": "כל המסמכים",
+  "catPassport": "דרכון / תעודת זהות",
+  "catVisa": "ויזה",
+  "catFlight": "טיסה",
+  "catStay": "לינה",
+  "catInsurance": "ביטוח",
+  "catTransport": "תחבורה",
+  "catOther": "אחר",
+  "manualRecord": "ידני",
+  "expiryShort": "תפוגה {date}",
+  "@expiryShort": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "docFormTitle": "הוספת מסמך",
+  "docFormName": "שם המסמך",
+  "docFormAttachFile": "צירוף קובץ",
+  "docFormExpiry": "תאריך תפוגה",
+  "docFormGlobal": "שמור בכספת הכללית",
+  "docFormGlobalHint": "למסמכים שרלוונטיים גם מעבר לטיול — דרכון, רישיון, ביטוח.",
+  "fieldFlightNumber": "מספר טיסה",
+  "fieldConfirmationCode": "קוד אישור",
+  "docFormDepartureTime": "שעת המראה",
+  "docFormDepartureTimeHint": "מפעיל את התזכורת לפתיחת הצ'ק-אין (M5.3) — אופציונלי.",
+  "docOcrPrefilled": "מולא אוטומטית מהתמונה — כדאי לבדוק שוב לפני השמירה.",
+  "docTitleFlight": "טיסה {number}",
+  "@docTitleFlight": {
+    "placeholders": { "number": { "type": "String" } }
+  },
+  "fieldBookingRef": "מספר הזמנה",
+  "fieldDocumentNumber": "מספר מסמך",
+  "docActionOpen": "פתיחה",
+  "showCodeAction": "הצג בשער",
+  "showCodeFileMissing": "הקובץ של המסמך הזה חסר. צרף אותו מחדש מהכספת.",
+  "showCodePdfFallback": "לא ניתן להציג את קובץ ה-PDF כאן. פתח אותו באפליקציית צפייה אחרת.",
+  "docActionPin": "הצמד לגישה מהירה",
+  "docActionUnpin": "ביטול הצמדה",
+  "docActionLink": "קשר לטיולים",
+  "pinLimitReached": "ניתן להצמיד עד 4 מסמכים. בטל הצמדה של אחד קודם.",
+  "noTripsToLink": "עדיין אין טיולים — צור אחד קודם.",
+  "docLinksUpdated": "קישורי הטיולים עודכנו.",
+  "docLinksUpdateFailed": "לא ניתן היה לעדכן את קישורי הטיולים. נסה שוב.",
+  "vaultLockedTitle": "הכספת נעולה",
+  "vaultLockedBody": "המסמכים שלך מוגנים באמצעות נעילת המכשיר.",
+  "unlockCta": "שחרור נעילה",
+  "unlockReason": "שחרר את נעילת כספת המסמכים",
+  "unlockSettingsReason": "שחרר את נעילת ההגדרות של Tripper",
+  "settingsLockedTitle": "ההגדרות נעולות",
+  "settingsLockedBody": "אפשרויות הגיבוי והאבטחה מוגנות באמצעות נעילת המכשיר.",
+  "deleteDocTitle": "למחוק את המסמך הזה?",
+  "deleteDocBody": "המסמך והקובץ שלו יימחקו מהמכשיר הזה.",
+  "expiryTripWarning": "המסמך {title} פג בסמוך מדי לסיום הטיול הזה. בדוק את דרישות הכניסה.",
+  "@expiryTripWarning": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+  "tripPlacesEmptyTitle": "עדיין אין מקומות",
+  "tripPlacesEmptyBody": "עקוב אחרי מה שתרצה לראות בטיול הזה.",
+  "placesWantSection": "רוצה לבקר",
+  "placesBeenSection": "כבר ביקרתי",
+  "placeMarkVisited": "סמן כמבוקר",
+  "placeViewOnMap": "הצג במפה",
+  "placeOpenInGoogleMaps": "פתח ב-Google Maps",
+  "placeOpenMapsFailed": "לא ניתן היה לפתוח את Google Maps.",
+  "placeUnvisit": "העבר בחזרה לרשימת המשאלות",
+  "visitedOn": "ביקרת ב-{date}",
+  "@visitedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "statsCountries": "מדינות",
+  "statsPlacesVisited": "מקומות שביקרת בהם",
+  "statsDaysTraveled": "ימים בדרכים",
+  "placeFormTitle": "הוספת מקום",
+  "placeFormName": "שם המקום",
+  "placeFormCity": "עיר",
+  "placeFormCountry": "מדינה",
+  "placeFormTrip": "קשר לטיול",
+  "placeFormDescription": "תיאור",
+  "catHotel": "מלון",
+  "catRestaurant": "מסעדה",
+  "catCoffeeShop": "בית קפה",
+  "catBar": "בר",
+  "catAttraction": "אטרקציה",
+  "catMuseum": "מוזיאון",
+  "catAmusementPark": "פארק שעשועים",
+  "catTrek": "טרק",
+  "catBeach": "חוף",
+  "catNature": "טבע",
+  "mapViewToggle": "תצוגת מפה",
+  "listViewToggle": "תצוגת רשימה",
+  "journalGlobeLoading": "טוען את הגלובוס",
+  "journalGlobeClusterCount": "{count, plural, one{1 רשומה} two{שתי רשומות} many{{count} רשומות} other{{count} רשומות}}",
+  "@journalGlobeClusterCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pickOnMap": "בחר במפה",
+  "pickOnMapTitle": "הצב נעץ",
+  "pickOnMapHint": "חפש למעלה, או לחץ לחיצה ארוכה על המפה כדי להציב את הנעץ",
+  "mapSearchHint": "חפש מקום",
+  "mapSearchNoResults": "אין תוצאות — נסה איות אחר.",
+  "mapSearchOffline": "החיפוש דורש חיבור לאינטרנט. לחץ לחיצה ארוכה על המפה במקום זאת.",
+  "mapLayersButton": "שכבות מפה",
+  "mapLayerNormal": "ברירת מחדל",
+  "mapLayerSatellite": "לוויין",
+  "mapLayerTerrain": "פני שטח",
+  "addWithoutLocation": "הוסף את \"{query}\" ללא מיקום",
+  "@addWithoutLocation": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "noLocationChip": "ללא מיקום",
+  "editPlaceTitle": "עריכת מקום",
+  "deletePlaceTitle": "למחוק את המקום הזה?",
+  "deletePlaceBody": "המקום יוסר מהרשימות שלך ומהמפה.",
+  "deleteExpenseTitle": "למחוק את ההוצאה הזו?",
+  "deleteExpenseBody": "פעולה זו תסיר אותה מהסכום הכולל של הטיול.",
+  "tripCompleteTitle": "הטיול הסתיים — לעדכן את המפה?",
+  "tripCompleteBody": "הטיול {trip} הסתיים. סמן את המקומות שהגעת אליהם כמבוקרים:",
+  "@tripCompleteBody": {
+    "placeholders": {
+      "trip": { "type": "String" }
+    }
+  },
+  "tripCompleteConfirm": "סמן כמבוקר",
+  "tripCompleteSkip": "לא עכשיו",
+  "settingsTitle": "הגדרות",
+  "settingsAppearance": "מראה",
+  "themeLight": "בהיר",
+  "themeDark": "כהה",
+  "themeSystem": "מערכת",
+  "settingsSecurity": "אבטחה",
+  "settingsVaultLock": "נעילת הכספת",
+  "settingsVaultLockHint": "בקש טביעת אצבע לפני פתיחת מסמכים.",
+  "settingsBackup": "גיבוי",
+  "settingsBackupHint": "הכול שמור רק במכשיר הזה. ייצא גיבוי שתוכל לשחזר אחרי התקנה מחדש או במכשיר חדש.",
+  "settingsExport": "ייצוא גיבוי",
+  "settingsExportShareText": "גיבוי Tripper",
+  "settingsExportFailed": "לא ניתן היה ליצור את הגיבוי. נסה שוב.",
+  "settingsImport": "שחזור גיבוי",
+  "settingsImportTitle": "לשחזר מגיבוי?",
+  "settingsImportWarning": "פעולה זו תחליף כל טיול, מסמך ומקום במכשיר הזה בתוכן מהגיבוי.",
+  "settingsImportDone": "הגיבוי שוחזר. הפעל מחדש את Tripper כדי לראות אותו.",
+  "settingsImportCorrupt": "הקובץ הזה אינו גיבוי תקין של Tripper.",
+  "settingsImportTooNew": "הגיבוי הזה נוצר בגרסה חדשה יותר של Tripper.",
+  "settingsNotifications": "התראות",
+  "settingsExpiryNoticeHint": "כמה זמן לפני תאריך התפוגה של מסמך הוא נחשב 'מתקרב'.",
+  "settingsExpiryNoticeOff": "כבוי",
+  "docExpiryNotificationTitle": "המסמך {title} עומד לפוג בקרוב",
+  "@docExpiryNotificationTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "docExpiryNotificationBody": "התוקף יפוג בתאריך {date}.",
+  "@docExpiryNotificationBody": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "tripCountdownNotificationTitle": "הטיול {name} מתחיל בקרוב",
+  "@tripCountdownNotificationTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "tripCountdownNotificationBodyClear": "{days, plural, one{מתחיל בעוד יום} two{מתחיל בעוד יומיים} many{מתחיל בעוד {days} ימים} other{מתחיל בעוד {days} ימים}} — הכול בסדר.",
+  "@tripCountdownNotificationBodyClear": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "tripCountdownNotificationBodyWithIssues": "{days, plural, one{מתחיל בעוד יום} two{מתחיל בעוד יומיים} many{מתחיל בעוד {days} ימים} other{מתחיל בעוד {days} ימים}} — {count, plural, one{1 מסמך דורש תשומת לב} two{שני מסמכים דורשים תשומת לב} many{{count} מסמכים דורשים תשומת לב} other{{count} מסמכים דורשים תשומת לב}}.",
+  "@tripCountdownNotificationBodyWithIssues": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "count": { "type": "int" }
+    }
+  },
+  "checkInNotificationTitle": "הצ'ק-אין נפתח עבור {title}",
+  "@checkInNotificationTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "checkInNotificationBody": "בדרך כלל הצ'ק-אין נפתח 24 שעות לפני ההמראה. חברות התעופה משנות את הטווח הזה בין 24 ל-48 שעות, אז כדאי לבדוק מול החברה שלך.",
+  "placeFormNoTrip": "ללא טיול",
+  "tripPlacesProgress": "ביקרת ב-{visited} מתוך {total}",
+  "@tripPlacesProgress": {
+    "placeholders": {
+      "visited": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "tabJournal": "יומן",
+  "journalEmptyTitle": "עדיין אין רשומות ביומן",
+  "journalEmptyBody": "רשום הערה מהדרך — לאן הלכת ומה קרה.",
+  "journalAddEntryCta": "הוסף רשומה",
+  "journalEntryFormTitle": "רשומה חדשה",
+  "journalEntryFormEditTitle": "עריכת רשומה",
+  "journalFieldSummary": "מה קרה?",
+  "journalAddPhoto": "הוסף תמונה",
+  "journalPhotoSourceCamera": "מצלמה",
+  "journalPhotoSourceGallery": "גלריה",
+  "journalRemovePhoto": "הסר תמונה",
+  "journalAddLocation": "הוסף מיקום",
+  "journalClearLocation": "נקה מיקום",
+  "journalDeleteEntryTitle": "למחוק את הרשומה הזו?",
+  "journalDeleteEntryBody": "פעולה זו תמחק את הטקסט ואת כל התמונות. לא ניתן לבטל פעולה זו.",
+  "journalMapLocationHint": "רשומות ללא מיקום לא יופיעו כאן.",
+  "journalUntitledEntry": "טרם נכתב",
+  "journalStatsLine": "{entries} רשומות · {places} מקומות שביקרת בהם",
+  "@journalStatsLine": {
+    "placeholders": {
+      "entries": { "type": "int" },
+      "places": { "type": "int" }
+    }
+  },
+  "journalPickNow": "עכשיו",
+  "journalPickToday": "היום",
+  "journalPickYesterday": "אתמול",
+  "journalTripLocations": "המיקומים של הטיול הזה",
+  "journalNewLocation": "מיקום חדש"
+}
