@@ -19,9 +19,9 @@ import '../helpers/fake_trip_repository.dart';
 import '../helpers/test_preferences.dart';
 
 /// Permanent guardrails (M4 §4.3): tap targets, labels, contrast.
-Future<Widget> _populatedApp() async => ProviderScope(
+Future<Widget> _populatedApp({String locale = 'en'}) async => ProviderScope(
       overrides: [
-        await testPreferencesOverride(),
+        await testPreferencesOverride({'app_locale': locale}),
         testSharesOverride(),
         tripRepositoryProvider.overrideWithValue(
           FakeTripRepository([
@@ -116,5 +116,50 @@ void main() {
     await tester.pumpAndSettle();
     // Any RenderFlex overflow throws in tests, so reaching here is the pass.
     expect(find.text('Thailand'), findsOneWidget);
+  });
+
+  testWidgets(
+      'app renders RTL and without overflow in Hebrew across the main tabs',
+      (tester) async {
+    await tester.pumpWidget(await _populatedApp(locale: 'he'));
+    await tester.pumpAndSettle();
+
+    // Navigate by icon, not translated label text — the label text is
+    // now Hebrew, and this test shouldn't need to know this plan's own
+    // word choices to drive navigation.
+    final navBar = find.byType(NavigationBar);
+    // MaterialApp's own element has no Directionality ancestor — it's the
+    // widget that introduces one for everything below it — so read the
+    // resolved direction from a descendant instead.
+    expect(
+      Directionality.of(tester.element(navBar)),
+      TextDirection.rtl,
+    );
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.folder_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.place_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.luggage_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // No RenderFlex overflow surfacing across any of these screens is the
+    // actual check — same "reaching this line is the pass" pattern the
+    // existing 1.3x text-scale test above already uses.
+    expect(tester.takeException(), isNull);
   });
 }
