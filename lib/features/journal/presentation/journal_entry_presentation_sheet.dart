@@ -359,7 +359,7 @@ class _JournalEntryPresentationPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     MonoText(
-                      DateFormat('d MMMM yyyy · HH:mm').format(entry.loggedAt),
+                      DateFormat('d MMMM yyyy · HH:mm', 'en_US').format(entry.loggedAt),
                     ),
                     if (placeName != null && placeName.isNotEmpty) ...[
                       const SizedBox(height: 4),

@@ -31,7 +31,7 @@ String categoryLabel(AppLocalizations l10n, DocumentCategory category) =>
     };
 
 String _expiryText(AppLocalizations l10n, DateTime expiry) =>
-    l10n.expiryShort(DateFormat('dd/MM/yyyy').format(expiry));
+    l10n.expiryShort(DateFormat('dd/MM/yyyy', 'en_US').format(expiry));
 
 /// Mono metadata line: category-specific details + expiry.
 String documentMetaLine(AppLocalizations l10n, Document doc) {

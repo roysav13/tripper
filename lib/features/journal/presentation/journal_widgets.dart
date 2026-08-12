@@ -118,7 +118,7 @@ class JournalGalleryCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               MonoText(
-                                DateFormat('dd MMM').format(entry.loggedAt),
+                                DateFormat('dd MMM', 'en_US').format(entry.loggedAt),
                                 color: hasPhoto
                                     ? colors.surface.withValues(alpha: 0.75)
                                     : colors.inkMuted,
@@ -539,7 +539,7 @@ class _GroupedGalleryCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               MonoText(
-                                DateFormat('dd MMM').format(first.loggedAt),
+                                DateFormat('dd MMM', 'en_US').format(first.loggedAt),
                                 color: hasPhoto
                                     ? colors.surface.withValues(alpha: 0.75)
                                     : colors.inkMuted,

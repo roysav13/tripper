@@ -154,7 +154,7 @@ class PlaceRowCard extends StatelessWidget {
       if (place.city.isNotEmpty) place.city,
       if (place.country.isNotEmpty) place.country,
       if (visited && place.visitedAt != null)
-        l10n.visitedOn(DateFormat('dd MMM yyyy').format(place.visitedAt!))
+        l10n.visitedOn(DateFormat('dd MMM yyyy', 'en_US').format(place.visitedAt!))
       else if (tripName != null)
         tripName!,
     ];

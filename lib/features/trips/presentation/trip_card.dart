@@ -11,7 +11,7 @@ import '../domain/trip.dart';
 
 /// All date formatting for trips goes through here (locale = one-file change).
 abstract final class TripDateFormatter {
-  static String single(DateTime d) => DateFormat('dd MMM').format(d);
+  static String single(DateTime d) => DateFormat('dd MMM', 'en_US').format(d);
 
   static String range(DateTime start, DateTime end) =>
       '${single(start)} – ${single(end)}';

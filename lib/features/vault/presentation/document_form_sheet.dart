@@ -180,7 +180,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
                 label: Text(
                   _expiry == null
                       ? l10n.docFormExpiry
-                      : DateFormat('dd MMM yyyy').format(_expiry!),
+                      : DateFormat('dd MMM yyyy', 'en_US').format(_expiry!),
                 ),
                 onPressed: _pickExpiry,
               ),
@@ -194,7 +194,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
             label: Text(
               _departureTime == null
                   ? l10n.docFormDepartureTime
-                  : DateFormat('dd MMM yyyy, HH:mm').format(_departureTime!),
+                  : DateFormat('dd MMM yyyy, HH:mm', 'en_US').format(_departureTime!),
             ),
             onPressed: _pickDepartureTime,
           ),
