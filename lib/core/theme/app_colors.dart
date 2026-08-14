@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// The Tripper palette (SPEC §4.2). The ONLY file allowed to contain
-/// raw Color(0xFF...) values.
+/// The Tripper palette — "Immersive Golden Hour"
+/// (docs/superpowers/specs/2026-08-14-tripper-redesign-design.md §3). The
+/// ONLY file allowed to contain raw Color(0xFF...) values.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
@@ -15,58 +16,79 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.warning,
     required this.error,
     required this.success,
+    required this.heroGradientStart,
+    required this.heroGradientEnd,
+    required this.mapWater,
+    required this.mapLand,
   });
 
-  /// App background — warm off-white, never pure white.
+  /// App background. Dark mode: near-black night tone. Light mode: warm
+  /// off-white, never pure white.
   final Color paper;
 
-  /// Cards and sheets.
+  /// Cards and sheets — solid content, never glass.
   final Color surface;
 
   final Color inkPrimary;
   final Color inkSecondary;
   final Color inkMuted;
 
-  /// Dividers and card borders.
+  /// Dividers and card borders — hairlines survive under the new skin.
   final Color hairline;
 
-  /// Deep teal — the single accent. Actions, active states, wishlist pins.
+  /// Coral — the one accent. Actions, active states, "want to go"
+  /// pins/dots. Never a second accent alongside [warning].
   final Color accent;
 
-  /// Rust — warnings only (document expiry). Never for place states.
+  /// Amber — expiry/danger-adjacent warnings only. Also reused for map
+  /// labels — no separate "map gold" token.
   final Color warning;
 
   final Color error;
   final Color success;
 
+  /// Cover scrims and generated trip-cover art only — never buttons, text
+  /// backgrounds, or flat surfaces (component rule 2).
+  final Color heroGradientStart;
+  final Color heroGradientEnd;
+
+  /// Custom Google Maps style base (map_style.dart, Phase 3) — replaces
+  /// Google's stock/Night colors.
+  final Color mapWater;
+  final Color mapLand;
+
   static const light = AppColors(
-    paper: Color(0xFFF7F4EE),
+    paper: Color(0xFFFAF3EC),
     surface: Color(0xFFFFFFFF),
-    inkPrimary: Color(0xFF1C2422),
-    inkSecondary: Color(0xFF5B6462),
-    // 4.8:1 on paper — mono metadata is informational, so it must clear
-    // WCAG AA. The old #8C948F sat at 2.8:1 (M4 audit).
-    inkMuted: Color(0xFF666D68),
-    hairline: Color(0xFFDEDACD),
-    accent: Color(0xFF2B6E6B),
-    warning: Color(0xFFB5562D),
-    error: Color(0xFFA23B2E),
-    success: Color(0xFF3F7A52),
+    inkPrimary: Color(0xFF1B1A22),
+    inkSecondary: Color(0xFF5B5A66),
+    inkMuted: Color(0xFF8A8894),
+    hairline: Color(0xFFE7E1D8),
+    accent: Color(0xFFE85A4E),
+    warning: Color(0xFFC97A1B),
+    error: Color(0xFFC23B34),
+    success: Color(0xFF1F9A6E),
+    heroGradientStart: Color(0xFFFAF3EC),
+    heroGradientEnd: Color(0xFFE85A4E),
+    mapWater: Color(0xFFDCEAE6),
+    mapLand: Color(0xFFEFE7D8),
   );
 
-  // Lifted a step from true black — "dim paper", not void.
   static const dark = AppColors(
-    paper: Color(0xFF1B1F21),
-    surface: Color(0xFF24292B),
-    inkPrimary: Color(0xFFEDEAE2),
-    inkSecondary: Color(0xFFB0B6B1),
-    // 5.2:1 on dark paper (was 3.9:1).
-    inkMuted: Color(0xFF8A918B),
-    hairline: Color(0xFF3A4043),
-    accent: Color(0xFF5AA6A2),
-    warning: Color(0xFFD37D53),
-    error: Color(0xFFC05B4D),
-    success: Color(0xFF5E9A72),
+    paper: Color(0xFF12141C),
+    surface: Color(0xFF1C1F2B),
+    inkPrimary: Color(0xFFF5F1EA),
+    inkSecondary: Color(0xFFA9AEBD),
+    inkMuted: Color(0xFF6E7386),
+    hairline: Color(0x14FFFFFF), // rgba(255,255,255,.08)
+    accent: Color(0xFFFF6B5E),
+    warning: Color(0xFFF2A93C),
+    error: Color(0xFFE5484D),
+    success: Color(0xFF34D399),
+    heroGradientStart: Color(0xFF171A2E),
+    heroGradientEnd: Color(0xFFFF6B5E),
+    mapWater: Color(0xFF17263C),
+    mapLand: Color(0xFF242F3E),
   );
 
   @override
@@ -81,6 +103,10 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? warning,
     Color? error,
     Color? success,
+    Color? heroGradientStart,
+    Color? heroGradientEnd,
+    Color? mapWater,
+    Color? mapLand,
   }) {
     return AppColors(
       paper: paper ?? this.paper,
@@ -93,6 +119,10 @@ class AppColors extends ThemeExtension<AppColors> {
       warning: warning ?? this.warning,
       error: error ?? this.error,
       success: success ?? this.success,
+      heroGradientStart: heroGradientStart ?? this.heroGradientStart,
+      heroGradientEnd: heroGradientEnd ?? this.heroGradientEnd,
+      mapWater: mapWater ?? this.mapWater,
+      mapLand: mapLand ?? this.mapLand,
     );
   }
 
@@ -110,6 +140,11 @@ class AppColors extends ThemeExtension<AppColors> {
       warning: Color.lerp(warning, other.warning, t)!,
       error: Color.lerp(error, other.error, t)!,
       success: Color.lerp(success, other.success, t)!,
+      heroGradientStart:
+          Color.lerp(heroGradientStart, other.heroGradientStart, t)!,
+      heroGradientEnd: Color.lerp(heroGradientEnd, other.heroGradientEnd, t)!,
+      mapWater: Color.lerp(mapWater, other.mapWater, t)!,
+      mapLand: Color.lerp(mapLand, other.mapLand, t)!,
     );
   }
 }

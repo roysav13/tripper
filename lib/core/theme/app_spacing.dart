@@ -9,9 +9,13 @@ abstract final class AppSpacing {
 }
 
 abstract final class AppShape {
-  /// One radius for everything — cards, sheets, buttons.
-  static const radius = 10.0;
+  /// Cards and sheets — grown from the old field-journal 10px per the
+  /// redesign (spec §3.4).
+  static const radius = 14.0;
 
-  /// Hairline borders instead of shadows.
+  /// Chips and tab indicators — full pill.
+  static const pillRadius = 999.0;
+
+  /// Hairline borders instead of shadows on solid content.
   static const hairlineWidth = 0.5;
 }
