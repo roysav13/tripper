@@ -141,36 +141,81 @@ The biggest lift in Phase 2, isolated deliberately because it's the one feature 
 ## 4. Design system
 
 ### 4.1 Direction
-"Classic, not much color, full of information, great UX" — plus your reference photo: natural light, sea and rock tones, no filters, nothing loud. The read on that combination is a **field-journal / boarding-pass aesthetic**: warm paper background, near-black ink for text, one restrained accent color, and typography doing the work that color usually does. Density comes from layout and type hierarchy (Citymapper's approach), not from packing in bright UI chrome.
+
+"Immersive Golden Hour" — cinematic, photo-forward, dark-first. Trip
+covers (real photos, or a generated gradient when none is set) are the
+emotional anchor of the app instead of staying text/data-forward. Glass
+(blurred) chrome floats over photography for navigation; content below
+the fold stays on solid, calm surfaces. The "boarding pass" data
+discipline — mono metadata, hairline dividers, serif titles — survives
+underneath the new skin. Full rationale and screen-by-screen breakdown:
+`docs/superpowers/specs/2026-08-14-tripper-redesign-design.md`.
 
 ### 4.2 Color tokens
 
-| Token | Value | Use |
-|---|---|---|
-| `bg.paper` | `#F7F4EE` | App background — warm off-white, not pure white |
-| `bg.surface` | `#FFFFFF` | Cards, sheets |
-| `ink.primary` | `#1C2422` | Primary text — near-black, slightly warm |
-| `ink.secondary` | `#5B6462` | Secondary text, timestamps, metadata |
-| `ink.muted` | `#8C948F` | Placeholder text, disabled state |
-| `line.hairline` | `#DEDACD` | Dividers, card borders |
-| `accent.primary` | `#2B6E6B` | Deep teal — primary actions, active states, "want to go" pins (evokes the sea in your reference shots) |
-| `accent.secondary` | `#B5562D` | Rust/terracotta — warnings only (document expiry, destructive-adjacent emphasis). Not used for place states. |
-| `status.error` | `#A23B2E` | Real errors/validation only |
-| `status.success` | `#3F7A52` | Confirmations only |
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `paper` | `#12141C` | `#FAF3EC` | App background |
+| `surface` | `#1C1F2B` | `#FFFFFF` | Solid content cards (non-glass) |
+| `inkPrimary` | `#F5F1EA` | `#1B1A22` | Primary text |
+| `inkSecondary` | `#A9AEBD` | `#403F47`\* | Secondary text, timestamps |
+| `inkMuted` | `#6E7386` | `#56525D`\* | Placeholder, disabled |
+| `hairline` | `rgba(255,255,255,.08)` | `#E7E1D8` | Borders on solid cards |
+| `accent` (coral) | `#FF6B5E` | `#A23F37`\* | The one accent — CTAs, active states, "want to go" pins/dots |
+| `warning` (amber) | `#F2A93C` | `#8D5513`\* | Expiry/danger-adjacent warnings only. Also reused for map labels |
+| `success` | `#34D399` | `#1F9A6E` | Confirmations only |
+| `error` | `#E5484D` | `#C23B34` | Real errors/validation only |
+| `heroGradientStart`/`heroGradientEnd` | `#171A2E` → `#FF6B5E` | `#FAF3EC` → `#A23F37`\* | Cover scrims and generated trip-cover art only |
+| `mapWater`/`mapLand` | `#17263c`/`#242f3e` | `#DCEAE6`/`#EFE7D8` | Map style base |
 
-Rule: **two accent colors, total, in the entire app.** Everything else is ink-on-paper plus weight/size. Dark mode is a straight inversion (paper → `#15181A`, ink → `#EDEAE2`) — build it from day one since Android users expect it, not bolted on later.
+\* Light-mode `accent`, `warning`, `inkMuted`, `inkSecondary` (and
+`heroGradientEnd`, which mirrors `accent`) were darkened from the original
+mockup values during Task 1's implementation — the originals
+(`#E85A4E`/`#C97A1B`/`#8A8894`/`#5B5A66`) failed WCAG AA 4.5:1 text contrast
+against real rendered UI (`accessibility_test.dart`), which per component
+rule 6 ("contrast is non-negotiable") outranks the un-audited mockup hex.
+
+Rule: **one accent, total, in the entire app.** Amber is reserved
+exclusively for warnings and never doubles as a second accent. Named
+brand hues: three (night, coral, amber), plus the two utility colors
+(success/error) every app needs. Dark is the primary mode; light is a
+fully-designed true alternate (not a mechanical inversion) — both ship
+from day one.
 
 ### 4.3 Typography
-- **Headings:** a serif (e.g. `Fraunces` or `Source Serif 4`) — gives the "journal/passport" feel without looking decorative
-- **Body/UI:** a clean grotesk sans (e.g. `Inter` or `IBM Plex Sans`) for everything interactive and dense
-- **Data/codes:** a monospace (`IBM Plex Mono` or `JetBrains Mono`) for confirmation codes, flight numbers, dates, coordinates — this is what makes dense data screens (Citymapper-style) feel authoritative rather than cluttered
-- Type scale: stick to 5 sizes total (display, title, body, label, caption). Weight (regular/medium/semibold) carries hierarchy more than size does.
+
+Unchanged from the original field-journal system:
+- **Headings:** `Fraunces` (serif) — titles, trip names, hero headings
+- **Body/UI:** `IBM Plex Sans` — body, buttons, UI labels
+- **Data/codes:** `IBM Plex Mono`, uppercase-tracked — dates, codes,
+  coordinates, stats, kickers
+- 5-size type scale (display, title, body, label, caption); weight
+  carries hierarchy more than size does.
 
 ### 4.4 Component principles
-- Cards use hairline borders, not shadows, for separation (shadows read as "app-y"; hairlines read as "printed")
-- Icons: outline style only, single weight, ink-colored (not accent-colored) except when indicating the two pin/document states
-- No gradients, no rounded-pill buttons everywhere — corner radius is modest and consistent (design token, not per-component guessing)
-- Empty states are illustrated sparingly with line art, not stock photography — keeps it consistent with the low-color direction
+
+- **One accent, not two.** Coral does all interactive/active/CTA work.
+  Amber is warnings-only.
+- **Gradients are scoped, not banned.** Only on hero/cover-photo scrims
+  and generated trip-cover art. Never on buttons, text backgrounds, or
+  flat surfaces.
+- **Glass/blur is for chrome over imagery only** — nav bars, tab bars,
+  top bars sitting on a photo or gradient hero (`GlassChrome`). Regular
+  content cards stay solid (`PaperCard`) for reliable contrast and cheap
+  repaint — no shadow.
+- **Hairline borders survive** on solid cards, recolored per token table
+  above — keeps the "printed, not app-y" feel under the new skin.
+- **Two pin/marker states, one accent** — coral+glow = want-to-go, muted
+  parchment/grey = been-there. Applies identically to map pins and the
+  journal globe's dots.
+- **Contrast is non-negotiable.** Every text-on-photo/gradient moment
+  gets a scrim strong enough to hit WCAG AA.
+- **Icons** stay outline, single-weight, ink-colored by default; coral
+  only for active nav/pin states.
+- Corner radius: 14px on cards/sheets, full-pill on chips/tab indicators,
+  circular on FABs/glass buttons.
+- Empty states are illustrated sparingly with line art, optionally with a
+  soft coral-tinted glow behind the icon; CTA button in coral.
 
 ## 5. Technical architecture
 
