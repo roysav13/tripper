@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
@@ -359,11 +360,12 @@ class _JournalEntryPresentationPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     MonoText(
-                      DateFormat('d MMMM yyyy · HH:mm').format(entry.loggedAt),
+                      DateFormat('d MMMM yyyy · HH:mm', l10n.localeName)
+                          .format(entry.loggedAt),
                     ),
                     if (placeName != null && placeName.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(
+                      AutoDirectionText(
                         placeName,
                         style: AppTextStyles.title
                             .copyWith(color: colors.inkPrimary),

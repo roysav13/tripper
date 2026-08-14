@@ -64,4 +64,29 @@ void main() {
     final container = await containerWith({'vault_lock_enabled': false});
     expect(container.read(vaultLockEnabledProvider), isFalse);
   });
+
+  test('locale defaults to English', () async {
+    final container = await containerWith({});
+    expect(container.read(localeProvider), const Locale('en'));
+  });
+
+  test('stored Hebrew locale is restored', () async {
+    final container = await containerWith({'app_locale': 'he'});
+    expect(container.read(localeProvider), const Locale('he'));
+  });
+
+  test('an unrecognized stored value falls back to English', () async {
+    final container = await containerWith({'app_locale': 'fr'});
+    expect(container.read(localeProvider), const Locale('en'));
+  });
+
+  test('set persists and updates state', () async {
+    final container = await containerWith({});
+    await container.read(localeProvider.notifier).set(const Locale('he'));
+    expect(container.read(localeProvider), const Locale('he'));
+    expect(
+      container.read(sharedPreferencesProvider).getString('app_locale'),
+      'he',
+    );
+  });
 }

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -11,10 +12,11 @@ import '../domain/trip.dart';
 
 /// All date formatting for trips goes through here (locale = one-file change).
 abstract final class TripDateFormatter {
-  static String single(DateTime d) => DateFormat('dd MMM').format(d);
+  static String single(DateTime d, AppLocalizations l10n) =>
+      DateFormat('dd MMM', l10n.localeName).format(d);
 
-  static String range(DateTime start, DateTime end) =>
-      '${single(start)} – ${single(end)}';
+  static String range(DateTime start, DateTime end, AppLocalizations l10n) =>
+      '${single(start, l10n)} – ${single(end, l10n)}';
 
   /// "16 JUL – 27 JUL" · "From 16 Jul" (open-ended) · "Dates TBD" (planned).
   /// MonoText uppercases downstream.
@@ -22,8 +24,8 @@ abstract final class TripDateFormatter {
     final start = trip.startDate;
     if (start == null) return l10n.datesTbd;
     final end = trip.endDate;
-    if (end == null) return l10n.fromDate(single(start));
-    return range(start, end);
+    if (end == null) return l10n.fromDate(single(start, l10n));
+    return range(start, end, l10n);
   }
 }
 
@@ -74,7 +76,7 @@ class TripCard extends StatelessWidget {
                   tag: 'trip-name-${trip.id}',
                   child: Material(
                     type: MaterialType.transparency,
-                    child: Text(
+                    child: AutoDirectionText(
                       trip.name,
                       style: AppTextStyles.title
                           .copyWith(fontSize: 17, color: ink),

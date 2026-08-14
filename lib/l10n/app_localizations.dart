@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_he.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
   ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('he')
+  ];
 
   /// No description provided for @appTitle.
   ///
@@ -603,6 +607,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All documents'**
   String get vaultAllSection;
+
+  /// No description provided for @vaultSortCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get vaultSortCreated;
+
+  /// No description provided for @vaultSortRelevant.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevant date'**
+  String get vaultSortRelevant;
 
   /// No description provided for @catPassport.
   ///
@@ -1222,6 +1238,24 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeSystem;
 
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageHebrew.
+  ///
+  /// In en, this message translates to:
+  /// **'עברית'**
+  String get languageHebrew;
+
   /// No description provided for @settingsSecurity.
   ///
   /// In en, this message translates to:
@@ -1528,7 +1562,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'he'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1539,6 +1573,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'he':
+      return AppLocalizationsHe();
   }
 
   throw FlutterError(

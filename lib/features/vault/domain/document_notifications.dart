@@ -44,7 +44,7 @@ List<PendingNotification> documentExpiryNotifications(
         triggerType: NotificationTriggerType.documentExpiry,
         title: l10n.docExpiryNotificationTitle(doc.title),
         body: l10n.docExpiryNotificationBody(
-          DateFormat('dd MMM yyyy').format(expiry),
+          DateFormat('dd MMM yyyy', l10n.localeName).format(expiry),
         ),
         at: fireAt,
       ),

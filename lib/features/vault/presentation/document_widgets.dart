@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -31,7 +32,7 @@ String categoryLabel(AppLocalizations l10n, DocumentCategory category) =>
     };
 
 String _expiryText(AppLocalizations l10n, DateTime expiry) =>
-    l10n.expiryShort(DateFormat('dd/MM/yyyy').format(expiry));
+    l10n.expiryShort(DateFormat('dd/MM/yyyy', l10n.localeName).format(expiry));
 
 /// Mono metadata line: category-specific details + expiry.
 String documentMetaLine(AppLocalizations l10n, Document doc) {
@@ -42,6 +43,50 @@ String documentMetaLine(AppLocalizations l10n, Document doc) {
     if (!doc.hasFile) l10n.manualRecord,
   ];
   return parts.join(' · ');
+}
+
+/// Category filter chips — a controlled widget, all state lives in the
+/// parent screen (mirrors places' PlaceFilterBar). Only categories
+/// actually present in [docs] render a chip, so there's never a dead-end
+/// filter option.
+class DocumentFilterBar extends StatelessWidget {
+  const DocumentFilterBar({
+    super.key,
+    required this.docs,
+    required this.selectedCategories,
+    required this.onCategoriesChanged,
+  });
+
+  final List<Document> docs;
+  final Set<DocumentCategory> selectedCategories;
+  final ValueChanged<Set<DocumentCategory>> onCategoriesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final categories = {for (final d in docs) d.category}.toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final category in categories)
+          FilterChip(
+            avatar: Icon(categoryIcon(category), size: 16),
+            label: Text(categoryLabel(l10n, category)),
+            selected: selectedCategories.contains(category),
+            onSelected: (selected) => onCategoriesChanged(
+              selected
+                  ? {...selectedCategories, category}
+                  : selectedCategories.where((c) => c != category).toSet(),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 /// One document = one card (matches the trips list), used in the vault
@@ -77,7 +122,7 @@ class DocumentRowTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AutoDirectionText(
                   doc.title,
                   style: AppTextStyles.body.copyWith(
                     color: colors.inkPrimary,
@@ -129,7 +174,7 @@ class PinnedDocumentCard extends StatelessWidget {
         children: [
           Icon(categoryIcon(doc.category), size: 18, color: colors.accent),
           const SizedBox(height: AppSpacing.sm),
-          Text(
+          AutoDirectionText(
             doc.title,
             style: AppTextStyles.label.copyWith(color: colors.inkPrimary),
             maxLines: 1,

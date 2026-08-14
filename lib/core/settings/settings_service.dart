@@ -11,6 +11,7 @@ const _kNotifyTripCountdown = 'notifications_trip_countdown_enabled';
 const _kNotifyCheckIn = 'notifications_check_in_enabled';
 const _kDocExpiryNoticeDays = 'document_expiry_notice_days';
 const _kHomeCurrency = 'home_currency';
+const _kAppLocale = 'app_locale';
 
 /// Overridden at startup with the real instance (main.dart).
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -48,6 +49,26 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
 final themeModeProvider =
     NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
+
+/// English by default — the app doesn't follow system locale (manual
+/// picker only, this round — see the design spec's "Out of scope").
+class LocaleController extends Notifier<Locale> {
+  @override
+  Locale build() {
+    final stored = ref.read(sharedPreferencesProvider).getString(_kAppLocale);
+    return stored == 'he' ? const Locale('he') : const Locale('en');
+  }
+
+  Future<void> set(Locale locale) async {
+    state = locale;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(_kAppLocale, locale.languageCode);
+  }
+}
+
+final localeProvider =
+    NotifierProvider<LocaleController, Locale>(LocaleController.new);
 
 /// Biometric gate on the vault; on by default (SPEC M2).
 class VaultLockSettingController extends Notifier<bool> {

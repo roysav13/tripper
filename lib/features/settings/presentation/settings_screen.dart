@@ -53,6 +53,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     final lockEnabled = ref.watch(vaultLockEnabledProvider);
     final noticeDays = ref.watch(documentExpiryNoticeDaysProvider);
 
@@ -98,6 +99,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             showSelectedIcon: false,
             onSelectionChanged: (selection) =>
                 ref.read(themeModeProvider.notifier).set(selection.first),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SectionLabel(l10n.settingsLanguage),
+          const SizedBox(height: AppSpacing.sm),
+          SegmentedButton<Locale>(
+            segments: [
+              ButtonSegment(
+                value: const Locale('en'),
+                label: Text(l10n.languageEnglish),
+              ),
+              ButtonSegment(
+                value: const Locale('he'),
+                label: Text(l10n.languageHebrew),
+              ),
+            ],
+            selected: {locale},
+            onSelectionChanged: (selection) =>
+                ref.read(localeProvider.notifier).set(selection.first),
           ),
           const SizedBox(height: AppSpacing.xl),
           SectionLabel(l10n.settingsSecurity),

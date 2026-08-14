@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -116,9 +117,7 @@ class PlaceFilterBar extends StatelessWidget {
                   onSelected: (selected) => onCountriesChanged(
                     selected
                         ? {...selectedCountries, country}
-                        : selectedCountries
-                            .where((c) => c != country)
-                            .toSet(),
+                        : selectedCountries.where((c) => c != country).toSet(),
                   ),
                 ),
             ],
@@ -154,7 +153,9 @@ class PlaceRowCard extends StatelessWidget {
       if (place.city.isNotEmpty) place.city,
       if (place.country.isNotEmpty) place.country,
       if (visited && place.visitedAt != null)
-        l10n.visitedOn(DateFormat('dd MMM yyyy').format(place.visitedAt!))
+        l10n.visitedOn(
+          DateFormat('dd MMM yyyy', l10n.localeName).format(place.visitedAt!),
+        )
       else if (tripName != null)
         tripName!,
     ];
@@ -180,7 +181,7 @@ class PlaceRowCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AutoDirectionText(
                   place.name,
                   style: AppTextStyles.body.copyWith(
                     color: visited ? colors.inkSecondary : colors.inkPrimary,

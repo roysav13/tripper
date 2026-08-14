@@ -6,8 +6,10 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_entry_queries.dart';
 
@@ -37,6 +39,7 @@ class JournalGalleryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final placeName = entry.placeName;
     final hasPhoto = entry.hasPhotos;
 
@@ -118,7 +121,8 @@ class JournalGalleryCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               MonoText(
-                                DateFormat('dd MMM').format(entry.loggedAt),
+                                DateFormat('dd MMM', l10n.localeName)
+                                    .format(entry.loggedAt),
                                 color: hasPhoto
                                     ? colors.surface.withValues(alpha: 0.75)
                                     : colors.inkMuted,
@@ -126,7 +130,7 @@ class JournalGalleryCard extends StatelessWidget {
                               if (placeName != null &&
                                   placeName.isNotEmpty) ...[
                                 const SizedBox(height: 2),
-                                Text(
+                                AutoDirectionText(
                                   placeName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -427,6 +431,7 @@ class _GroupedGalleryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final first = day.first;
     // The cover is the day's LATEST entry with a photo, not just the
     // first-with-photo in list order — day isn't guaranteed to be sorted
@@ -539,7 +544,8 @@ class _GroupedGalleryCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               MonoText(
-                                DateFormat('dd MMM').format(first.loggedAt),
+                                DateFormat('dd MMM', l10n.localeName)
+                                    .format(first.loggedAt),
                                 color: hasPhoto
                                     ? colors.surface.withValues(alpha: 0.75)
                                     : colors.inkMuted,
@@ -547,7 +553,7 @@ class _GroupedGalleryCard extends StatelessWidget {
                               if (placeName != null &&
                                   placeName.isNotEmpty) ...[
                                 const SizedBox(height: 2),
-                                Text(
+                                AutoDirectionText(
                                   placeName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

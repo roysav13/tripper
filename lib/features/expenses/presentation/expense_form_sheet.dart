@@ -193,7 +193,7 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
           icon: const Icon(Icons.event_outlined, size: 16),
-          label: Text(DateFormat('dd MMM yyyy').format(_date)),
+          label: Text(DateFormat('dd MMM yyyy', l10n.localeName).format(_date)),
           onPressed: _pickDate,
         ),
         const SizedBox(height: AppSpacing.md),

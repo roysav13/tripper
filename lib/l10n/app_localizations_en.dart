@@ -296,6 +296,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vaultAllSection => 'All documents';
 
   @override
+  String get vaultSortCreated => 'Created';
+
+  @override
+  String get vaultSortRelevant => 'Relevant date';
+
+  @override
   String get catPassport => 'Passport / ID';
 
   @override
@@ -635,6 +641,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSystem => 'System';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageHebrew => 'עברית';
 
   @override
   String get settingsSecurity => 'Security';

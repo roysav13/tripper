@@ -19,9 +19,9 @@ import '../helpers/fake_trip_repository.dart';
 import '../helpers/test_preferences.dart';
 
 /// Permanent guardrails (M4 §4.3): tap targets, labels, contrast.
-Future<Widget> _populatedApp() async => ProviderScope(
+Future<Widget> _populatedApp({String locale = 'en'}) async => ProviderScope(
       overrides: [
-        await testPreferencesOverride(),
+        await testPreferencesOverride({'app_locale': locale}),
         testSharesOverride(),
         tripRepositoryProvider.overrideWithValue(
           FakeTripRepository([
@@ -37,10 +37,11 @@ Future<Widget> _populatedApp() async => ProviderScope(
         ),
         documentRepositoryProvider.overrideWithValue(
           FakeDocumentRepository([
-            const Document(
+            Document(
               id: 'd1',
               title: 'Passport',
               category: DocumentCategory.passportId,
+              createdAt: DateTime(2026, 7, 19),
               isPinned: true,
             ),
           ]),
@@ -116,5 +117,74 @@ void main() {
     await tester.pumpAndSettle();
     // Any RenderFlex overflow throws in tests, so reaching here is the pass.
     expect(find.text('Thailand'), findsOneWidget);
+  });
+
+  testWidgets(
+      'app renders RTL and without overflow in Hebrew across the main tabs',
+      (tester) async {
+    await tester.pumpWidget(await _populatedApp(locale: 'he'));
+    await tester.pumpAndSettle();
+
+    // Navigate by icon, not translated label text — the label text is
+    // now Hebrew, and this test shouldn't need to know this plan's own
+    // word choices to drive navigation.
+    final navBar = find.byType(NavigationBar);
+    // MaterialApp's own element has no Directionality ancestor — it's the
+    // widget that introduces one for everything below it — so read the
+    // resolved direction from a descendant instead.
+    expect(
+      Directionality.of(tester.element(navBar)),
+      TextDirection.rtl,
+    );
+
+    // The trip name "Thailand" is English fixture data inside a Hebrew
+    // (RTL) app — it must render LTR so a one-line ellipsis truncates from
+    // its trailing edge instead of clipping the start of the word.
+    expect(
+      tester.widget<Text>(find.text('Thailand')).textDirection,
+      TextDirection.ltr,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.folder_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Same check for the vault tab's document title — pinned, so it
+    // renders in both the quick-access row and the main list.
+    expect(
+      tester
+          .widgetList<Text>(find.text('Passport'))
+          .map((t) => t.textDirection),
+      everyElement(TextDirection.ltr),
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.place_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Same check for the places tab's place name.
+    expect(
+      tester.widget<Text>(find.text('Railay viewpoint')).textDirection,
+      TextDirection.ltr,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: navBar,
+        matching: find.byIcon(Icons.luggage_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // No RenderFlex overflow surfacing across any of these screens is the
+    // actual check — same "reaching this line is the pass" pattern the
+    // existing 1.3x text-scale test above already uses.
+    expect(tester.takeException(), isNull);
   });
 }
