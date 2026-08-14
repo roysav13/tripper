@@ -123,5 +123,11 @@ CREATE TABLE trips (
     await db.customSelect('SELECT category FROM places').get();
     // ...and the trips step correctly backfilled the column it lacked.
     await db.customSelect('SELECT completion_prompt_shown FROM trips').get();
+    // ...and the same is true of the v13 coverPhotoPath step: it also
+    // runs unconditionally off `from` (not gated by `to`), so it fires
+    // here too even though this test only migrates up to 12.
+    final coverPhotoRows =
+        await db.customSelect('SELECT cover_photo_path FROM trips').get();
+    expect(coverPhotoRows.single.read<String?>('cover_photo_path'), isNull);
   });
 }
