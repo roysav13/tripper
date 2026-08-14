@@ -4,7 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
 /// Letter-spaced uppercase section header ("ACTIVE NOW", "PINNED").
-/// [accent] renders in teal — used for the wishlist section.
+/// [accent] renders in coral — used for the wishlist section.
 class SectionLabel extends StatelessWidget {
   const SectionLabel(this.text, {super.key, this.accent = false});
 

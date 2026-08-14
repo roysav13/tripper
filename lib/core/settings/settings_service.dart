@@ -18,8 +18,12 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('SharedPreferences not initialised'),
 );
 
-/// Light by default — the paper palette is the app's identity, independent
-/// of the system setting (user decision, M1 feedback).
+/// Defaults to light, independent of the system setting. The redesign's
+/// design spec (docs/SPEC.md §4.2) now describes dark as the primary mode
+/// with light as a fully-designed true alternate, but this default has not
+/// been flipped to match — switching it is a real, user-visible product
+/// decision left for a later phase, not something this token-only
+/// foundation phase decided.
 class ThemeModeController extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {

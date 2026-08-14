@@ -159,11 +159,11 @@ underneath the new skin. Full rationale and screen-by-screen breakdown:
 | `surface` | `#1C1F2B` | `#FFFFFF` | Solid content cards (non-glass) |
 | `inkPrimary` | `#F5F1EA` | `#1B1A22` | Primary text |
 | `inkSecondary` | `#A9AEBD` | `#403F47`\* | Secondary text, timestamps |
-| `inkMuted` | `#6E7386` | `#56525D`\* | Placeholder, disabled |
+| `inkMuted` | `#868BA0`† | `#56525D`\* | Placeholder, disabled |
 | `hairline` | `rgba(255,255,255,.08)` | `#E7E1D8` | Borders on solid cards |
 | `accent` (coral) | `#FF6B5E` | `#A23F37`\* | The one accent — CTAs, active states, "want to go" pins/dots |
 | `warning` (amber) | `#F2A93C` | `#8D5513`\* | Expiry/danger-adjacent warnings only. Also reused for map labels |
-| `success` | `#34D399` | `#1F9A6E` | Confirmations only |
+| `success` | `#34D399` | `#187650`† | Confirmations only |
 | `error` | `#E5484D` | `#C23B34` | Real errors/validation only |
 | `heroGradientStart`/`heroGradientEnd` | `#171A2E` → `#FF6B5E` | `#FAF3EC` → `#A23F37`\* | Cover scrims and generated trip-cover art only |
 | `mapWater`/`mapLand` | `#17263c`/`#242f3e` | `#DCEAE6`/`#EFE7D8` | Map style base |
@@ -175,12 +175,20 @@ mockup values during Task 1's implementation — the originals
 against real rendered UI (`accessibility_test.dart`), which per component
 rule 6 ("contrast is non-negotiable") outranks the un-audited mockup hex.
 
+† Dark-mode `inkMuted` and light-mode `success` were adjusted in the
+phase's final-review fix wave, 2026-08-14 — the originals
+(`#6E7386` / `#1F9A6E`) also failed WCAG AA 4.5:1 (`accessibility_test.dart`
+did not exercise dark mode until this same fix wave added that coverage;
+light `success` had zero UI usages at the time, so it was latent, not yet
+user-visible).
+
 Rule: **one accent, total, in the entire app.** Amber is reserved
 exclusively for warnings and never doubles as a second accent. Named
 brand hues: three (night, coral, amber), plus the two utility colors
 (success/error) every app needs. Dark is the primary mode; light is a
 fully-designed true alternate (not a mechanical inversion) — both ship
-from day one.
+from day one. (The app's default `ThemeMode` has not yet been switched to
+match — that's a product decision for a later phase, not this one.)
 
 ### 4.3 Typography
 

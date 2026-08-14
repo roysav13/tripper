@@ -8,6 +8,13 @@ import 'app_colors.dart';
 /// (SPEC §3.1.2/§3.1.3). Only ever uses the two tracked hero-gradient
 /// tokens (component rule 2: gradients are scoped, never inventing an
 /// untracked hue).
+///
+/// Caveat: this relies on [String.hashCode], which Dart guarantees is
+/// deterministic only within a single build/SDK version, not stably
+/// across Dart SDK upgrades. A trip's fallback gradient angle could in
+/// principle shift after a future Flutter/Dart bump — purely cosmetic if
+/// it happens, not a correctness issue (no stored data depends on the
+/// hash value).
 LinearGradient generatedCoverGradient(String tripId, AppColors colors) {
   const corners = [
     Alignment.topLeft,

@@ -22,7 +22,7 @@ Cinematic, photo-forward, dark-first. Trip covers (real photos or generated grad
 | `surface` | `#1C1F2B` | Solid content cards (below-the-fold, non-glass) |
 | `ink.primary` | `#F5F1EA` | Primary text |
 | `ink.secondary` | `#A9AEBD` | Secondary text, timestamps |
-| `ink.muted` | `#6E7386` | Placeholder, disabled |
+| `ink.muted` | `#868BA0` (adjusted from `#6E7386` for WCAG AA — final-review fix, 2026-08-14) | Placeholder, disabled |
 | `hairline` | `rgba(255,255,255,.08)` | Borders on solid cards |
 | `accent.coral` | `#FF6B5E` | The one accent — CTAs, active states, "want to go" pins/dots |
 | `warning.amber` | `#F2A93C` | Expiry/danger-adjacent warnings only. Also reused for map labels — no separate "map gold" token |
@@ -43,7 +43,7 @@ Cinematic, photo-forward, dark-first. Trip covers (real photos or generated grad
 | `hairline` | `#E7E1D8` |
 | `accent.coral` | `#A23F37` (adjusted from `#E85A4E` for WCAG AA — Task 1 fix, 2026-08-14) |
 | `warning.amber` | `#8D5513` (adjusted from `#C97A1B` for WCAG AA — Task 1 fix, 2026-08-14) |
-| `success` | `#1F9A6E` |
+| `success` | `#187650` (adjusted from `#1F9A6E` for WCAG AA — final-review fix, 2026-08-14) |
 | `error` | `#C23B34` |
 | `hero.gradient` | `#FAF3EC → #A23F37` (warm parchment→darkened coral, adjusted for WCAG AA — Task 1 fix, 2026-08-14) |
 | `map.water` / `map.land` | `#DCEAE6` / `#EFE7D8` |
