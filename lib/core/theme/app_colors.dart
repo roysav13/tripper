@@ -67,7 +67,7 @@ class AppColors extends ThemeExtension<AppColors> {
     accent: Color(0xFFA23F37),
     warning: Color(0xFF8D5513),
     error: Color(0xFFC23B34),
-    success: Color(0xFF1F9A6E),
+    success: Color(0xFF187650),
     heroGradientStart: Color(0xFFFAF3EC),
     heroGradientEnd: Color(0xFFA23F37),
     mapWater: Color(0xFFDCEAE6),
@@ -79,7 +79,7 @@ class AppColors extends ThemeExtension<AppColors> {
     surface: Color(0xFF1C1F2B),
     inkPrimary: Color(0xFFF5F1EA),
     inkSecondary: Color(0xFFA9AEBD),
-    inkMuted: Color(0xFF6E7386),
+    inkMuted: Color(0xFF868BA0),
     hairline: Color(0x14FFFFFF), // rgba(255,255,255,.08)
     accent: Color(0xFFFF6B5E),
     warning: Color(0xFFF2A93C),

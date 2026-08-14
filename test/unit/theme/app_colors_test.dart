@@ -12,7 +12,7 @@ void main() {
     expect(AppColors.dark.surface, const Color(0xFF1C1F2B));
     expect(AppColors.dark.inkPrimary, const Color(0xFFF5F1EA));
     expect(AppColors.dark.inkSecondary, const Color(0xFFA9AEBD));
-    expect(AppColors.dark.inkMuted, const Color(0xFF6E7386));
+    expect(AppColors.dark.inkMuted, const Color(0xFF868BA0));
     expect(AppColors.dark.hairline, const Color(0x14FFFFFF));
     expect(AppColors.dark.accent, const Color(0xFFFF6B5E));
     expect(AppColors.dark.warning, const Color(0xFFF2A93C));
@@ -34,7 +34,7 @@ void main() {
     expect(AppColors.light.accent, const Color(0xFFA23F37));
     expect(AppColors.light.warning, const Color(0xFF8D5513));
     expect(AppColors.light.error, const Color(0xFFC23B34));
-    expect(AppColors.light.success, const Color(0xFF1F9A6E));
+    expect(AppColors.light.success, const Color(0xFF187650));
     expect(AppColors.light.heroGradientStart, const Color(0xFFFAF3EC));
     expect(AppColors.light.heroGradientEnd, const Color(0xFFA23F37));
     expect(AppColors.light.mapWater, const Color(0xFFDCEAE6));
