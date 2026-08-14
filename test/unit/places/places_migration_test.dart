@@ -54,11 +54,34 @@ CREATE TABLE trips (
   const insertV4Trip = 'INSERT INTO trips (id, name, color_tag, archived, '
       "created_at) VALUES ('t1', 'Thailand', 0, 0, 0)";
 
+  /// The pre-v13 trips table — before Trips.coverPhotoPath existed.
+  /// Needed here for the same reason `createV4Trips` is needed below: a
+  /// fresh `AppDatabase` creates trips at its CURRENT shape (via
+  /// `onCreate`), coverPhotoPath included, so replaying `onUpgrade` from
+  /// `from: 11` would otherwise make the migration's own (correct)
+  /// trips.coverPhotoPath addColumn step collide with a column this
+  /// synthetic setup already has — unrelated to what this test covers.
+  const createPreCoverPhotoTrips = '''
+CREATE TABLE trips (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  start_date INTEGER,
+  end_date INTEGER,
+  color_tag INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
+  completion_prompt_shown INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+)''';
+
   test(
       'v11 -> v12 adds the category column to an existing table, null '
       '(= uncategorized), keeping existing rows', () async {
     await db.customStatement('DROP TABLE places');
     await db.customStatement(createV11Places);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
     await db.customStatement(insertTrip);
     await db.customStatement(
       'INSERT INTO places (id, name, country, city, status, notes, '

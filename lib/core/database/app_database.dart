@@ -27,6 +27,8 @@ part 'app_database.g.dart';
 ///   v10 — JournalEntries + JournalPhotos (Journal feature)
 ///   v11 — JournalEntries.placeId (Place<->JournalEntry correlation)
 ///   v12 — Places.category (place categorization + filtering)
+///   v13 — Trips.coverPhotoPath (Immersive Golden Hour redesign;
+///         generated-gradient fallback renders when this is null)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -53,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -76,6 +78,9 @@ class AppDatabase extends _$AppDatabase {
             }
             if (from < 6) {
               await m.addColumn(trips, trips.completionPromptShown);
+            }
+            if (from < 13) {
+              await m.addColumn(trips, trips.coverPhotoPath);
             }
           }
           if (from < 4) {

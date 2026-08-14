@@ -19,6 +19,7 @@ void main() {
   Future<String> create({
     String name = 'Thailand',
     List<String> destinations = const ['Krabi', 'Ko Pha-ngan', 'Bangkok'],
+    String? coverPhotoPath,
   }) {
     return repo.createTrip(
       name: name,
@@ -26,6 +27,7 @@ void main() {
       startDate: DateTime(2026, 7, 16),
       endDate: DateTime(2026, 7, 27),
       colorTag: 2,
+      coverPhotoPath: coverPhotoPath,
     );
   }
 
@@ -119,9 +121,9 @@ void main() {
     expect((await repo.getTrip(id))!.completionPromptShown, isTrue);
   });
 
-  test('fresh database opens at schema v12 with every table queryable',
+  test('fresh database opens at schema v13 with every table queryable',
       () async {
-    expect(db.schemaVersion, 12);
+    expect(db.schemaVersion, 13);
     for (final table in [
       'trips',
       'trip_destinations',
@@ -137,5 +139,18 @@ void main() {
     ]) {
       await db.customSelect('SELECT COUNT(*) FROM $table').getSingle();
     }
+  });
+
+  test('coverPhotoPath persists through create/update, defaults to null',
+      () async {
+    final id = await create();
+    final trip = (await repo.getTrip(id))!;
+    expect(trip.coverPhotoPath, isNull);
+
+    await repo.updateTrip(
+      trip.copyWith(coverPhotoPath: () => '/vault/covers/t1.jpg'),
+    );
+    final updated = (await repo.getTrip(id))!;
+    expect(updated.coverPhotoPath, '/vault/covers/t1.jpg');
   });
 }

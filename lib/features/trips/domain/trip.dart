@@ -17,6 +17,7 @@ class Trip {
     this.colorTag = 0,
     this.archived = false,
     this.completionPromptShown = false,
+    this.coverPhotoPath,
   }) : assert(
           startDate != null || endDate == null,
           'endDate requires startDate',
@@ -39,6 +40,10 @@ class Trip {
   /// The one-time "trip over — mark places visited?" prompt was offered.
   final bool completionPromptShown;
 
+  /// Path to a locally-stored cover photo. Null means no photo — render
+  /// the generated gradient fallback instead (redesign spec §6).
+  final String? coverPhotoPath;
+
   /// Inclusive length; null when open-ended or unplanned.
   int? get lengthInDays => (startDate == null || endDate == null)
       ? null
@@ -57,6 +62,7 @@ class Trip {
     int? colorTag,
     bool? archived,
     bool? completionPromptShown,
+    String? Function()? coverPhotoPath,
   }) {
     return Trip(
       id: id,
@@ -68,6 +74,8 @@ class Trip {
       archived: archived ?? this.archived,
       completionPromptShown:
           completionPromptShown ?? this.completionPromptShown,
+      coverPhotoPath:
+          coverPhotoPath == null ? this.coverPhotoPath : coverPhotoPath(),
     );
   }
 
@@ -80,7 +88,8 @@ class Trip {
       other.startDate == startDate &&
       other.endDate == endDate &&
       other.colorTag == colorTag &&
-      other.archived == archived;
+      other.archived == archived &&
+      other.coverPhotoPath == coverPhotoPath;
 
   @override
   int get hashCode => Object.hash(
@@ -91,6 +100,7 @@ class Trip {
         endDate,
         colorTag,
         archived,
+        coverPhotoPath,
       );
 }
 

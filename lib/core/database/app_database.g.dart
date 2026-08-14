@@ -61,6 +61,12 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, TripRow> {
           defaultConstraints: GeneratedColumn.constraintIsAlways(
               'CHECK ("completion_prompt_shown" IN (0, 1))'),
           defaultValue: const Constant(false));
+  static const VerificationMeta _coverPhotoPathMeta =
+      const VerificationMeta('coverPhotoPath');
+  @override
+  late final GeneratedColumn<String> coverPhotoPath = GeneratedColumn<String>(
+      'cover_photo_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -76,6 +82,7 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, TripRow> {
         colorTag,
         archived,
         completionPromptShown,
+        coverPhotoPath,
         createdAt
       ];
   @override
@@ -121,6 +128,12 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, TripRow> {
           completionPromptShown.isAcceptableOrUnknown(
               data['completion_prompt_shown']!, _completionPromptShownMeta));
     }
+    if (data.containsKey('cover_photo_path')) {
+      context.handle(
+          _coverPhotoPathMeta,
+          coverPhotoPath.isAcceptableOrUnknown(
+              data['cover_photo_path']!, _coverPhotoPathMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -151,6 +164,8 @@ class $TripsTable extends Trips with TableInfo<$TripsTable, TripRow> {
       completionPromptShown: attachedDatabase.typeMapping.read(
           DriftSqlType.bool,
           data['${effectivePrefix}completion_prompt_shown'])!,
+      coverPhotoPath: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}cover_photo_path']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -172,6 +187,10 @@ class TripRow extends DataClass implements Insertable<TripRow> {
 
   /// "Trip over — mark places visited?" is offered exactly once (M3).
   final bool completionPromptShown;
+
+  /// Path to a locally-stored cover photo (redesign spec §6). Null means
+  /// no photo — render the generated gradient fallback instead.
+  final String? coverPhotoPath;
   final DateTime createdAt;
   const TripRow(
       {required this.id,
@@ -181,6 +200,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
       required this.colorTag,
       required this.archived,
       required this.completionPromptShown,
+      this.coverPhotoPath,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -196,6 +216,9 @@ class TripRow extends DataClass implements Insertable<TripRow> {
     map['color_tag'] = Variable<int>(colorTag);
     map['archived'] = Variable<bool>(archived);
     map['completion_prompt_shown'] = Variable<bool>(completionPromptShown);
+    if (!nullToAbsent || coverPhotoPath != null) {
+      map['cover_photo_path'] = Variable<String>(coverPhotoPath);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -213,6 +236,9 @@ class TripRow extends DataClass implements Insertable<TripRow> {
       colorTag: Value(colorTag),
       archived: Value(archived),
       completionPromptShown: Value(completionPromptShown),
+      coverPhotoPath: coverPhotoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverPhotoPath),
       createdAt: Value(createdAt),
     );
   }
@@ -229,6 +255,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
       archived: serializer.fromJson<bool>(json['archived']),
       completionPromptShown:
           serializer.fromJson<bool>(json['completionPromptShown']),
+      coverPhotoPath: serializer.fromJson<String?>(json['coverPhotoPath']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -243,6 +270,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
       'colorTag': serializer.toJson<int>(colorTag),
       'archived': serializer.toJson<bool>(archived),
       'completionPromptShown': serializer.toJson<bool>(completionPromptShown),
+      'coverPhotoPath': serializer.toJson<String?>(coverPhotoPath),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -255,6 +283,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
           int? colorTag,
           bool? archived,
           bool? completionPromptShown,
+          Value<String?> coverPhotoPath = const Value.absent(),
           DateTime? createdAt}) =>
       TripRow(
         id: id ?? this.id,
@@ -265,6 +294,8 @@ class TripRow extends DataClass implements Insertable<TripRow> {
         archived: archived ?? this.archived,
         completionPromptShown:
             completionPromptShown ?? this.completionPromptShown,
+        coverPhotoPath:
+            coverPhotoPath.present ? coverPhotoPath.value : this.coverPhotoPath,
         createdAt: createdAt ?? this.createdAt,
       );
   TripRow copyWithCompanion(TripsCompanion data) {
@@ -278,6 +309,9 @@ class TripRow extends DataClass implements Insertable<TripRow> {
       completionPromptShown: data.completionPromptShown.present
           ? data.completionPromptShown.value
           : this.completionPromptShown,
+      coverPhotoPath: data.coverPhotoPath.present
+          ? data.coverPhotoPath.value
+          : this.coverPhotoPath,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -292,6 +326,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
           ..write('colorTag: $colorTag, ')
           ..write('archived: $archived, ')
           ..write('completionPromptShown: $completionPromptShown, ')
+          ..write('coverPhotoPath: $coverPhotoPath, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -299,7 +334,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
 
   @override
   int get hashCode => Object.hash(id, name, startDate, endDate, colorTag,
-      archived, completionPromptShown, createdAt);
+      archived, completionPromptShown, coverPhotoPath, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -311,6 +346,7 @@ class TripRow extends DataClass implements Insertable<TripRow> {
           other.colorTag == this.colorTag &&
           other.archived == this.archived &&
           other.completionPromptShown == this.completionPromptShown &&
+          other.coverPhotoPath == this.coverPhotoPath &&
           other.createdAt == this.createdAt);
 }
 
@@ -322,6 +358,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
   final Value<int> colorTag;
   final Value<bool> archived;
   final Value<bool> completionPromptShown;
+  final Value<String?> coverPhotoPath;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const TripsCompanion({
@@ -332,6 +369,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
     this.colorTag = const Value.absent(),
     this.archived = const Value.absent(),
     this.completionPromptShown = const Value.absent(),
+    this.coverPhotoPath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -343,6 +381,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
     this.colorTag = const Value.absent(),
     this.archived = const Value.absent(),
     this.completionPromptShown = const Value.absent(),
+    this.coverPhotoPath = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -356,6 +395,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
     Expression<int>? colorTag,
     Expression<bool>? archived,
     Expression<bool>? completionPromptShown,
+    Expression<String>? coverPhotoPath,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -368,6 +408,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
       if (archived != null) 'archived': archived,
       if (completionPromptShown != null)
         'completion_prompt_shown': completionPromptShown,
+      if (coverPhotoPath != null) 'cover_photo_path': coverPhotoPath,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -381,6 +422,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
       Value<int>? colorTag,
       Value<bool>? archived,
       Value<bool>? completionPromptShown,
+      Value<String?>? coverPhotoPath,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
     return TripsCompanion(
@@ -392,6 +434,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
       archived: archived ?? this.archived,
       completionPromptShown:
           completionPromptShown ?? this.completionPromptShown,
+      coverPhotoPath: coverPhotoPath ?? this.coverPhotoPath,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -422,6 +465,9 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
       map['completion_prompt_shown'] =
           Variable<bool>(completionPromptShown.value);
     }
+    if (coverPhotoPath.present) {
+      map['cover_photo_path'] = Variable<String>(coverPhotoPath.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -441,6 +487,7 @@ class TripsCompanion extends UpdateCompanion<TripRow> {
           ..write('colorTag: $colorTag, ')
           ..write('archived: $archived, ')
           ..write('completionPromptShown: $completionPromptShown, ')
+          ..write('coverPhotoPath: $coverPhotoPath, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4016,6 +4063,7 @@ typedef $$TripsTableCreateCompanionBuilder = TripsCompanion Function({
   Value<int> colorTag,
   Value<bool> archived,
   Value<bool> completionPromptShown,
+  Value<String?> coverPhotoPath,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -4027,6 +4075,7 @@ typedef $$TripsTableUpdateCompanionBuilder = TripsCompanion Function({
   Value<int> colorTag,
   Value<bool> archived,
   Value<bool> completionPromptShown,
+  Value<String?> coverPhotoPath,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -4150,6 +4199,10 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
 
   ColumnFilters<bool> get completionPromptShown => $composableBuilder(
       column: $table.completionPromptShown,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get coverPhotoPath => $composableBuilder(
+      column: $table.coverPhotoPath,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -4313,6 +4366,10 @@ class $$TripsTableOrderingComposer
       column: $table.completionPromptShown,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get coverPhotoPath => $composableBuilder(
+      column: $table.coverPhotoPath,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -4346,6 +4403,9 @@ class $$TripsTableAnnotationComposer
 
   GeneratedColumn<bool> get completionPromptShown => $composableBuilder(
       column: $table.completionPromptShown, builder: (column) => column);
+
+  GeneratedColumn<String> get coverPhotoPath => $composableBuilder(
+      column: $table.coverPhotoPath, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -4513,6 +4573,7 @@ class $$TripsTableTableManager extends RootTableManager<
             Value<int> colorTag = const Value.absent(),
             Value<bool> archived = const Value.absent(),
             Value<bool> completionPromptShown = const Value.absent(),
+            Value<String?> coverPhotoPath = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4524,6 +4585,7 @@ class $$TripsTableTableManager extends RootTableManager<
             colorTag: colorTag,
             archived: archived,
             completionPromptShown: completionPromptShown,
+            coverPhotoPath: coverPhotoPath,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -4535,6 +4597,7 @@ class $$TripsTableTableManager extends RootTableManager<
             Value<int> colorTag = const Value.absent(),
             Value<bool> archived = const Value.absent(),
             Value<bool> completionPromptShown = const Value.absent(),
+            Value<String?> coverPhotoPath = const Value.absent(),
             required DateTime createdAt,
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4546,6 +4609,7 @@ class $$TripsTableTableManager extends RootTableManager<
             colorTag: colorTag,
             archived: archived,
             completionPromptShown: completionPromptShown,
+            coverPhotoPath: coverPhotoPath,
             createdAt: createdAt,
             rowid: rowid,
           ),

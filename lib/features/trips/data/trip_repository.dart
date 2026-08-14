@@ -15,6 +15,7 @@ abstract interface class TripRepository {
     DateTime? startDate,
     DateTime? endDate,
     required int colorTag,
+    String? coverPhotoPath,
   });
   Future<void> updateTrip(Trip trip);
   Future<void> setArchived(String id, {required bool archived});
@@ -46,6 +47,7 @@ class DriftTripRepository implements TripRepository {
     DateTime? startDate,
     DateTime? endDate,
     required int colorTag,
+    String? coverPhotoPath,
   }) async {
     final id = _uuid.v4();
     await _dao.insertTrip(
@@ -57,6 +59,7 @@ class DriftTripRepository implements TripRepository {
         colorTag: colorTag,
         archived: false,
         completionPromptShown: false,
+        coverPhotoPath: coverPhotoPath,
         createdAt: _clock(),
       ),
       _destinationRows(id, destinations),
@@ -75,6 +78,7 @@ class DriftTripRepository implements TripRepository {
         endDate: Value(trip.endDate),
         colorTag: trip.colorTag,
         archived: trip.archived,
+        coverPhotoPath: Value(trip.coverPhotoPath),
       ),
       _destinationRows(trip.id, trip.destinations),
     );
@@ -117,5 +121,6 @@ class DriftTripRepository implements TripRepository {
         colorTag: row.trip.colorTag,
         archived: row.trip.archived,
         completionPromptShown: row.trip.completionPromptShown,
+        coverPhotoPath: row.trip.coverPhotoPath,
       );
 }

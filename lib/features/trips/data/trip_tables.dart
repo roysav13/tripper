@@ -12,6 +12,11 @@ class Trips extends Table {
   /// "Trip over — mark places visited?" is offered exactly once (M3).
   BoolColumn get completionPromptShown =>
       boolean().withDefault(const Constant(false))();
+
+  /// Path to a locally-stored cover photo (redesign spec §6). Null means
+  /// no photo — render the generated gradient fallback instead.
+  TextColumn get coverPhotoPath => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime()();
 
   @override

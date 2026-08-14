@@ -40,6 +40,7 @@ class FakeTripRepository implements TripRepository {
     DateTime? startDate,
     DateTime? endDate,
     required int colorTag,
+    String? coverPhotoPath,
   }) async {
     final trip = Trip(
       id: 'fake-${_trips.length}',
@@ -48,6 +49,7 @@ class FakeTripRepository implements TripRepository {
       startDate: startDate,
       endDate: endDate,
       colorTag: colorTag,
+      coverPhotoPath: coverPhotoPath,
     );
     emit([..._trips, trip]);
     return trip.id;

@@ -56,12 +56,35 @@ CREATE TABLE places (
   created_at INTEGER NOT NULL
 )''';
 
+  /// The pre-v13 trips table — before Trips.coverPhotoPath existed. Same
+  /// class of issue as `createPreCategoryPlaces` above: a fresh
+  /// `AppDatabase` creates trips at its CURRENT shape (via `onCreate`),
+  /// coverPhotoPath included, so any `onUpgrade` replay with `from` < 13
+  /// below would otherwise make the migration's own (correct)
+  /// trips.coverPhotoPath addColumn step collide with a column this
+  /// synthetic setup already has.
+  const createPreCoverPhotoTrips = '''
+CREATE TABLE trips (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  start_date INTEGER,
+  end_date INTEGER,
+  color_tag INTEGER NOT NULL DEFAULT 0,
+  archived INTEGER NOT NULL DEFAULT 0,
+  completion_prompt_shown INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+)''';
+
   test('v6 -> v7 creates the expenses table and preserves existing data',
       () async {
     // A v6 install: no expenses table at all.
     await db.customStatement('DROP TABLE expenses');
     await db.customStatement('DROP TABLE places');
     await db.customStatement(createPreCategoryPlaces);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
     await db.customStatement(insertTrip);
 
     await db.migration.onUpgrade(Migrator(db), 6, 7);
@@ -78,6 +101,10 @@ CREATE TABLE places (
     await db.customStatement(createV7Expenses);
     await db.customStatement('DROP TABLE places');
     await db.customStatement(createPreCategoryPlaces);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
     await db.customStatement(insertTrip);
     await db.customStatement(
       'INSERT INTO expenses (id, trip_id, amount_minor, currency, category, '
@@ -106,6 +133,10 @@ CREATE TABLE places (
     await db.customStatement('DROP TABLE expenses');
     await db.customStatement('DROP TABLE places');
     await db.customStatement(createPreCategoryPlaces);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
     await db.customStatement(insertTrip);
 
     await expectLater(
