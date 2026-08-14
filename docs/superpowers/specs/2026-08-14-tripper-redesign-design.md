@@ -38,14 +38,14 @@ Cinematic, photo-forward, dark-first. Trip covers (real photos or generated grad
 | `bg.paper` | `#FAF3EC` |
 | `surface` | `#FFFFFF` |
 | `ink.primary` | `#1B1A22` |
-| `ink.secondary` | `#5B5A66` |
-| `ink.muted` | `#8A8894` |
+| `ink.secondary` | `#403F47` (adjusted from `#5B5A66` for WCAG AA — Task 1 fix, 2026-08-14) |
+| `ink.muted` | `#56525D` (adjusted from `#8A8894` for WCAG AA — Task 1 fix, 2026-08-14) |
 | `hairline` | `#E7E1D8` |
-| `accent.coral` | `#E85A4E` (deepened from dark-mode coral for AA contrast on light) |
-| `warning.amber` | `#C97A1B` (deepened) |
+| `accent.coral` | `#A23F37` (adjusted from `#E85A4E` for WCAG AA — Task 1 fix, 2026-08-14) |
+| `warning.amber` | `#8D5513` (adjusted from `#C97A1B` for WCAG AA — Task 1 fix, 2026-08-14) |
 | `success` | `#1F9A6E` |
 | `error` | `#C23B34` |
-| `hero.gradient` | `#FAF3EC → #E85A4E` (warm parchment→coral, not the dark night gradient — a hero shouldn't read as a dark patch on an otherwise bright screen) |
+| `hero.gradient` | `#FAF3EC → #A23F37` (warm parchment→darkened coral, adjusted for WCAG AA — Task 1 fix, 2026-08-14) |
 | `map.water` / `map.land` | `#DCEAE6` / `#EFE7D8` |
 
 Net **named brand hues: three** (night, coral, amber) plus the two utility colors (success/error) every app needs — tightened down from an earlier draft that had 7-8 (a 3-stop indigo/violet/rust gradient and a separate map-gold were cut; the gradient's middle tones are now pure interpolation, not tracked tokens).
