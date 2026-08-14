@@ -17,6 +17,7 @@ class Document {
     required this.id,
     required this.title,
     required this.category,
+    required this.createdAt,
     this.filePath,
     this.mimeType,
     this.expiryDate,
@@ -29,6 +30,7 @@ class Document {
   final String id;
   final String title;
   final DocumentCategory category;
+  final DateTime createdAt;
 
   /// Null = manual record (confirmation code typed in, no file).
   final String? filePath;
@@ -60,6 +62,7 @@ class Document {
       id: id,
       title: title ?? this.title,
       category: category ?? this.category,
+      createdAt: createdAt,
       filePath: filePath == null ? this.filePath : filePath(),
       mimeType: mimeType == null ? this.mimeType : mimeType(),
       expiryDate: expiryDate == null ? this.expiryDate : expiryDate(),
@@ -76,6 +79,7 @@ class Document {
       other.id == id &&
       other.title == title &&
       other.category == category &&
+      other.createdAt == createdAt &&
       other.filePath == filePath &&
       other.mimeType == mimeType &&
       other.expiryDate == expiryDate &&
@@ -89,6 +93,7 @@ class Document {
         id,
         title,
         category,
+        createdAt,
         filePath,
         mimeType,
         expiryDate,

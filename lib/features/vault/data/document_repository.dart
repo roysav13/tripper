@@ -139,6 +139,7 @@ class DriftDocumentRepository implements DocumentRepository {
       id: d.id,
       title: d.title,
       category: DocumentCategory.values[d.category],
+      createdAt: d.createdAt,
       filePath: d.filePath,
       mimeType: d.mimeType,
       expiryDate: d.expiryDate,

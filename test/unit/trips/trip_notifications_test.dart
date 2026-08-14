@@ -14,6 +14,7 @@ void main() {
         id: id,
         title: 'Passport',
         category: DocumentCategory.passportId,
+        createdAt: today,
         expiryDate: expiry,
       );
 

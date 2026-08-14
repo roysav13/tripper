@@ -43,8 +43,7 @@ void main() {
       final heMeta = he[key] as Map<String, dynamic>?;
       expect(heMeta, isNotNull, reason: '$key missing from app_he.arb');
       final enPlaceholders =
-          (enMeta['placeholders'] as Map<String, dynamic>?)?.keys.toSet() ??
-              {};
+          (enMeta['placeholders'] as Map<String, dynamic>?)?.keys.toSet() ?? {};
       final hePlaceholders =
           (heMeta!['placeholders'] as Map<String, dynamic>?)?.keys.toSet() ??
               {};

@@ -608,6 +608,18 @@ abstract class AppLocalizations {
   /// **'All documents'**
   String get vaultAllSection;
 
+  /// No description provided for @vaultSortCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get vaultSortCreated;
+
+  /// No description provided for @vaultSortRelevant.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevant date'**
+  String get vaultSortRelevant;
+
   /// No description provided for @catPassport.
   ///
   /// In en, this message translates to:

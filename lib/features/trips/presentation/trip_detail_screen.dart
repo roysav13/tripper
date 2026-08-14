@@ -6,6 +6,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../expenses/presentation/trip_expenses_tab.dart';
@@ -65,7 +66,7 @@ class TripDetailScreen extends ConsumerWidget {
             tag: 'trip-name-${trip.id}',
             child: Material(
               type: MaterialType.transparency,
-              child: Text(
+              child: AutoDirectionText(
                 trip.name,
                 style: AppTextStyles.title.copyWith(color: colors.inkPrimary),
                 maxLines: 1,

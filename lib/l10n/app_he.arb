@@ -116,6 +116,8 @@
   "tripDocsEmptyBody": "טיסות, לינה וכרטיסים לטיול הזה יופיעו כאן.",
   "vaultPinnedSection": "מוצמדים · גישה מהירה",
   "vaultAllSection": "כל המסמכים",
+  "vaultSortCreated": "נוצר",
+  "vaultSortRelevant": "תאריך רלוונטי",
   "catPassport": "דרכון / תעודת זהות",
   "catVisa": "ויזה",
   "catFlight": "טיסה",

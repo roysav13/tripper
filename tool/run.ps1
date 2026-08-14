@@ -33,7 +33,7 @@ if ($Release) { $mode = '--release' }
 
 Push-Location $root
 try {
-    flutter run $mode "--dart-define=MAPS_API_KEY=$key"
+    flutter run $mode "--dart-define=MAPS_API_KEY=$key" 
 }
 finally {
     Pop-Location

@@ -5,9 +5,11 @@ import 'package:tripper/features/vault/domain/document.dart';
 
 /// Fake at the repository boundary (testing rules — no DB in widget tests).
 class FakeDocumentRepository implements DocumentRepository {
-  FakeDocumentRepository(this._docs);
+  FakeDocumentRepository(this._docs, {DateTime? clock})
+      : _clock = clock ?? DateTime(2026, 7, 19);
 
   final List<Document> _docs;
+  final DateTime _clock;
   final _controller = StreamController<List<Document>>.broadcast();
 
   void emit(List<Document> docs) {
@@ -53,6 +55,7 @@ class FakeDocumentRepository implements DocumentRepository {
       id: 'fake-${_docs.length}',
       title: title,
       category: category,
+      createdAt: _clock,
       filePath: sourceFilePath,
       mimeType: mimeType,
       expiryDate: expiryDate,

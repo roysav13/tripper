@@ -37,10 +37,11 @@ Future<Widget> _populatedApp({String locale = 'en'}) async => ProviderScope(
         ),
         documentRepositoryProvider.overrideWithValue(
           FakeDocumentRepository([
-            const Document(
+            Document(
               id: 'd1',
               title: 'Passport',
               category: DocumentCategory.passportId,
+              createdAt: DateTime(2026, 7, 19),
               isPinned: true,
             ),
           ]),
@@ -135,6 +136,15 @@ void main() {
       Directionality.of(tester.element(navBar)),
       TextDirection.rtl,
     );
+
+    // The trip name "Thailand" is English fixture data inside a Hebrew
+    // (RTL) app — it must render LTR so a one-line ellipsis truncates from
+    // its trailing edge instead of clipping the start of the word.
+    expect(
+      tester.widget<Text>(find.text('Thailand')).textDirection,
+      TextDirection.ltr,
+    );
+
     await tester.tap(
       find.descendant(
         of: navBar,
@@ -142,6 +152,15 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Same check for the vault tab's document title — pinned, so it
+    // renders in both the quick-access row and the main list.
+    expect(
+      tester
+          .widgetList<Text>(find.text('Passport'))
+          .map((t) => t.textDirection),
+      everyElement(TextDirection.ltr),
+    );
+
     await tester.tap(
       find.descendant(
         of: navBar,
@@ -149,6 +168,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Same check for the places tab's place name.
+    expect(
+      tester.widget<Text>(find.text('Railay viewpoint')).textDirection,
+      TextDirection.ltr,
+    );
+
     await tester.tap(
       find.descendant(
         of: navBar,

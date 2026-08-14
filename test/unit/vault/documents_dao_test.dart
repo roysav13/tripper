@@ -41,6 +41,15 @@ void main() {
         colorTag: 0,
       );
 
+  test('a new document\'s createdAt comes from the injected clock', () async {
+    final id = await repo.createDocument(
+      title: 'Passport',
+      category: DocumentCategory.passportId,
+    );
+    final doc = (await repo.getById(id))!;
+    expect(doc.createdAt, DateTime(2026, 7, 19));
+  });
+
   test('manual record roundtrips with details JSON', () async {
     final id = await repo.createDocument(
       title: 'Flight to BKK',

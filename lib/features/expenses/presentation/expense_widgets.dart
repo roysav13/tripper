@@ -130,7 +130,8 @@ class ExpenseSummaryCard extends StatelessWidget {
                   if (home!.ratesAt != null)
                     Text(
                       l10n.expensesRatesAsOf(
-                        DateFormat('dd MMM yyyy', 'en_US').format(home!.ratesAt!),
+                        DateFormat('dd MMM yyyy', l10n.localeName)
+                            .format(home!.ratesAt!),
                       ),
                       style: AppTextStyles.mono.copyWith(
                         color: colors.inkMuted,
@@ -221,7 +222,7 @@ class ExpenseRowCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final meta = [
       expenseCategoryLabel(l10n, expense.category),
-      DateFormat('dd MMM yyyy', 'en_US').format(expense.date),
+      DateFormat('dd MMM yyyy', l10n.localeName).format(expense.date),
     ].join(' · ');
 
     return PaperCard(
@@ -354,12 +355,12 @@ class ExpenseGroupHeader extends StatelessWidget {
   String _label(AppLocalizations l10n, ExpenseGroup group) =>
       switch (group.granularity) {
         ExpenseGroupGranularity.day =>
-          DateFormat('EEE, MMM d', 'en_US').format(group.periodStart),
+          DateFormat('EEE, MMM d', l10n.localeName).format(group.periodStart),
         ExpenseGroupGranularity.week => l10n.expenseGroupWeekOf(
-            DateFormat('MMM d', 'en_US').format(group.periodStart),
+            DateFormat('MMM d', l10n.localeName).format(group.periodStart),
           ),
         ExpenseGroupGranularity.month =>
-          DateFormat('MMMM yyyy', 'en_US').format(group.periodStart),
+          DateFormat('MMMM yyyy', l10n.localeName).format(group.periodStart),
       };
 
   String _totalText(ExpenseGroup group) {

@@ -293,6 +293,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get vaultAllSection => 'כל המסמכים';
 
   @override
+  String get vaultSortCreated => 'נוצר';
+
+  @override
+  String get vaultSortRelevant => 'תאריך רלוונטי';
+
+  @override
   String get catPassport => 'דרכון / תעודת זהות';
 
   @override

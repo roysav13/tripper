@@ -257,6 +257,7 @@ class _DateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     return OutlinedButton(
       onPressed: onPick,
       child: Row(
@@ -264,7 +265,7 @@ class _DateField extends StatelessWidget {
         children: [
           value == null
               ? Text(label, style: TextStyle(color: colors.inkMuted))
-              : MonoText(TripDateFormatter.single(value!)),
+              : MonoText(TripDateFormatter.single(value!, l10n)),
           if (onClear != null)
             GestureDetector(
               onTap: onClear,

@@ -296,6 +296,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vaultAllSection => 'All documents';
 
   @override
+  String get vaultSortCreated => 'Created';
+
+  @override
+  String get vaultSortRelevant => 'Relevant date';
+
+  @override
   String get catPassport => 'Passport / ID';
 
   @override

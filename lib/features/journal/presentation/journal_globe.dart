@@ -590,7 +590,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
       // out further, so maxZoom is raised to 5 (~32x) to actually use
       // that tier's extra headroom instead of capping the range at the
       // base tier's old limit.
-      maxZoom: 5,
+      maxZoom: 7,
     );
     controller.onLoaded = () {
       _addPoints(controller);

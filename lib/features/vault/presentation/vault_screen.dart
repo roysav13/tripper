@@ -10,6 +10,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
+import '../domain/document_sort.dart';
 import '../domain/expiry_checker.dart';
 import 'document_actions_sheet.dart';
 import 'document_form_sheet.dart';
@@ -25,6 +26,9 @@ class VaultScreen extends ConsumerStatefulWidget {
 }
 
 class _VaultScreenState extends ConsumerState<VaultScreen> {
+  Set<DocumentCategory> _categoryFilter = {};
+  DocumentSortOrder _sortOrder = DocumentSortOrder.createdDate;
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +65,23 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
     final pinned = ref.watch(pinnedDocumentsProvider);
     final today = ref.watch(clockProvider)();
 
+    // Same stranded-filter guard as PlacesScreen: if the last document in
+    // a selected category is edited/deleted, its chip disappears — prune
+    // the selection against what's still present so the list can't be
+    // left empty with no visible way to recover.
+    final availableCategories = {for (final d in docs) d.category};
+    final prunedCategories = _categoryFilter.intersection(availableCategories);
+    if (prunedCategories.length != _categoryFilter.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _categoryFilter = prunedCategories);
+      });
+    }
+    final visibleDocs = sortDocuments(
+      filterDocumentsByCategory(docs, prunedCategories),
+      _sortOrder,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.tabVault),
@@ -72,7 +93,17 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
           ),
         ],
       ),
-      body: _body(context, ref, l10n, asyncDocs, docs, pinned, today),
+      body: _body(
+        context,
+        ref,
+        l10n,
+        asyncDocs,
+        docs,
+        visibleDocs,
+        prunedCategories,
+        pinned,
+        today,
+      ),
     );
   }
 
@@ -82,6 +113,8 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
     AppLocalizations l10n,
     AsyncValue<List<Document>> asyncDocs,
     List<Document> docs,
+    List<Document> visibleDocs,
+    Set<DocumentCategory> categoryFilter,
     List<Document> pinned,
     DateTime today,
   ) {
@@ -132,14 +165,38 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
+        DocumentFilterBar(
+          docs: docs,
+          selectedCategories: categoryFilter,
+          onCategoriesChanged: (v) => setState(() => _categoryFilter = v),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SegmentedButton<DocumentSortOrder>(
+          segments: [
+            ButtonSegment(
+              value: DocumentSortOrder.createdDate,
+              label: Text(l10n.vaultSortCreated),
+            ),
+            ButtonSegment(
+              value: DocumentSortOrder.relevantDate,
+              label: Text(l10n.vaultSortRelevant),
+            ),
+          ],
+          selected: {_sortOrder},
+          showSelectedIcon: false,
+          onSelectionChanged: (selection) =>
+              setState(() => _sortOrder = selection.first),
+        ),
         // Grouped by category, one card per document (trips-list
-        // style, per user feedback).
+        // style, per user feedback). Sort order (from the segmented
+        // control above) determines the order of documents within each
+        // section — the sections themselves stay fixed.
         for (final category in DocumentCategory.values)
           ..._categorySection(
             l10n,
             category,
             [
-              for (final d in docs)
+              for (final d in visibleDocs)
                 if (d.category == category) d,
             ],
             today,

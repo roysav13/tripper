@@ -53,10 +53,11 @@ void main() {
       'linking a standalone document to a trip survives the sheet\'s pop '
       '(regression — "ref used after dispose" bug)', (tester) async {
     final repo = FakeDocumentRepository([
-      const Document(
+      Document(
         id: 'passport',
         title: 'Passport',
         category: DocumentCategory.passportId,
+        createdAt: _today,
         isGlobal: true,
         // Unlinked at start — a standalone vault document.
       ),

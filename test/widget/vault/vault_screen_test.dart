@@ -58,17 +58,19 @@ void main() {
 
   testWidgets('pinned docs render in the quick-access grid', (tester) async {
     await tester.pumpWidget(
-      await _app(const [
+      await _app([
         Document(
           id: 'p',
           title: 'Passport',
           category: DocumentCategory.passportId,
+          createdAt: _today,
           isPinned: true,
         ),
         Document(
           id: 'i',
-          title: 'Insurance',
+          title: 'Travel insurance',
           category: DocumentCategory.insurance,
+          createdAt: _today,
         ),
       ]),
     );
@@ -78,7 +80,7 @@ void main() {
     expect(find.text('PASSPORT / ID'), findsWidgets);
     expect(find.text('INSURANCE'), findsOneWidget);
     expect(find.text('Passport'), findsNWidgets(2));
-    expect(find.text('Insurance'), findsOneWidget);
+    expect(find.text('Travel insurance'), findsOneWidget);
   });
 
   testWidgets(
@@ -90,6 +92,7 @@ void main() {
           id: 'x',
           title: 'Old passport',
           category: DocumentCategory.passportId,
+          createdAt: _today,
           expiryDate: DateTime(2026, 8, 1), // 13 days out from _today
         ),
       ]),
@@ -111,6 +114,7 @@ void main() {
           id: 'x',
           title: 'Expired passport',
           category: DocumentCategory.passportId,
+          createdAt: _today,
           expiryDate: DateTime(2026, 1, 1), // well before _today
         ),
       ]),
@@ -127,6 +131,7 @@ void main() {
           id: 'doc-$i',
           title: 'Document number $i with a fairly long descriptive title',
           category: DocumentCategory.values[i % DocumentCategory.values.length],
+          createdAt: _today,
         ),
     ];
     await tester.pumpWidget(await _app(many));
@@ -140,17 +145,90 @@ void main() {
 
   testWidgets('flight details render in the meta line', (tester) async {
     await tester.pumpWidget(
-      await _app(const [
+      await _app([
         Document(
           id: 'f',
           title: 'TLV to BKK',
           category: DocumentCategory.flight,
-          details: {'flightNumber': 'LY083', 'confirmationCode': 'XK4R2M'},
+          createdAt: _today,
+          details: const {
+            'flightNumber': 'LY083',
+            'confirmationCode': 'XK4R2M',
+          },
         ),
       ]),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('LY083'), findsOneWidget);
     expect(find.textContaining('XK4R2M'), findsOneWidget);
+  });
+
+  testWidgets('a category filter chip narrows the visible documents',
+      (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        Document(
+          id: 'p',
+          title: 'A passport',
+          category: DocumentCategory.passportId,
+          createdAt: _today,
+        ),
+        Document(
+          id: 's',
+          title: 'A hotel booking',
+          category: DocumentCategory.stay,
+          createdAt: _today,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('A passport'), findsOneWidget);
+    expect(find.text('A hotel booking'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilterChip, 'Stay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A passport'), findsNothing);
+    expect(find.text('A hotel booking'), findsOneWidget);
+  });
+
+  testWidgets(
+      'switching the order-by control from Created to Relevant date '
+      'reorders documents within a category', (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        Document(
+          id: 'a',
+          title: 'Newest doc',
+          category: DocumentCategory.passportId,
+          createdAt: DateTime(2026, 7, 10), // most recently created
+          expiryDate: DateTime(2026, 12, 1), // furthest expiry
+        ),
+        Document(
+          id: 'b',
+          title: 'Oldest doc',
+          category: DocumentCategory.passportId,
+          createdAt: DateTime(2026, 1, 1), // least recently created
+          expiryDate: DateTime(2026, 8, 1), // soonest expiry
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    // Default order-by is Created: newest first.
+    expect(
+      tester.getTopLeft(find.text('Newest doc')).dy,
+      lessThan(tester.getTopLeft(find.text('Oldest doc')).dy),
+    );
+
+    await tester.tap(find.text('Relevant date'));
+    await tester.pumpAndSettle();
+
+    // Relevant date is soonest-first — the doc with the nearer expiry
+    // (created earlier) now renders first, flipping the order.
+    expect(
+      tester.getTopLeft(find.text('Oldest doc')).dy,
+      lessThan(tester.getTopLeft(find.text('Newest doc')).dy),
+    );
   });
 }

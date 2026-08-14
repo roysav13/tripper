@@ -18,6 +18,7 @@ void main() {
         id: id,
         title: title,
         category: DocumentCategory.flight,
+        createdAt: today,
         details: details,
       );
 
@@ -31,6 +32,7 @@ void main() {
       id: 'x',
       title: 'Hotel booking',
       category: DocumentCategory.stay,
+      createdAt: today,
       details: {
         kDepartureTimeDetailKey: DateTime(2026, 8, 1).toIso8601String(),
       },

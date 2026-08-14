@@ -110,13 +110,15 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DateFormat('EEEE, d MMMM', 'en_US').format(_loggedAt!),
+                        DateFormat('EEEE, d MMMM', l10n.localeName)
+                            .format(_loggedAt!),
                         style: AppTextStyles.title
                             .copyWith(color: colors.inkPrimary),
                       ),
                       const SizedBox(height: 2),
                       MonoText(
-                        DateFormat('yyyy · HH:mm', 'en_US').format(_loggedAt!),
+                        DateFormat('yyyy · HH:mm', l10n.localeName)
+                            .format(_loggedAt!),
                         muted: true,
                       ),
                     ],

@@ -27,31 +27,35 @@ Widget _wrap(Widget child) => MaterialApp(
 
 void main() {
   test('canShow accepts images and PDFs, with extension fallback', () {
-    const pdf = Document(
+    final pdf = Document(
       id: 'a',
       title: 'Ticket',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
       filePath: '/x/a.pdf',
       mimeType: 'application/pdf',
     );
-    const image = Document(
+    final image = Document(
       id: 'b',
       title: 'Boarding pass',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
       filePath: '/x/b.png',
       mimeType: 'image/png',
     );
     // Shared-in file where mime detection failed — extension decides.
-    const noMime = Document(
+    final noMime = Document(
       id: 'd',
       title: 'Shared pass',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
       filePath: '/x/d.PDF',
     );
-    const manual = Document(
+    final manual = Document(
       id: 'c',
       title: 'Conf code',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
     );
     expect(ShowCodeScreen.canShow(pdf), isTrue);
     expect(ShowCodeScreen.canShow(image), isTrue);
@@ -77,6 +81,7 @@ void main() {
       id: 'b',
       title: 'Boarding pass',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
       filePath: file.path,
       mimeType: 'image/png',
     );
@@ -93,14 +98,15 @@ void main() {
   });
 
   testWidgets('missing file shows the fallback message', (tester) async {
-    const doc = Document(
+    final doc = Document(
       id: 'x',
       title: 'Gone',
       category: DocumentCategory.flight,
+      createdAt: DateTime(2026, 7, 19),
       filePath: '/nonexistent/pass.png',
       mimeType: 'image/png',
     );
-    await tester.pumpWidget(_wrap(const ShowCodeScreen(doc: doc)));
+    await tester.pumpWidget(_wrap(ShowCodeScreen(doc: doc)));
     // Let the real event loop deliver the file-not-found error.
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),

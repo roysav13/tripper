@@ -8,20 +8,29 @@ void main() {
   });
 
   test(
-      'a DateFormat pinned to en_US renders English month names even when '
-      "Intl.defaultLocale is Hebrew — the fix this task's call sites rely on",
-      () {
+      'a DateFormat pinned to the Hebrew locale renders Hebrew month names, '
+      'and pinned to English renders English month names — the fix each app '
+      "call site's DateFormat(pattern, l10n.localeName) relies on", () {
+    final english =
+        DateFormat('dd MMM yyyy', 'en').format(DateTime(2026, 7, 16));
+    expect(english, '16 Jul 2026');
+
+    final hebrew =
+        DateFormat('dd MMM yyyy', 'he').format(DateTime(2026, 7, 16));
+    expect(hebrew, isNot(english));
+    expect(RegExp('[֐-׿]').hasMatch(hebrew), isTrue);
+  });
+
+  test(
+      'the pinned locale is explicit, not inherited from Intl.defaultLocale '
+      '— call sites must pass l10n.localeName rather than rely on the '
+      'ambient default', () {
     final original = Intl.defaultLocale;
     Intl.defaultLocale = 'he';
     addTearDown(() => Intl.defaultLocale = original);
 
-    final pinned = DateFormat('dd MMM yyyy', 'en_US');
-    expect(pinned.format(DateTime(2026, 7, 16)), '16 Jul 2026');
-
-    // Without a pinned locale, the same pattern picks up the active
-    // Intl.defaultLocale instead — demonstrating why the pin matters,
-    // not just asserting the pinned behavior in isolation.
-    final unpinned = DateFormat('dd MMM yyyy');
-    expect(unpinned.format(DateTime(2026, 7, 16)), isNot('16 Jul 2026'));
+    final pinnedToEnglish =
+        DateFormat('dd MMM yyyy', 'en').format(DateTime(2026, 7, 16));
+    expect(pinnedToEnglish, '16 Jul 2026');
   });
 }

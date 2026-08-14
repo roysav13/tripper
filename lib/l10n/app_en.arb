@@ -116,6 +116,8 @@
   "tripDocsEmptyBody": "Flights, stays, and tickets for this trip will live here.",
   "vaultPinnedSection": "Pinned · quick access",
   "vaultAllSection": "All documents",
+  "vaultSortCreated": "Created",
+  "vaultSortRelevant": "Relevant date",
   "catPassport": "Passport / ID",
   "catVisa": "Visa",
   "catFlight": "Flight",

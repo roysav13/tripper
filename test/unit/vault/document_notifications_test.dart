@@ -1,11 +1,14 @@
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:tripper/core/notifications/notification_service.dart';
 import 'package:tripper/features/vault/domain/document.dart';
 import 'package:tripper/features/vault/domain/document_notifications.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting());
+
   final l10n = lookupAppLocalizations(const Locale('en'));
   final today = DateTime(2026, 7, 23);
 
@@ -18,6 +21,7 @@ void main() {
         id: id,
         title: title,
         category: DocumentCategory.passportId,
+        createdAt: today,
         expiryDate: expiry,
       );
 

@@ -63,9 +63,24 @@ void main() {
 
   group('filterPlaces', () {
     final places = [
-      const Place(id: 'a', name: 'A', country: 'Thailand', category: PlaceCategory.hotel),
-      const Place(id: 'b', name: 'B', country: 'Thailand', category: PlaceCategory.restaurant),
-      const Place(id: 'c', name: 'C', country: 'Japan', category: PlaceCategory.hotel),
+      const Place(
+        id: 'a',
+        name: 'A',
+        country: 'Thailand',
+        category: PlaceCategory.hotel,
+      ),
+      const Place(
+        id: 'b',
+        name: 'B',
+        country: 'Thailand',
+        category: PlaceCategory.restaurant,
+      ),
+      const Place(
+        id: 'c',
+        name: 'C',
+        country: 'Japan',
+        category: PlaceCategory.hotel,
+      ),
       const Place(id: 'd', name: 'D', country: 'Japan', category: null),
     ];
 
@@ -95,8 +110,7 @@ void main() {
       expect(result.map((p) => p.id), ['c']);
     });
 
-    test('an uncategorized place never matches an active category filter',
-        () {
+    test('an uncategorized place never matches an active category filter', () {
       final result = filterPlaces(places, categories: {PlaceCategory.hotel});
       expect(result.any((p) => p.id == 'd'), isFalse);
     });
