@@ -40,9 +40,8 @@ CREATE TABLE trips (
 
     await db.migration.onUpgrade(Migrator(db), 12, 13);
 
-    final rows = await db
-        .customSelect('SELECT name, cover_photo_path FROM trips')
-        .get();
+    final rows =
+        await db.customSelect('SELECT name, cover_photo_path FROM trips').get();
     expect(rows.single.read<String>('name'), 'Thailand');
     expect(rows.single.read<String?>('cover_photo_path'), isNull);
   });

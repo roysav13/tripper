@@ -83,7 +83,7 @@ void main() {
 
   testWidgets(
       'document expiring soon (not yet expired) shows its date but no '
-      'warning border (M5, 2026-07-23)', (tester) async {
+      'warning edge (M5, 2026-07-23)', (tester) async {
     await tester.pumpWidget(
       await _app([
         Document(
@@ -104,8 +104,7 @@ void main() {
     expect(_hasWarningEdge(tester), isFalse);
   });
 
-  testWidgets('already-expired document gets the warning border',
-      (tester) async {
+  testWidgets('already-expired document gets the warning edge', (tester) async {
     await tester.pumpWidget(
       await _app([
         Document(

@@ -26,13 +26,12 @@ Widget _app(Widget child, {TextDirection direction = TextDirection.ltr}) =>
       supportedLocales: const [Locale('en')],
     );
 
-Document _doc({bool pinned = false, DateTime? expiry}) => Document(
+Document _doc({bool pinned = false}) => Document(
       id: 'd1',
       title: 'Passport',
       category: DocumentCategory.passportId,
       createdAt: _today,
       isPinned: pinned,
-      expiryDate: expiry,
     );
 
 void main() {
@@ -44,10 +43,12 @@ void main() {
       await tester.pumpAndSettle();
 
       final material = tester.widget<Material>(
-        find.ancestor(
-          of: find.text('Passport'),
-          matching: find.byType(Material),
-        ).first,
+        find
+            .ancestor(
+              of: find.text('Passport'),
+              matching: find.byType(Material),
+            )
+            .first,
       );
       expect(material.elevation, greaterThan(0));
     });
@@ -125,7 +126,8 @@ void main() {
   });
 
   group('PinnedDocumentCard', () {
-    testWidgets('renders a two-stop gradient from surface toward '
+    testWidgets(
+        'renders a two-stop gradient from surface toward '
         'heroGradientEnd, not a flat color', (tester) async {
       await tester.pumpWidget(
         _app(PinnedDocumentCard(doc: _doc(), warning: false)),
@@ -143,9 +145,18 @@ void main() {
       // first stop either (that would be no gradient at all).
       expect(gradient.colors[1], isNot(AppColors.dark.heroGradientEnd));
       expect(gradient.colors[1], isNot(gradient.colors[0]));
+      expect(
+        gradient.colors[1],
+        Color.lerp(
+          AppColors.dark.surface,
+          AppColors.dark.heroGradientEnd,
+          0.35,
+        ),
+      );
     });
 
-    testWidgets('title and category icon use theme ink, not fixed on-scrim '
+    testWidgets(
+        'title and category icon use theme ink, not fixed on-scrim '
         'ink', (tester) async {
       await tester.pumpWidget(
         _app(PinnedDocumentCard(doc: _doc(), warning: false)),

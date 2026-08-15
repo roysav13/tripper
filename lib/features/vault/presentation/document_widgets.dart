@@ -129,50 +129,50 @@ class DocumentRowTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            ColoredBox(color: edgeColor, child: const SizedBox(width: 5)),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.all(AppSpacing.md),
-                child: Row(
-                  children: [
-                    Icon(
-                      categoryIcon(doc.category),
-                      size: 20,
-                      color: warning ? colors.warning : colors.inkSecondary,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AutoDirectionText(
-                            doc.title,
-                            style: AppTextStyles.body.copyWith(
-                              color: colors.inkPrimary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          MonoText(
-                            documentMetaLine(l10n, doc),
-                            color: warning ? colors.warning : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (doc.isPinned)
+              ColoredBox(color: edgeColor, child: const SizedBox(width: 5)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.all(AppSpacing.md),
+                  child: Row(
+                    children: [
                       Icon(
-                        Icons.push_pin_outlined,
-                        size: 16,
-                        color: colors.accent,
+                        categoryIcon(doc.category),
+                        size: 20,
+                        color: warning ? colors.warning : colors.inkSecondary,
                       ),
-                  ],
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AutoDirectionText(
+                              doc.title,
+                              style: AppTextStyles.body.copyWith(
+                                color: colors.inkPrimary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            MonoText(
+                              documentMetaLine(l10n, doc),
+                              color: warning ? colors.warning : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (doc.isPinned)
+                        Icon(
+                          Icons.push_pin_outlined,
+                          size: 16,
+                          color: colors.accent,
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),
@@ -227,7 +227,11 @@ class PinnedDocumentCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(categoryIcon(doc.category), size: 18, color: colors.accent),
+                Icon(
+                  categoryIcon(doc.category),
+                  size: 18,
+                  color: colors.accent,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 AutoDirectionText(
                   doc.title,
