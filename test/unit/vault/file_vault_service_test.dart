@@ -70,4 +70,21 @@ void main() {
     expect(await File(orphan2).exists(), isFalse);
     expect(missing, ['/nonexistent/x.pdf']);
   });
+
+  test('a custom subfolder keeps files separate from the default vault dir',
+      () async {
+    final covers = FileVaultService(() async => tempDir, subfolder: 'covers');
+    final src = await sourceFile('sunset.jpg');
+    final coverPath = await covers.import(src.path);
+
+    expect(p.dirname(coverPath), p.join(tempDir.path, 'covers'));
+    expect(await File(coverPath).exists(), isTrue);
+
+    // sweepOrphans only ever sees its own subfolder — a file a different
+    // FileVaultService instance owns must not be treated as this one's
+    // orphan (the whole reason cover photos get their own subfolder).
+    final missing = await service.sweepOrphans({});
+    expect(await File(coverPath).exists(), isTrue);
+    expect(missing, isEmpty);
+  });
 }

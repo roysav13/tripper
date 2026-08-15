@@ -1,12 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/files/file_vault_service.dart';
 import '../data/trip_repository.dart';
 import '../data/trips_dao.dart';
 import '../domain/trip.dart';
 
 final tripsDaoProvider =
     Provider<TripsDao>((ref) => ref.watch(databaseProvider).tripsDao);
+
+/// Trip cover photos live in their own subfolder — see Task 1's design
+/// note: never share `fileVaultServiceProvider`'s 'vault' folder, or the
+/// vault feature's orphan sweep would delete cover photos it doesn't own.
+final coverPhotoFileServiceProvider = Provider<FileVaultService>(
+  (ref) => FileVaultService(getApplicationDocumentsDirectory, subfolder: 'covers'),
+);
 
 final tripRepositoryProvider = Provider<TripRepository>(
   (ref) => DriftTripRepository(

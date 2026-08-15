@@ -5,20 +5,27 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-/// Owns the vault directory: {appDocs}/vault/{uuid}.{ext}.
+/// Owns a storage subfolder: {appDocs}/{subfolder}/{uuid}.{ext}. Defaults
+/// to the document vault ('vault'); pass a different [subfolder] for other
+/// local-file features (e.g. trip cover photos — 'covers') so their files
+/// never mix with vault documents. [sweepOrphans] assumes every file in
+/// its own folder belongs to the table it was constructed for, so mixing
+/// folders would make it delete files a different feature still needs.
 /// Files are always copied in — picker content-URIs are ephemeral on Android.
 class FileVaultService {
-  FileVaultService(this._baseDir);
+  FileVaultService(this._baseDir, {String subfolder = 'vault'})
+      : _subfolder = subfolder;
 
   /// Injected for tests (temp dir) vs production (app documents dir).
   final Future<Directory> Function() _baseDir;
+  final String _subfolder;
   final _uuid = const Uuid();
 
   static const maxFileBytes = 20 * 1024 * 1024;
 
   Future<Directory> _vaultDir() async {
     final base = await _baseDir();
-    final dir = Directory(p.join(base.path, 'vault'));
+    final dir = Directory(p.join(base.path, _subfolder));
     if (!await dir.exists()) await dir.create(recursive: true);
     return dir;
   }
