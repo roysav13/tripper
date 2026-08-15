@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/files/file_vault_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/mono_text.dart';
@@ -248,20 +249,30 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       ),
     );
     if (source == null) return;
-    final picked = await ImagePicker().pickImage(source: source);
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 2000,
+      imageQuality: 85,
+    );
     if (picked == null || !mounted) return;
 
     final files = ref.read(coverPhotoFileServiceProvider);
-    final imported = await files.import(picked.path);
+    final String imported;
+    try {
+      imported = await files.import(picked.path);
+    } on FileTooLargeException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.tripFormCoverPhotoTooLarge)),
+        );
+      }
+      return;
+    }
     // A pick from earlier this session that was never saved — replace it
     // rather than leaking it (the original stored photo, if any, is left
     // alone until save so cancelling the form doesn't destroy it).
     if (_coverPhotoPath != null && _coverPhotoPath != _originalCoverPhotoPath) {
-      try {
-        await files.delete(_coverPhotoPath!);
-      } catch (_) {
-        // Best-effort cleanup only — see _save() for the same reasoning.
-      }
+      await _deleteCoverQuietly(_coverPhotoPath!);
     }
     if (!mounted) return;
     setState(() => _coverPhotoPath = imported);
@@ -271,9 +282,20 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     final path = _coverPhotoPath;
     if (path != null && path != _originalCoverPhotoPath) {
       // An unsaved fresh import — nothing else references it.
-      unawaited(ref.read(coverPhotoFileServiceProvider).delete(path));
+      unawaited(_deleteCoverQuietly(path));
     }
     setState(() => _coverPhotoPath = null);
+  }
+
+  /// Best-effort cleanup — a locked/undeletable file must never abort a
+  /// save or become an unhandled async error. An orphaned file is a
+  /// low-stakes, recoverable leak.
+  Future<void> _deleteCoverQuietly(String path) async {
+    try {
+      await ref.read(coverPhotoFileServiceProvider).delete(path);
+    } catch (_) {
+      // Best-effort cleanup only.
+    }
   }
 
   Future<void> _save() async {
@@ -297,13 +319,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       // cleanup failure (e.g. a locked file) must never block the trip's
       // other changes from saving; an orphaned file is a low-stakes,
       // recoverable leak, a silently-discarded edit is not.
-      try {
-        await ref
-            .read(coverPhotoFileServiceProvider)
-            .delete(_originalCoverPhotoPath!);
-      } catch (_) {
-        // Best-effort cleanup only.
-      }
+      await _deleteCoverQuietly(_originalCoverPhotoPath);
     }
 
     final repo = ref.read(tripRepositoryProvider);
@@ -398,23 +414,16 @@ class _CoverPhotoField extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               path == null
-                  ? DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        border: Border.all(
-                          color: colors.hairline,
-                          width: AppShape.hairlineWidth,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.add_photo_alternate_outlined,
-                          color: colors.inkMuted,
-                          size: 32,
-                        ),
-                      ),
-                    )
-                  : Image.file(File(path!), fit: BoxFit.cover),
+                  ? _placeholder(colors)
+                  : Image.file(
+                      File(path!),
+                      fit: BoxFit.cover,
+                      // No trip/gradient context here (this is a raw file
+                      // picker preview, not tied to a Trip) — fall back to
+                      // the same "no photo picked yet" placeholder rather
+                      // than inventing a new visual.
+                      errorBuilder: (_, __, ___) => _placeholder(colors),
+                    ),
               if (path != null)
                 Positioned.directional(
                   textDirection: Directionality.of(context),
@@ -444,4 +453,21 @@ class _CoverPhotoField extends StatelessWidget {
       ),
     );
   }
+
+  Widget _placeholder(AppColors colors) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border.all(
+            color: colors.hairline,
+            width: AppShape.hairlineWidth,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.add_photo_alternate_outlined,
+            color: colors.inkMuted,
+            size: 32,
+          ),
+        ),
+      );
 }

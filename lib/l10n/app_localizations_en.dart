@@ -141,6 +141,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripFormCoverPhoto => 'Cover photo';
 
   @override
+  String get tripFormCoverPhotoTooLarge =>
+      'That photo is too large — try a smaller one.';
+
+  @override
   String get errEndWithoutStart => 'Set a start date first';
 
   @override

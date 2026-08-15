@@ -338,6 +338,12 @@ abstract class AppLocalizations {
   /// **'Cover photo'**
   String get tripFormCoverPhoto;
 
+  /// No description provided for @tripFormCoverPhotoTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'That photo is too large — try a smaller one.'**
+  String get tripFormCoverPhotoTooLarge;
+
   /// No description provided for @errEndWithoutStart.
   ///
   /// In en, this message translates to:

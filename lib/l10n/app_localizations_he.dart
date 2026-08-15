@@ -138,6 +138,10 @@ class AppLocalizationsHe extends AppLocalizations {
   String get tripFormCoverPhoto => 'תמונת שער';
 
   @override
+  String get tripFormCoverPhotoTooLarge =>
+      'התמונה גדולה מדי — נסו תמונה קטנה יותר.';
+
+  @override
   String get errEndWithoutStart => 'קבע קודם תאריך התחלה';
 
   @override

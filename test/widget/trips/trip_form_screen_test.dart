@@ -17,20 +17,31 @@ import '../../helpers/fake_trip_repository.dart';
 
 final _today = DateTime(2026, 7, 19);
 
-/// A [FileVaultService] whose `delete` is an instant no-op. This screen's
-/// tests exist to verify UI + state wiring, not real file-deletion
-/// mechanics (already covered, with no `Image.file` involved, by
-/// `file_vault_service_test.dart`) — using the real, disk-backed service
-/// here made these tests dependent on Windows file-lock timing after
-/// `Image.file` decodes a photo, which proved unreliable across multiple
-/// attempts to fix. `import`/`exists`/`sweepOrphans` stay inherited from
-/// the real implementation; they're unexercised by these tests.
-class _InstantDeleteFileVaultService extends FileVaultService {
-  _InstantDeleteFileVaultService()
-      : super(() async => Directory.systemTemp, subfolder: 'covers-noop');
+/// A [FileVaultService] whose `delete` records every call instead of
+/// touching disk, and can optionally throw to simulate a locked file. This
+/// screen's tests exist to verify UI + state wiring, not real
+/// file-deletion mechanics (already covered, with no `Image.file`
+/// involved, by `file_vault_service_test.dart`) — using the real,
+/// disk-backed service here made these tests dependent on Windows
+/// file-lock timing after `Image.file` decodes a photo, which proved
+/// unreliable across multiple attempts to fix. `import`/`exists`/
+/// `sweepOrphans` stay inherited from the real implementation; they're
+/// unexercised by these tests. Pointed at the test's own [tempDir] (even
+/// though `delete()` never touches the filesystem) rather than
+/// `Directory.systemTemp` is just hygiene in case those inherited methods
+/// are ever accidentally exercised later.
+class _SpyFileVaultService extends FileVaultService {
+  _SpyFileVaultService(Directory dir, {this.throwOnDelete = false})
+      : super(() async => dir, subfolder: 'covers-noop');
+
+  final List<String> deleted = [];
+  final bool throwOnDelete;
 
   @override
-  Future<void> delete(String vaultPath) async {}
+  Future<void> delete(String vaultPath) async {
+    deleted.add(vaultPath);
+    if (throwOnDelete) throw const FileSystemException('locked');
+  }
 }
 
 void main() {
@@ -86,12 +97,16 @@ void main() {
         ],
       );
 
-  Future<Widget> app(FakeTripRepository repo, {Trip? initial}) async =>
+  Future<Widget> app(
+    FakeTripRepository repo, {
+    Trip? initial,
+    FileVaultService? files,
+  }) async =>
       ProviderScope(
         overrides: [
           tripRepositoryProvider.overrideWithValue(repo),
           coverPhotoFileServiceProvider
-              .overrideWithValue(_InstantDeleteFileVaultService()),
+              .overrideWithValue(files ?? _SpyFileVaultService(tempDir)),
           clockProvider.overrideWithValue(() => _today),
         ],
         child: MaterialApp.router(
@@ -195,7 +210,8 @@ void main() {
       coverPhotoPath: photo.path,
     );
     final repo = FakeTripRepository([trip]);
-    await tester.pumpWidget(await app(repo, initial: trip));
+    final spy = _SpyFileVaultService(tempDir);
+    await tester.pumpWidget(await app(repo, initial: trip, files: spy));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.close));
@@ -207,6 +223,34 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
+    final saved = await repo.getTrip('t1');
+    expect(saved!.coverPhotoPath, isNull);
+    expect(spy.deleted, [photo.path]);
+  });
+
+  testWidgets('a locked cover-photo file does not block the trip save',
+      (tester) async {
+    final photo = writeCoverPhoto();
+    final trip = Trip(
+      id: 't1',
+      name: 'Thailand',
+      destinations: const ['Krabi'],
+      coverPhotoPath: photo.path,
+    );
+    final repo = FakeTripRepository([trip]);
+    final spy = _SpyFileVaultService(tempDir, throwOnDelete: true);
+    await tester.pumpWidget(await app(repo, initial: trip, files: spy));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save', skipOffstage: false));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    // A locked/undeletable file must never abort the save — this is the
+    // regression guard for the production _deleteCoverQuietly fix.
     final saved = await repo.getTrip('t1');
     expect(saved!.coverPhotoPath, isNull);
   });

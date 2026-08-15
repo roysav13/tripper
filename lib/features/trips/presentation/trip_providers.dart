@@ -14,7 +14,8 @@ final tripsDaoProvider =
 /// note: never share `fileVaultServiceProvider`'s 'vault' folder, or the
 /// vault feature's orphan sweep would delete cover photos it doesn't own.
 final coverPhotoFileServiceProvider = Provider<FileVaultService>(
-  (ref) => FileVaultService(getApplicationDocumentsDirectory, subfolder: 'covers'),
+  (ref) =>
+      FileVaultService(getApplicationDocumentsDirectory, subfolder: 'covers'),
 );
 
 final tripRepositoryProvider = Provider<TripRepository>(
