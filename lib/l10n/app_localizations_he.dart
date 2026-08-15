@@ -135,7 +135,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get tripFormEndDate => 'תאריך סיום';
 
   @override
-  String get tripFormCoverPhoto => 'Cover photo';
+  String get tripFormCoverPhoto => 'תמונת שער';
 
   @override
   String get errEndWithoutStart => 'קבע קודם תאריך התחלה';

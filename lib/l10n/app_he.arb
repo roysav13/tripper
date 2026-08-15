@@ -55,6 +55,7 @@
   "tripFormDatesHint": "אופציונלי — השאר ריק בשלב התכנון, או הזן רק תאריך התחלה לטיולים בכיוון אחד.",
   "tripFormStartDate": "תאריך התחלה",
   "tripFormEndDate": "תאריך סיום",
+  "tripFormCoverPhoto": "תמונת שער",
   "errEndWithoutStart": "קבע קודם תאריך התחלה",
   "save": "שמירה",
   "cancel": "ביטול",
