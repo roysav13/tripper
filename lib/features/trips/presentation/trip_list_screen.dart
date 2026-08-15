@@ -116,7 +116,12 @@ class TripListScreen extends ConsumerWidget {
     }
     final colors = context.colors;
     return ListView(
-      padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+      padding: const EdgeInsetsDirectional.only(
+        start: AppSpacing.lg,
+        end: AppSpacing.lg,
+        top: AppSpacing.lg,
+        bottom: 88,
+      ),
       children: [
         // M4.5 — quiet nudge, not a notification; disappears for good the
         // moment a real export happens (settings_service).
