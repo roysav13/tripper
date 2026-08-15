@@ -311,4 +311,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('detail-a'), findsOneWidget);
   });
+
+  testWidgets('the coral FAB opens the new-trip route', (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        _trip('a', 'Active trip', DateTime(2026, 7, 16), DateTime(2026, 7, 27)),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('form-screen'), findsOneWidget);
+  });
 }

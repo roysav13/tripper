@@ -67,12 +67,14 @@ class TripListScreen extends ConsumerWidget {
             tooltip: l10n.settingsTitle,
             onPressed: () => context.push('/settings'),
           ),
-          IconButton(
-            icon: Icon(Icons.add, color: colors.accent),
-            tooltip: l10n.tripsEmptyCta,
-            onPressed: () => context.push('/trips/new'),
-          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/trips/new'),
+        backgroundColor: colors.accent,
+        foregroundColor: colors.surface,
+        tooltip: l10n.tripsEmptyCta,
+        child: const Icon(Icons.add),
       ),
       body: _body(
         context,
