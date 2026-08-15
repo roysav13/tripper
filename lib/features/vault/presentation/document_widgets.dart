@@ -90,7 +90,10 @@ class DocumentFilterBar extends StatelessWidget {
 }
 
 /// One document = one card (matches the trips list), used in the vault
-/// and in a trip's Documents tab.
+/// and in a trip's Documents tab. A real elevated Material card with a
+/// leading accent edge — coral normally, amber when the document has
+/// expired (replaces the old full-border warning treatment: only the
+/// edge changes color now, not the whole card outline).
 class DocumentRowTile extends StatelessWidget {
   const DocumentRowTile({
     super.key,
@@ -103,45 +106,74 @@ class DocumentRowTile extends StatelessWidget {
   final bool warning;
   final VoidCallback? onTap;
 
+  static const _shape = BorderRadiusDirectional.only(
+    topStart: Radius.circular(4),
+    bottomStart: Radius.circular(4),
+    topEnd: Radius.circular(AppShape.radius),
+    bottomEnd: Radius.circular(AppShape.radius),
+  );
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    return PaperCard(
-      onTap: onTap,
-      borderColor: warning ? colors.warning : null,
-      child: Row(
-        children: [
-          Icon(
-            categoryIcon(doc.category),
-            size: 20,
-            color: warning ? colors.warning : colors.inkSecondary,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AutoDirectionText(
-                  doc.title,
-                  style: AppTextStyles.body.copyWith(
-                    color: colors.inkPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    final edgeColor = warning ? colors.warning : colors.accent;
+
+    return Material(
+      color: colors.surface,
+      elevation: 3,
+      shape: const RoundedRectangleBorder(borderRadius: _shape),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ColoredBox(color: edgeColor, child: const SizedBox(width: 5)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.all(AppSpacing.md),
+                child: Row(
+                  children: [
+                    Icon(
+                      categoryIcon(doc.category),
+                      size: 20,
+                      color: warning ? colors.warning : colors.inkSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AutoDirectionText(
+                            doc.title,
+                            style: AppTextStyles.body.copyWith(
+                              color: colors.inkPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          MonoText(
+                            documentMetaLine(l10n, doc),
+                            color: warning ? colors.warning : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (doc.isPinned)
+                      Icon(
+                        Icons.push_pin_outlined,
+                        size: 16,
+                        color: colors.accent,
+                      ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                MonoText(
-                  documentMetaLine(l10n, doc),
-                  color: warning ? colors.warning : null,
-                ),
-              ],
+              ),
             ),
-          ),
-          if (doc.isPinned)
-            Icon(Icons.push_pin_outlined, size: 16, color: colors.accent),
-        ],
+          ],
+        ),
       ),
     );
   }

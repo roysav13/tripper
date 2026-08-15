@@ -16,15 +16,13 @@ import '../../helpers/test_preferences.dart';
 
 final _today = DateTime(2026, 7, 19);
 
-/// True if any card in the tree is currently drawing the rust warning
-/// border (M5, 2026-07-23: expired-only, not "expiring soon" too).
-bool _hasWarningBorder(WidgetTester tester) {
-  final materials = tester.widgetList<Material>(find.byType(Material));
-  return materials.any((m) {
-    final shape = m.shape;
-    return shape is RoundedRectangleBorder &&
-        shape.side.color == AppColors.light.warning;
-  });
+/// True if any document card in the tree is currently drawing its coral
+/// leading edge in the warning (amber) color instead of the normal
+/// accent color (M5, 2026-07-23: expired-only, not "expiring soon" too;
+/// redesign, 2026-08-15: signaled by the edge color, not a card border).
+bool _hasWarningEdge(WidgetTester tester) {
+  final edges = tester.widgetList<ColoredBox>(find.byType(ColoredBox));
+  return edges.any((b) => b.color == AppColors.light.warning);
 }
 
 Future<Widget> _app(List<Document> docs) async => ProviderScope(
@@ -103,7 +101,7 @@ void main() {
     // 'EXP 08/26' substring never actually matched this format; fixed
     // while investigating an unrelated test failure (2026-07-23).
     expect(find.textContaining('EXP 01/08/2026'), findsOneWidget);
-    expect(_hasWarningBorder(tester), isFalse);
+    expect(_hasWarningEdge(tester), isFalse);
   });
 
   testWidgets('already-expired document gets the warning border',
@@ -120,7 +118,7 @@ void main() {
       ]),
     );
     await tester.pumpAndSettle();
-    expect(_hasWarningBorder(tester), isTrue);
+    expect(_hasWarningEdge(tester), isTrue);
   });
 
   testWidgets('100+ documents render without overflow or exceptions (M4.2)',
