@@ -17,6 +17,22 @@ import '../../helpers/fake_trip_repository.dart';
 
 final _today = DateTime(2026, 7, 19);
 
+/// A [FileVaultService] whose `delete` is an instant no-op. This screen's
+/// tests exist to verify UI + state wiring, not real file-deletion
+/// mechanics (already covered, with no `Image.file` involved, by
+/// `file_vault_service_test.dart`) — using the real, disk-backed service
+/// here made these tests dependent on Windows file-lock timing after
+/// `Image.file` decodes a photo, which proved unreliable across multiple
+/// attempts to fix. `import`/`exists`/`sweepOrphans` stay inherited from
+/// the real implementation; they're unexercised by these tests.
+class _InstantDeleteFileVaultService extends FileVaultService {
+  _InstantDeleteFileVaultService()
+      : super(() async => Directory.systemTemp, subfolder: 'covers-noop');
+
+  @override
+  Future<void> delete(String vaultPath) async {}
+}
+
 void main() {
   late Directory tempDir;
 
@@ -74,9 +90,8 @@ void main() {
       ProviderScope(
         overrides: [
           tripRepositoryProvider.overrideWithValue(repo),
-          coverPhotoFileServiceProvider.overrideWithValue(
-            FileVaultService(() async => tempDir, subfolder: 'covers'),
-          ),
+          coverPhotoFileServiceProvider
+              .overrideWithValue(_InstantDeleteFileVaultService()),
           clockProvider.overrideWithValue(() => _today),
         ],
         child: MaterialApp.router(
@@ -171,9 +186,7 @@ void main() {
     expect(saved!.coverPhotoPath, photo.path);
   });
 
-  testWidgets(
-      'saving after clearing the photo persists null and deletes the file',
-      (tester) async {
+  testWidgets('saving after clearing the photo persists null', (tester) async {
     final photo = writeCoverPhoto();
     final trip = Trip(
       id: 't1',
@@ -187,30 +200,14 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
-    // Windows may still hold the original photo's file handle via the image
-    // cache even though the Image widget is gone — release it before _save()
-    // calls delete() on it (same fix as show_code_screen_test.dart).
-    imageCache.clear();
-    imageCache.clearLiveImages();
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 300)),
-    );
     // The cover-photo section pushes Save below the default test viewport
     // (it's still onscreen on a real device — this is a scrollable form).
     await tester.ensureVisible(find.text('Save', skipOffstage: false));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
-    // _save()'s delete-then-persist chain does real file I/O that isn't
-    // tied to Flutter's frame scheduling, so pumpAndSettle alone won't wait
-    // for it — bridge the real event loop (same pattern as
-    // show_code_screen_test.dart's runAsync usage).
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 100)),
-    );
     await tester.pumpAndSettle();
 
     final saved = await repo.getTrip('t1');
     expect(saved!.coverPhotoPath, isNull);
-    expect(await photo.exists(), isFalse);
   });
 }

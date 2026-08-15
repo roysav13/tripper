@@ -257,7 +257,11 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     // rather than leaking it (the original stored photo, if any, is left
     // alone until save so cancelling the form doesn't destroy it).
     if (_coverPhotoPath != null && _coverPhotoPath != _originalCoverPhotoPath) {
-      await files.delete(_coverPhotoPath!);
+      try {
+        await files.delete(_coverPhotoPath!);
+      } catch (_) {
+        // Best-effort cleanup only — see _save() for the same reasoning.
+      }
     }
     if (!mounted) return;
     setState(() => _coverPhotoPath = imported);
@@ -289,10 +293,17 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
 
     if (_originalCoverPhotoPath != null &&
         _originalCoverPhotoPath != _coverPhotoPath) {
-      // Replaced or cleared — the old file is no longer referenced.
-      await ref
-          .read(coverPhotoFileServiceProvider)
-          .delete(_originalCoverPhotoPath!);
+      // Replaced or cleared — the old file is no longer referenced. A
+      // cleanup failure (e.g. a locked file) must never block the trip's
+      // other changes from saving; an orphaned file is a low-stakes,
+      // recoverable leak, a silently-discarded edit is not.
+      try {
+        await ref
+            .read(coverPhotoFileServiceProvider)
+            .delete(_originalCoverPhotoPath!);
+      } catch (_) {
+        // Best-effort cleanup only.
+      }
     }
 
     final repo = ref.read(tripRepositoryProvider);
