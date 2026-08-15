@@ -55,6 +55,7 @@
   "tripFormDatesHint": "Optional — leave empty while planning, or set only a start for one-way trips.",
   "tripFormStartDate": "Start date",
   "tripFormEndDate": "End date",
+  "tripFormCoverPhoto": "Cover photo",
   "errEndWithoutStart": "Set a start date first",
   "save": "Save",
   "cancel": "Cancel",

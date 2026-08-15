@@ -135,6 +135,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get tripFormEndDate => 'תאריך סיום';
 
   @override
+  String get tripFormCoverPhoto => 'Cover photo';
+
+  @override
   String get errEndWithoutStart => 'קבע קודם תאריך התחלה';
 
   @override

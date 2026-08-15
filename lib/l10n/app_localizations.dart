@@ -332,6 +332,12 @@ abstract class AppLocalizations {
   /// **'End date'**
   String get tripFormEndDate;
 
+  /// No description provided for @tripFormCoverPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover photo'**
+  String get tripFormCoverPhoto;
+
   /// No description provided for @errEndWithoutStart.
   ///
   /// In en, this message translates to:

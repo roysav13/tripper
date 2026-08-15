@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,6 +33,13 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   late List<String> _destinations;
   DateTime? _start;
   DateTime? _end;
+
+  /// Captured once — the stored path this screen opened with, if any.
+  /// Compared against [_coverPhotoPath] at save time to know whether the
+  /// old file needs deleting (replaced or cleared) or left alone
+  /// (unchanged, or a brand-new trip that never had one).
+  late final String? _originalCoverPhotoPath;
+  String? _coverPhotoPath;
   List<TripValidationError> _errors = const [];
 
   @override
@@ -40,6 +51,8 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     _destinations = [...?t?.destinations];
     _start = t?.startDate;
     _end = t?.endDate;
+    _originalCoverPhotoPath = t?.coverPhotoPath;
+    _coverPhotoPath = t?.coverPhotoPath;
   }
 
   @override
@@ -111,6 +124,14 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
                 onPressed: _addDestination,
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(l10n.tripFormCoverPhoto),
+          const SizedBox(height: AppSpacing.sm),
+          _CoverPhotoField(
+            path: _coverPhotoPath,
+            onPick: _pickCoverPhoto,
+            onClear: _clearCoverPhoto,
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(l10n.tripFormDates),
@@ -204,6 +225,53 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     });
   }
 
+  Future<void> _pickCoverPhoto() async {
+    final l10n = AppLocalizations.of(context)!;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l10n.journalPhotoSourceCamera),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.journalPhotoSourceGallery),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final picked = await ImagePicker().pickImage(source: source);
+    if (picked == null || !mounted) return;
+
+    final files = ref.read(coverPhotoFileServiceProvider);
+    final imported = await files.import(picked.path);
+    // A pick from earlier this session that was never saved — replace it
+    // rather than leaking it (the original stored photo, if any, is left
+    // alone until save so cancelling the form doesn't destroy it).
+    if (_coverPhotoPath != null && _coverPhotoPath != _originalCoverPhotoPath) {
+      await files.delete(_coverPhotoPath!);
+    }
+    if (!mounted) return;
+    setState(() => _coverPhotoPath = imported);
+  }
+
+  void _clearCoverPhoto() {
+    final path = _coverPhotoPath;
+    if (path != null && path != _originalCoverPhotoPath) {
+      // An unsaved fresh import — nothing else references it.
+      unawaited(ref.read(coverPhotoFileServiceProvider).delete(path));
+    }
+    setState(() => _coverPhotoPath = null);
+  }
+
   Future<void> _save() async {
     // Unsubmitted text in the destination field counts — common flow is
     // typing the only destination and hitting save without "+".
@@ -218,6 +286,15 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       setState(() => _errors = errors);
       return;
     }
+
+    if (_originalCoverPhotoPath != null &&
+        _originalCoverPhotoPath != _coverPhotoPath) {
+      // Replaced or cleared — the old file is no longer referenced.
+      await ref
+          .read(coverPhotoFileServiceProvider)
+          .delete(_originalCoverPhotoPath!);
+    }
+
     final repo = ref.read(tripRepositoryProvider);
     if (widget.initial == null) {
       await repo.createTrip(
@@ -226,6 +303,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
         startDate: _start,
         endDate: _end,
         colorTag: widget.initial?.colorTag ?? 0,
+        coverPhotoPath: _coverPhotoPath,
       );
     } else {
       await repo.updateTrip(
@@ -234,6 +312,7 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
           destinations: _destinations,
           startDate: () => _start,
           endDate: () => _end,
+          coverPhotoPath: () => _coverPhotoPath,
         ),
       );
     }
@@ -278,6 +357,79 @@ class _DateField extends StatelessWidget {
               color: colors.inkMuted,
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _CoverPhotoField extends StatelessWidget {
+  const _CoverPhotoField({
+    required this.path,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  final String? path;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      onTap: onPick,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppShape.radius),
+        child: SizedBox(
+          height: 140,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              path == null
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        border: Border.all(
+                          color: colors.hairline,
+                          width: AppShape.hairlineWidth,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.add_photo_alternate_outlined,
+                          color: colors.inkMuted,
+                          size: 32,
+                        ),
+                      ),
+                    )
+                  : Image.file(File(path!), fit: BoxFit.cover),
+              if (path != null)
+                Positioned.directional(
+                  textDirection: Directionality.of(context),
+                  top: AppSpacing.sm,
+                  end: AppSpacing.sm,
+                  child: GestureDetector(
+                    onTap: onClear,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.dark.paper.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: AppColors.dark.inkPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
