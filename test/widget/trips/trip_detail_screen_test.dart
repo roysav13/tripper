@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
@@ -138,5 +139,27 @@ void main() {
 
     expect(find.byType(Tab), findsNWidgets(4));
     expect(find.text('Plan'), findsNothing);
+  });
+
+  testWidgets(
+      'the cover hero and glass chrome render without overflow',
+      (tester) async {
+    final trip = _trip(
+      start: DateTime(2026, 7, 16),
+      end: DateTime(2026, 7, 27),
+    );
+    await tester.pumpWidget(await _app(trip));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == 'trip-cover-t1',
+      ),
+      findsOneWidget,
+    );
+    // One GlassChrome for the topbar (back/name/menu), one for the
+    // floating tab bar.
+    expect(find.byType(GlassChrome), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +8,9 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/generated_cover_gradient.dart';
 import '../../../core/widgets/auto_direction_text.dart';
+import '../../../core/widgets/glass_chrome.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../expenses/presentation/trip_expenses_tab.dart';
@@ -26,6 +30,9 @@ import 'trip_providers.dart';
 /// that happens to reuse the freed slot.
 const _tabCount = 4;
 const _expensesTabIndex = 2;
+
+const _coverHeight = 220.0;
+const _tabBarOverlap = 28.0;
 
 class TripDetailScreen extends ConsumerWidget {
   const TripDetailScreen({super.key, required this.tripId});
@@ -61,44 +68,139 @@ class TripDetailScreen extends ConsumerWidget {
       // Spend would bury the documents you actually came for.
       initialIndex: status == TripStatus.active ? _expensesTabIndex : 0,
       child: Scaffold(
-        appBar: AppBar(
-          title: Hero(
-            tag: 'trip-name-${trip.id}',
-            child: Material(
-              type: MaterialType.transparency,
-              child: AutoDirectionText(
-                trip.name,
-                style: AppTextStyles.title.copyWith(color: colors.inkPrimary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (action) => _onMenu(context, ref, trip, action),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Text(l10n.menuEdit),
-                ),
-                PopupMenuItem(
-                  value: 'archive',
-                  child: Text(
-                    trip.archived ? l10n.menuUnarchive : l10n.menuArchive,
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(l10n.menuDelete),
-                ),
-              ],
-            ),
-          ],
-        ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Shares a tag with TripCard's cover hero (Task 3).
+                Hero(
+                  tag: 'trip-cover-${trip.id}',
+                  child: SizedBox(
+                    height: _coverHeight,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _CoverBackground(trip: trip, colors: colors),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppColors.dark.paper.withValues(alpha: 0.55),
+                                AppColors.dark.paper.withValues(alpha: 0.85),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.all(AppSpacing.sm),
+                      child: GlassChrome(
+                        borderRadius:
+                            BorderRadius.circular(AppShape.pillRadius),
+                        child: Padding(
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: AppSpacing.xs,
+                          ),
+                          child: Row(
+                            children: [
+                              // BackButton (not a raw Icon) so the glyph
+                              // still auto-mirrors for RTL — building the
+                              // topbar by hand must not lose what AppBar
+                              // gave us for free.
+                              BackButton(
+                                color: AppColors.dark.inkPrimary,
+                                onPressed: () => context.pop(),
+                              ),
+                              Expanded(
+                                child: Hero(
+                                  tag: 'trip-name-${trip.id}',
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: AutoDirectionText(
+                                      trip.name,
+                                      style: AppTextStyles.title.copyWith(
+                                        color: AppColors.dark.inkPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  color: AppColors.dark.inkPrimary,
+                                ),
+                                onSelected: (action) =>
+                                    _onMenu(context, ref, trip, action),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(l10n.menuEdit),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'archive',
+                                    child: Text(
+                                      trip.archived
+                                          ? l10n.menuUnarchive
+                                          : l10n.menuArchive,
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text(l10n.menuDelete),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: AppSpacing.lg,
+                  right: AppSpacing.lg,
+                  bottom: -_tabBarOverlap,
+                  child: GlassChrome(
+                    borderRadius: BorderRadius.circular(AppShape.radius),
+                    child: TabBar(
+                      labelColor: colors.inkPrimary,
+                      unselectedLabelColor: colors.inkMuted,
+                      indicatorColor: colors.accent,
+                      labelStyle: AppTextStyles.label,
+                      // Fixed (non-scrollable) so the tabs share the width
+                      // evenly and each label sits centred in its slot.
+                      tabs: [
+                        Tab(text: l10n.tabDocuments),
+                        Tab(text: l10n.tabPlacesInTrip),
+                        Tab(text: l10n.tabExpenses),
+                        Tab(text: l10n.tabJournal),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Clears the tab bar's overlap below the cover Stack so the
+            // date line starts right after it, not underneath it.
+            const SizedBox(height: _tabBarOverlap + AppSpacing.md),
             Padding(
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpacing.lg,
@@ -110,20 +212,6 @@ class TripDetailScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            TabBar(
-              labelColor: colors.inkPrimary,
-              unselectedLabelColor: colors.inkMuted,
-              indicatorColor: colors.accent,
-              labelStyle: AppTextStyles.label,
-              // Fixed (non-scrollable) so the tabs share the width evenly
-              // and each label sits centred in its slot.
-              tabs: [
-                Tab(text: l10n.tabDocuments),
-                Tab(text: l10n.tabPlacesInTrip),
-                Tab(text: l10n.tabExpenses),
-                Tab(text: l10n.tabJournal),
-              ],
-            ),
             Expanded(
               child: TabBarView(
                 // Journal's globe needs full ownership of horizontal drags
@@ -179,5 +267,25 @@ class TripDetailScreen extends ConsumerWidget {
           await repo.deleteTrip(trip.id);
         }
     }
+  }
+}
+
+class _CoverBackground extends StatelessWidget {
+  const _CoverBackground({required this.trip, required this.colors});
+
+  final Trip trip;
+  final AppColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = trip.coverPhotoPath;
+    if (path != null) {
+      return Image.file(File(path), fit: BoxFit.cover);
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: generatedCoverGradient(trip.id, colors),
+      ),
+    );
   }
 }
