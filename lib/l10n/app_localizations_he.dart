@@ -547,6 +547,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get listViewToggle => 'תצוגת רשימה';
 
   @override
+  String get placesFilterButton => 'סינון';
+
+  @override
+  String get placesFilterSheetTitle => 'מסננים';
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override

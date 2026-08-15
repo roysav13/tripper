@@ -92,6 +92,20 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
               onPressed: () =>
                   ref.read(placesMapModeProvider.notifier).state = !mapMode,
             ),
+          if (availableCategories.isNotEmpty || availableCountries.isNotEmpty)
+            PlaceFilterButton(
+              active:
+                  prunedCategories.isNotEmpty || prunedCountries.isNotEmpty,
+              onPressed: () => showPlaceFilterSheet(
+                context,
+                placesProvider: placeListProvider,
+                selectedCategories: _categoryFilter,
+                selectedCountries: _countryFilter,
+                onCategoriesChanged: (v) =>
+                    setState(() => _categoryFilter = v),
+                onCountriesChanged: (v) => setState(() => _countryFilter = v),
+              ),
+            ),
           IconButton(
             icon: Icon(Icons.add, color: colors.accent),
             tooltip: l10n.placesEmptyCta,
@@ -150,13 +164,6 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
-        PlaceFilterBar(
-          places: places,
-          selectedCategories: _categoryFilter,
-          selectedCountries: _countryFilter,
-          onCategoriesChanged: (v) => setState(() => _categoryFilter = v),
-          onCountriesChanged: (v) => setState(() => _countryFilter = v),
-        ),
         if (want.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsetsDirectional.only(

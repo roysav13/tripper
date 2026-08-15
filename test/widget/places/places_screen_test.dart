@@ -171,6 +171,8 @@ void main() {
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsOneWidget);
 
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Hotel'));
     await tester.pumpAndSettle();
 
@@ -212,6 +214,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Filter down to Hotel — Cafe B drops out of the list.
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Hotel'));
     await tester.pumpAndSettle();
     expect(find.text('Hotel A'), findsOneWidget);
@@ -219,7 +223,9 @@ void main() {
 
     // Simulate the underlying data changing so no place is a Hotel
     // anymore — the Hotel chip disappears, but without the fix the stale
-    // selection would keep the list stuck empty forever.
+    // selection would keep the list stuck empty forever. The sheet is
+    // still open here (never dismissed) — it must reflect this live, not
+    // just the snapshot it opened with.
     repo.emit([
       const Place(
         id: 'a',
@@ -250,10 +256,40 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Japan'));
     await tester.pumpAndSettle();
 
     expect(find.text('Thai spot'), findsNothing);
     expect(find.text('Japan spot'), findsOneWidget);
+  });
+
+  testWidgets(
+      'filter sheet renders many categories and countries without '
+      'overflow', (tester) async {
+    final many = [
+      for (var i = 0; i < 40; i++)
+        Place(
+          id: 'p$i',
+          name: 'Place $i',
+          country: 'Country $i',
+          category: PlaceCategory.values[i % PlaceCategory.values.length],
+        ),
+    ];
+    await tester.pumpWidget(_app(many));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.fling(
+      find.byType(SingleChildScrollView).last,
+      const Offset(0, -2000),
+      3000,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }

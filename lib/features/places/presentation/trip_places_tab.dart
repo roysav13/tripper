@@ -86,16 +86,31 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
       children: [
         Padding(
           padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-          child: SectionLabel(
-            l10n.tripPlacesProgress(visitedCount, places.length),
+          child: Row(
+            children: [
+              Expanded(
+                child: SectionLabel(
+                  l10n.tripPlacesProgress(visitedCount, places.length),
+                ),
+              ),
+              if (availableCategories.isNotEmpty ||
+                  availableCountries.isNotEmpty)
+                PlaceFilterButton(
+                  active: prunedCategories.isNotEmpty ||
+                      prunedCountries.isNotEmpty,
+                  onPressed: () => showPlaceFilterSheet(
+                    context,
+                    placesProvider: tripPlacesProvider(widget.trip.id),
+                    selectedCategories: _categoryFilter,
+                    selectedCountries: _countryFilter,
+                    onCategoriesChanged: (v) =>
+                        setState(() => _categoryFilter = v),
+                    onCountriesChanged: (v) =>
+                        setState(() => _countryFilter = v),
+                  ),
+                ),
+            ],
           ),
-        ),
-        PlaceFilterBar(
-          places: places,
-          selectedCategories: _categoryFilter,
-          selectedCountries: _countryFilter,
-          onCategoriesChanged: (v) => setState(() => _categoryFilter = v),
-          onCountriesChanged: (v) => setState(() => _countryFilter = v),
         ),
         const SizedBox(height: AppSpacing.sm),
         for (final place in sorted)

@@ -1082,6 +1082,18 @@ abstract class AppLocalizations {
   /// **'List view'**
   String get listViewToggle;
 
+  /// No description provided for @placesFilterButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get placesFilterButton;
+
+  /// No description provided for @placesFilterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get placesFilterSheetTitle;
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

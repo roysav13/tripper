@@ -551,6 +551,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listViewToggle => 'List view';
 
   @override
+  String get placesFilterButton => 'Filter';
+
+  @override
+  String get placesFilterSheetTitle => 'Filters';
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

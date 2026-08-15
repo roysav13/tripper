@@ -54,6 +54,8 @@ void main() {
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsOneWidget);
 
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Hotel'));
     await tester.pumpAndSettle();
 
@@ -82,6 +84,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Filter down to Hotel — Cafe B drops out of the list.
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Hotel'));
     await tester.pumpAndSettle();
     expect(find.text('Hotel A'), findsOneWidget);
