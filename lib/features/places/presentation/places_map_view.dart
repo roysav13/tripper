@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -5,6 +7,21 @@ import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/place.dart';
 import 'map_style.dart';
+
+// Layered-dot bitmap markers: halo, ring, core — the same three-layer
+// technique and proportions journal_map_view.dart's plain dot already
+// established for the Journal map (matching "the globe's dot language"
+// per the redesign spec, §6). Only the want-to-go state gets the glowing
+// halo; been-there stays a plain ring+core, so the two pin states read as
+// "glowing" vs. "quiet" at a glance without needing a second hue
+// (component rule 5: "coral+glow = want-to-go, muted parchment/grey =
+// been-there").
+const _dotCanvasSize = 56.0;
+const _dotCoreRadius = 9.0;
+const _dotBorderRadius = 13.0;
+const _dotHaloRadius = 21.0;
+const _dotHaloBlur = 6.0;
+const _haloAlpha = 0.28;
 
 /// Google Maps needs a platform view, which widget tests can't render.
 /// Tests pass `renderMap: false` to get the pin/label scaffolding without
@@ -47,8 +64,44 @@ class _PlacesMapViewState extends State<PlacesMapView> {
   GoogleMapController? _controller;
   MapType _mapType = MapType.normal;
 
+  /// Built once per theme brightness (they carry no per-place data) and
+  /// reused for every marker of that state.
+  BitmapDescriptor? _wantMarker;
+  BitmapDescriptor? _beenMarker;
+
   List<Place> get _located =>
       widget.places.where((p) => p.hasLocation).toList();
+
+  // Not initState: _loadMarkerBitmaps reads context.colors (a Theme
+  // lookup), and establishing an InheritedWidget dependency before
+  // initState() completes throws — same reasoning as
+  // journal_map_view.dart's didChangeDependencies override.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.renderMap && _wantMarker == null) {
+      _loadMarkerBitmaps();
+    }
+  }
+
+  Future<void> _loadMarkerBitmaps() async {
+    final colors = context.colors;
+    final want = await _dotMarkerBitmap(
+      coreColor: colors.accent,
+      ringColor: colors.surface,
+      glow: true,
+    );
+    final been = await _dotMarkerBitmap(
+      coreColor: colors.inkMuted,
+      ringColor: colors.surface,
+      glow: false,
+    );
+    if (!mounted) return;
+    setState(() {
+      _wantMarker = want;
+      _beenMarker = been;
+    });
+  }
 
   @override
   void didUpdateWidget(PlacesMapView oldWidget) {
@@ -185,6 +238,9 @@ class _PlacesMapViewState extends State<PlacesMapView> {
               Marker(
                 markerId: MarkerId(place.id),
                 position: LatLng(place.lat!, place.lng!),
+                icon: (place.isVisited ? _beenMarker : _wantMarker) ??
+                    BitmapDescriptor.defaultMarker,
+                anchor: const Offset(0.5, 0.5),
                 infoWindow: InfoWindow(
                   title: place.name,
                   snippet: [
@@ -296,4 +352,44 @@ class _EdgeShadow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Draws a halo/ring/core dot to a fixed-pixel-size PNG and wraps it as a
+/// [BitmapDescriptor] — the flat-canvas equivalent of journal_globe.dart's
+/// native Point layering, matching journal_map_view.dart's own
+/// `_plainDotMarkerBitmap` proportions so map pins and journal dots read
+/// as the same visual language. [glow] off skips the halo layer entirely
+/// (the been-there / "quiet" state) rather than drawing it at zero alpha.
+Future<BitmapDescriptor> _dotMarkerBitmap({
+  required Color coreColor,
+  required Color ringColor,
+  required bool glow,
+}) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  const center = Offset(_dotCanvasSize / 2, _dotCanvasSize / 2);
+
+  if (glow) {
+    canvas.drawCircle(
+      center,
+      _dotHaloRadius,
+      Paint()
+        ..color = coreColor.withValues(alpha: _haloAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _dotHaloBlur),
+    );
+  }
+  canvas.drawCircle(center, _dotBorderRadius, Paint()..color = ringColor);
+  canvas.drawCircle(center, _dotCoreRadius, Paint()..color = coreColor);
+
+  final picture = recorder.endRecording();
+  final rendered = await picture.toImage(
+    _dotCanvasSize.toInt(),
+    _dotCanvasSize.toInt(),
+  );
+  final byteData = await rendered.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.bytes(
+    byteData!.buffer.asUint8List(),
+    width: _dotCanvasSize,
+    height: _dotCanvasSize,
+  );
 }
