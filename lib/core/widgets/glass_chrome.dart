@@ -14,14 +14,25 @@ class GlassChrome extends StatelessWidget {
     super.key,
     required this.child,
     this.borderRadius = BorderRadius.zero,
+    this.tint,
   });
 
   final Widget child;
   final BorderRadius borderRadius;
 
+  /// Overrides the glass fill color, ignoring the current theme. Use this
+  /// when the chrome's own ink is ALSO theme-independent (e.g. sitting over
+  /// a fixed dark scrim) — leave it null when the chrome's ink is
+  /// theme-derived too (e.g. a tab bar mostly over the app's own
+  /// background), which is what makes fill and ink stay legible together.
+  final Color? tint;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final fillColor = tint ?? colors.surface;
+    final borderColor =
+        tint != null ? AppColors.dark.hairline : colors.hairline;
     // The shadow lives on this outer DecoratedBox, deliberately outside
     // the ClipRRect below: a BoxShadow paints outside its box's bounds
     // (offset/blurRadius), and ClipRRect clips to exactly those bounds —
@@ -47,10 +58,10 @@ class GlassChrome extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colors.surface.withValues(alpha: 0.55),
+              color: fillColor.withValues(alpha: 0.55),
               borderRadius: borderRadius,
               border: Border.all(
-                color: colors.hairline,
+                color: borderColor,
                 width: AppShape.hairlineWidth,
               ),
             ),

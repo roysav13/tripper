@@ -61,6 +61,12 @@ Future<Widget> _app(Trip trip) async => ProviderScope(
 void expectTabShowing(String text) => expect(find.text(text), findsWidgets);
 
 void main() {
+  // A missed tap (hitting a widget whose own hit-test region doesn't
+  // actually cover it — the exact class of bug Fix 1 addresses) normally
+  // only prints a warning; this promotes it to a thrown exception so tests
+  // relying on `tester.tap` actually landing can't pass by accident.
+  WidgetController.hitTestWarningShouldBeFatal = true;
+
   testWidgets(
       'an active trip opens on Spend — the tab you actually use '
       'while travelling', (tester) async {
@@ -116,7 +122,15 @@ void main() {
     await tester.pumpWidget(await _app(trip));
     await tester.pumpAndSettle();
 
-    for (final tab in ['Documents', 'Places', 'Journal']) {
+    await tester.tap(find.text('Documents'));
+    await tester.pumpAndSettle();
+    // The Documents tab's actual empty-state content (no docs are wired
+    // into _app's fixtures), not just "no exception was thrown" — that
+    // vacuous check would still pass even if the tap missed the tab bar
+    // entirely and the view never switched.
+    expectTabShowing('No documents linked');
+
+    for (final tab in ['Places', 'Journal']) {
       await tester.tap(find.text(tab));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: tab);
@@ -141,8 +155,7 @@ void main() {
     expect(find.text('Plan'), findsNothing);
   });
 
-  testWidgets(
-      'the cover hero and glass chrome render without overflow',
+  testWidgets('the cover hero and glass chrome render without overflow',
       (tester) async {
     final trip = _trip(
       start: DateTime(2026, 7, 16),
@@ -160,6 +173,26 @@ void main() {
     // One GlassChrome for the topbar (back/name/menu), one for the
     // floating tab bar.
     expect(find.byType(GlassChrome), findsNWidgets(2));
+    // A real BackButton (not a raw Icon(Icons.arrow_back)) so the glyph
+    // still auto-mirrors for RTL.
+    expect(find.byType(BackButton), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'the topbar glass chrome meets text contrast in light mode — its '
+      'ink is fixed-dark-scrim, so the fill must not go theme-derived',
+      (tester) async {
+    final handle = tester.ensureSemantics();
+    final trip = _trip(
+      start: DateTime(2026, 7, 16),
+      end: DateTime(2026, 7, 27),
+    );
+    // _app already themes the screen with AppTheme.light().
+    await tester.pumpWidget(await _app(trip));
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
   });
 }
