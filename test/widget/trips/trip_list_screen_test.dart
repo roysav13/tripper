@@ -120,9 +120,14 @@ void main() {
 
     expect(find.text('ACTIVE NOW'), findsOneWidget);
     expect(find.text('UPCOMING'), findsOneWidget);
-    expect(find.text('PAST'), findsOneWidget);
     expect(find.text('Active trip'), findsOneWidget);
     expect(find.text('Day 4 of 12'), findsOneWidget);
+
+    // Reskinned TripCard's cover photo strip makes each card taller, so
+    // with three sections the PAST bucket now sits past the ListView's
+    // default cache extent — scroll it into view before asserting.
+    await tester.scrollUntilVisible(find.text('PAST'), 300);
+    expect(find.text('PAST'), findsOneWidget);
   });
 
   testWidgets('dateless trip lands in PLANNED with dates TBD', (tester) async {
