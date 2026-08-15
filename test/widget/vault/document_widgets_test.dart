@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_colors.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/auto_direction_text.dart';
 import 'package:tripper/features/vault/domain/document.dart';
 import 'package:tripper/features/vault/presentation/document_widgets.dart';
 import 'package:tripper/l10n/app_localizations.dart';
@@ -120,6 +121,58 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.push_pin_outlined), findsOneWidget);
+    });
+  });
+
+  group('PinnedDocumentCard', () {
+    testWidgets('renders a two-stop gradient from surface toward '
+        'heroGradientEnd, not a flat color', (tester) async {
+      await tester.pumpWidget(
+        _app(PinnedDocumentCard(doc: _doc(), warning: false)),
+      );
+      await tester.pumpAndSettle();
+
+      final ink = tester.widget<Ink>(find.byType(Ink));
+      final decoration = ink.decoration! as BoxDecoration;
+      final gradient = decoration.gradient! as LinearGradient;
+      expect(gradient.colors, hasLength(2));
+      expect(gradient.colors.first, AppColors.dark.surface);
+      // The second stop is a blend, not the raw token — it must not equal
+      // heroGradientEnd outright (that would be full-strength, the exact
+      // "too strong" the user asked to soften), and must not equal the
+      // first stop either (that would be no gradient at all).
+      expect(gradient.colors[1], isNot(AppColors.dark.heroGradientEnd));
+      expect(gradient.colors[1], isNot(gradient.colors[0]));
+    });
+
+    testWidgets('title and category icon use theme ink, not fixed on-scrim '
+        'ink', (tester) async {
+      await tester.pumpWidget(
+        _app(PinnedDocumentCard(doc: _doc(), warning: false)),
+      );
+      await tester.pumpAndSettle();
+
+      final title = tester.widget<AutoDirectionText>(
+        find.byType(AutoDirectionText),
+      );
+      expect(title.style?.color, AppColors.dark.inkPrimary);
+    });
+
+    testWidgets('tapping the card fires onTap', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        _app(
+          PinnedDocumentCard(
+            doc: _doc(),
+            warning: false,
+            onTap: () => tapped = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Passport'));
+      expect(tapped, isTrue);
     });
   });
 }

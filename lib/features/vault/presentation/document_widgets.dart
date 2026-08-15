@@ -6,7 +6,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
-import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
 
@@ -181,7 +180,11 @@ class DocumentRowTile extends StatelessWidget {
   }
 }
 
-/// Pinned quick-access card: light surface, teal border (revised mockup).
+/// Pinned quick-access card: a soft gradient wash built from the card's
+/// own surface tone toward a muted `heroGradientEnd` — the same "your
+/// most important documents get their own moment" idea trip covers use,
+/// deliberately much softer (35% peak, not full strength) since this is
+/// a document, not a photo.
 class PinnedDocumentCard extends StatelessWidget {
   const PinnedDocumentCard({
     super.key,
@@ -198,31 +201,52 @@ class PinnedDocumentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    return PaperCard(
-      borderColor: colors.accent,
-      onTap: onTap,
-      padding: const EdgeInsetsDirectional.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(categoryIcon(doc.category), size: 18, color: colors.accent),
-          const SizedBox(height: AppSpacing.sm),
-          AutoDirectionText(
-            doc.title,
-            style: AppTextStyles.label.copyWith(color: colors.inkPrimary),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+
+    return Material(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShape.radius),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: [
+              colors.surface,
+              Color.lerp(colors.surface, colors.heroGradientEnd, 0.35)!,
+            ],
           ),
-          const SizedBox(height: 2),
-          MonoText(
-            doc.expiryDate != null
-                ? _expiryText(l10n, doc.expiryDate!)
-                : categoryLabel(l10n, doc.category),
-            color: warning ? colors.warning : null,
-            muted: !warning,
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(categoryIcon(doc.category), size: 18, color: colors.accent),
+                const SizedBox(height: AppSpacing.sm),
+                AutoDirectionText(
+                  doc.title,
+                  style: AppTextStyles.label.copyWith(color: colors.inkPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                MonoText(
+                  doc.expiryDate != null
+                      ? _expiryText(l10n, doc.expiryDate!)
+                      : categoryLabel(l10n, doc.category),
+                  color: warning ? colors.warning : null,
+                  muted: !warning,
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
