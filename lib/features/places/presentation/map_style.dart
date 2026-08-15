@@ -1,36 +1,62 @@
-/// Stock Google Maps look (design decision, 2026-07-23 — supersedes the
-/// muted app-branded style from M4): full color roads/water, POI + business
-/// labels and transit lines on, standard Google chrome (zoom controls, map
-/// toolbar, my-location button). The app's own visual language stays out of
-/// the map surface itself so it reads exactly like the Google Maps app.
+/// Custom Google Maps style (redesign spec §6, Phase 3): retunes the map
+/// surface to the app's own `map.water`/`map.land`/`warning.amber` tokens
+/// instead of leaving light mode as Google's stock tiles and dark mode as
+/// Google's generic "Night" style. This supersedes the 2026-07-23 "stock
+/// Google Maps look" decision that used to live in this file's header —
+/// the app's visual language now extends onto the map surface itself.
 ///
-/// Light mode: `null` means "no style override" — the GoogleMap widget
-/// renders Google's default tiles untouched.
-const String? kMapStyleLight = null;
+/// The hex literals below are copies of `AppColors.light`/`AppColors.dark`
+/// (`lib/core/theme/app_colors.dart`) — `GoogleMap.style` needs a plain
+/// JSON string built at compile time, so it can't reference `AppColors`
+/// directly. If those tokens ever change, these two strings need updating
+/// to match (this is the same narrow "copy, don't invent" exception to
+/// "no raw hex outside app_colors.dart" that `TripCard`'s cover scrim
+/// uses — see phase2a's plan, Task 3).
+///
+/// Both styles share the same feature/element shape (base geometry, road,
+/// road.highway, transit, water, plus label fill/stroke for each), only
+/// dropping Google's separate `poi.park` override — this app's token set
+/// has no distinct "park" hue, and folding parks into the base geometry
+/// color keeps the palette as tight as the redesign spec calls for
+/// (§3.2: "tightened down... named brand hues: three").
+const kMapStyleLight = '''
+[
+  {"elementType":"geometry","stylers":[{"color":"#efe7d8"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#403f47"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#efe7d8"}]},
+  {"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#8d5513"}]},
+  {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#8d5513"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#efe7d8"}]},
+  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#faf3ec"}]},
+  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#403f47"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#efe7d8"}]},
+  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#faf3ec"}]},
+  {"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#8d5513"}]},
+  {"featureType":"transit","elementType":"geometry","stylers":[{"color":"#efe7d8"}]},
+  {"featureType":"transit.station","elementType":"labels.text.fill","stylers":[{"color":"#8d5513"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#dceae6"}]},
+  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#56525d"}]},
+  {"featureType":"water","elementType":"labels.text.stroke","stylers":[{"color":"#dceae6"}]}
+]
+''';
 
-/// Dark mode: GoogleMap has no built-in night theme, so without an explicit
-/// style the tiles stay bright white even when the rest of the app is dark.
-/// This is Google's own published "Night" style (the same one used to give
-/// the real Google Maps app its dark-mode look), not a custom palette.
 const kMapStyleDark = '''
 [
   {"elementType":"geometry","stylers":[{"color":"#242f3e"}]},
-  {"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#868ba0"}]},
   {"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},
-  {"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},
-  {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},
-  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c3f"}]},
-  {"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#6b9a76"}]},
-  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},
-  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},
-  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#9ca5b3"}]},
-  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},
-  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#1f2835"}]},
-  {"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#f3d19c"}]},
-  {"featureType":"transit","elementType":"geometry","stylers":[{"color":"#2f3948"}]},
-  {"featureType":"transit.station","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},
+  {"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#f2a93c"}]},
+  {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#f2a93c"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#242f3e"}]},
+  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#12141c"}]},
+  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#868ba0"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#242f3e"}]},
+  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#12141c"}]},
+  {"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#f2a93c"}]},
+  {"featureType":"transit","elementType":"geometry","stylers":[{"color":"#242f3e"}]},
+  {"featureType":"transit.station","elementType":"labels.text.fill","stylers":[{"color":"#f2a93c"}]},
   {"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]},
-  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#515c6d"}]},
+  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#868ba0"}]},
   {"featureType":"water","elementType":"labels.text.stroke","stylers":[{"color":"#17263c"}]}
 ]
 ''';

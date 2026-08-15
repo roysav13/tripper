@@ -10,10 +10,12 @@ import 'map_style.dart';
 /// Tests pass `renderMap: false` to get the pin/label scaffolding without
 /// the native surface (SPEC: no network, no platform channels in tests).
 ///
-/// Styling is intentionally stock Google Maps (design decision, 2026-07-23):
-/// default colors/POIs/transit, standard chrome (zoom controls, map
-/// toolbar, my-location button + blue dot), default red pins, and a layers
-/// button — the same building blocks as the real Google Maps app.
+/// Styling is the app's own authored light/dark palette (`map_style.dart`,
+/// Phase 3 — supersedes the 2026-07-23 "stock Google Maps look" decision):
+/// custom colors/labels, but standard Google chrome (zoom controls, map
+/// toolbar, my-location button + blue dot), and default markers are
+/// replaced with custom layered-dot bitmaps (see Task 2 of the Places
+/// redesign plan) — a hybrid of "our palette" and "familiar map UX".
 class PlacesMapView extends StatefulWidget {
   const PlacesMapView({
     super.key,
