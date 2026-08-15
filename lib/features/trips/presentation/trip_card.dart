@@ -183,7 +183,15 @@ class _CoverBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = trip.coverPhotoPath;
     if (path != null) {
-      return Image.file(File(path), fit: BoxFit.cover);
+      return Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: generatedCoverGradient(trip.id, colors),
+          ),
+        ),
+      );
     }
     return DecoratedBox(
       decoration: BoxDecoration(

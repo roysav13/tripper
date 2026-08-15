@@ -38,7 +38,7 @@ void main() {
         (w) =>
             w is DecoratedBox &&
             w.decoration is BoxDecoration &&
-            (w.decoration! as BoxDecoration).gradient is LinearGradient,
+            (w.decoration as BoxDecoration).gradient is LinearGradient,
       ),
       findsWidgets,
     );
