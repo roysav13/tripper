@@ -86,7 +86,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final edge = tester.getTopLeft(find.byType(ColoredBox).first);
+      final edge = tester.getTopLeft(
+        find.byWidgetPredicate(
+          (w) => w is ColoredBox && w.color == AppColors.dark.accent,
+        ),
+      );
       final text = tester.getTopLeft(find.text('Passport'));
       // RTL: the leading (start) edge is the right side of the screen —
       // the accent bar must sit to the right of the title, not the left.

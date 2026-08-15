@@ -126,9 +126,10 @@ class DocumentRowTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             ColoredBox(color: edgeColor, child: const SizedBox(width: 5)),
             Expanded(
               child: Padding(
@@ -173,6 +174,7 @@ class DocumentRowTile extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
