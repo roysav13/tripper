@@ -46,3 +46,6 @@ app.*.map.json
 
 # Claude Code brainstorming visual companion (local scratch, not for review)
 .superpowers/
+
+# Local git worktrees for isolated feature work
+.worktrees/
