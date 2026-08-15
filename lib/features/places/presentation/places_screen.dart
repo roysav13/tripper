@@ -70,7 +70,6 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
       categories: prunedCategories,
       countries: prunedCountries,
     );
-    final stats = ref.watch(placeStatsProvider);
     final trips = ref.watch(tripListProvider).valueOrNull ?? [];
     final tripNames = {for (final t in trips) t.id: t.name};
     final mapMode = ref.watch(placesMapModeProvider);
@@ -108,7 +107,6 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         filtered,
         want,
         been,
-        stats,
         tripNames,
         mapMode,
       ),
@@ -123,7 +121,6 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     List<Place> filtered,
     List<Place> want,
     List<Place> been,
-    ({int countries, int visited, int days}) stats,
     Map<String, String> tripNames,
     bool mapMode,
   ) {
@@ -153,12 +150,6 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
-        PlaceStatsHeader(
-          countries: stats.countries,
-          visited: stats.visited,
-          days: stats.days,
-        ),
-        const SizedBox(height: AppSpacing.lg),
         PlaceFilterBar(
           places: places,
           selectedCategories: _categoryFilter,

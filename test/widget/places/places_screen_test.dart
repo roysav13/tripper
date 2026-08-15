@@ -7,7 +7,6 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
-import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
@@ -63,8 +62,7 @@ void main() {
     expect(find.text('Where to next?'), findsOneWidget);
   });
 
-  testWidgets('sections split wishlist and visited, stats count up',
-      (tester) async {
+  testWidgets('sections split wishlist and visited', (tester) async {
     await tester.pumpWidget(
       _app([
         _p('Railay viewpoint', city: 'Krabi', country: 'Thailand'),
@@ -86,53 +84,7 @@ void main() {
 
     expect(find.text('WANT TO GO · 1'), findsOneWidget);
     expect(find.text('BEEN THERE · 2'), findsOneWidget);
-    // Stats header: 2 distinct countries, 2 visited, 0 days (no trips).
-    expect(find.text('COUNTRIES'), findsOneWidget);
-    expect(find.text('PLACES VISITED'), findsOneWidget);
-    expect(find.text('DAYS AWAY'), findsOneWidget);
-    expect(find.text('2'), findsNWidgets(2));
     expect(find.textContaining('VISITED 18 JUL 2026'), findsOneWidget);
-  });
-
-  testWidgets('days-away stat counts finished and in-progress trips only',
-      (tester) async {
-    await tester.pumpWidget(
-      _app(
-        // At least one place, or the screen shows the empty state and the
-        // stats header is never built.
-        [_p('Railay viewpoint', country: 'Thailand')],
-        trips: [
-          // Finished: 5 days.
-          Trip(
-            id: 'past',
-            name: 'Rome',
-            destinations: ['Rome'],
-            startDate: DateTime(2026, 6, 1),
-            endDate: DateTime(2026, 6, 5),
-          ),
-          // In progress (today = 19 Jul): 16-19 Jul = 4 days so far.
-          Trip(
-            id: 'active',
-            name: 'Krabi',
-            destinations: ['Krabi'],
-            startDate: DateTime(2026, 7, 16),
-            endDate: DateTime(2026, 7, 27),
-          ),
-          // Upcoming: contributes nothing.
-          Trip(
-            id: 'future',
-            name: 'Tokyo',
-            destinations: ['Tokyo'],
-            startDate: DateTime(2026, 9, 1),
-            endDate: DateTime(2026, 9, 10),
-          ),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('DAYS AWAY'), findsOneWidget);
-    expect(find.text('9'), findsOneWidget); // 5 + 4, not 5 + 12 + 10
   });
 
   testWidgets('check tap moves a place from wishlist to visited',
@@ -303,30 +255,5 @@ void main() {
 
     expect(find.text('Thai spot'), findsNothing);
     expect(find.text('Japan spot'), findsOneWidget);
-  });
-
-  testWidgets(
-      'stat labels stay centered even when the longest one wraps to two '
-      'lines', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en')],
-        home: const Scaffold(
-          body: SizedBox(
-            width: 200, // narrow enough to force "Places visited" to wrap
-            child: PlaceStatsHeader(countries: 3, visited: 12, days: 20),
-          ),
-        ),
-      ),
-    );
-    final label = tester.widget<Text>(find.text('PLACES VISITED'));
-    expect(label.textAlign, TextAlign.center);
   });
 }
