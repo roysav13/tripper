@@ -64,7 +64,13 @@ class _PlacesMapViewState extends State<PlacesMapView> {
   GoogleMapController? _controller;
   MapType _mapType = MapType.normal;
 
-  /// Built once per theme brightness (they carry no per-place data) and
+  /// Synchronous flag to guard against concurrent _loadMarkerBitmaps calls
+  /// during the async bitmap generation window. Set to true immediately
+  /// before the first await, preventing re-entrancy if didChangeDependencies
+  /// fires again (e.g., theme/locale change).
+  bool _markersInitialized = false;
+
+  /// Built once per widget lifetime (they carry no per-place data) and
   /// reused for every marker of that state.
   BitmapDescriptor? _wantMarker;
   BitmapDescriptor? _beenMarker;
@@ -79,7 +85,8 @@ class _PlacesMapViewState extends State<PlacesMapView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.renderMap && _wantMarker == null) {
+    if (widget.renderMap && !_markersInitialized) {
+      _markersInitialized = true;
       _loadMarkerBitmaps();
     }
   }
