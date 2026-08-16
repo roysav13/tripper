@@ -11,7 +11,7 @@ import '../sharing/share_intent_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// Bottom-nav shell: Trips / Vault / Places (SPEC — 3 tabs, teal active).
+/// Bottom-nav shell: Trips / Vault / Places (SPEC — 3 tabs, coral active).
 /// Bar sits on the paper tone with a soft hairline — no hard edge.
 /// Also hosts the share-target listener: a file shared into Tripper opens
 /// the save-to-vault sheet from any screen.

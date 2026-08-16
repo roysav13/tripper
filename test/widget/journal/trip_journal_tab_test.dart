@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tripper/core/theme/app_colors.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/glass_chrome.dart';
+import 'package:tripper/core/widgets/mono_text.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/presentation/journal_globe.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
@@ -52,6 +55,36 @@ Future<FakeJournalRepository> _pump(
   );
   await tester.pumpAndSettle();
   return repo;
+}
+
+Future<void> _pumpDark(
+  WidgetTester tester, {
+  List<JournalEntry> entries = const [],
+}) async {
+  final repo = FakeJournalRepository(entries);
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        journalRepositoryProvider.overrideWithValue(repo),
+        placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body:
+              TripJournalTab(trip: _trip, renderGlobe: false, renderMap: false),
+        ),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -277,5 +310,52 @@ void main() {
     await tester.pumpAndSettle();
     // SectionLabel uppercases its text.
     expect(find.text('NEW ENTRY'), findsOneWidget);
+  });
+
+  testWidgets(
+      'the floating top chrome stays a fixed dark glass panel in dark app '
+      'theme, not an inverted bright one (regression: it used to hand-roll '
+      'panels from theme-flipping colors.inkPrimary/colors.surface)',
+      (tester) async {
+    await _pumpDark(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Arrived in Krabi',
+          loggedAt: DateTime(2026, 7, 20),
+          createdAt: DateTime(2026, 7, 20),
+        ),
+      ],
+    );
+
+    // Both the stats pill and the two icon buttons are GlassChrome now,
+    // each pinned to the fixed dark tint regardless of app theme.
+    final glassChromes =
+        tester.widgetList<GlassChrome>(find.byType(GlassChrome));
+    expect(glassChromes.length, greaterThanOrEqualTo(3));
+    for (final chrome in glassChromes) {
+      expect(chrome.tint, AppColors.dark.surface);
+    }
+
+    // The stats line's ink is fixed dark-mode ink, not colors.surface
+    // (which would be dark-theme's near-white-on-dark-card tone — wrong
+    // against the glass panel's own fixed dark tint).
+    final statsMono = tester
+        .widgetList<MonoText>(find.byType(MonoText))
+        .where((m) => m.text.toUpperCase().contains('ENTRIES'))
+        .single;
+    expect(statsMono.color, AppColors.dark.inkPrimary);
+
+    // Same for both icon buttons' glyphs.
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.add)).color,
+      AppColors.dark.inkPrimary,
+    );
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.map_outlined)).color,
+      AppColors.dark.inkPrimary,
+    );
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/glass_chrome.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
@@ -53,7 +54,6 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
     final asyncEntries = ref.watch(tripJournalProvider(widget.trip.id));
     final entries = asyncEntries.valueOrNull ?? const <JournalEntry>[];
@@ -124,7 +124,7 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
               child: _GlassPill(
                 child: MonoText(
                   l10n.journalStatsLine(entries.length, visitedPlaces.length),
-                  color: colors.surface,
+                  color: AppColors.dark.inkPrimary,
                 ),
               ),
             ),
@@ -235,10 +235,13 @@ class _GalleryOverlay extends StatelessWidget {
   }
 }
 
-/// A short fade at the very top of the globe/map — same inkPrimary-alpha
-/// gradient convention as [_GalleryOverlay], much shallower since this is
-/// only smoothing a hairline seam against the TabBar above, not backing
-/// legible overlaid text.
+/// A short fade at the very top of the globe/map, smoothing the hairline
+/// seam against the TabBar above — fixed `AppColors.dark.paper`-based
+/// gradient (not theme-aware `colors.inkPrimary`), same reasoning as
+/// [_GlassPill]: this sits directly over the globe/map's own
+/// unpredictable imagery, so the scrim must read as "quiet dark" in both
+/// app themes, matching TripCard's and TripDetailScreen's cover-scrim
+/// convention.
 class _TopEdgeScrim extends StatelessWidget {
   const _TopEdgeScrim();
 
@@ -246,7 +249,6 @@ class _TopEdgeScrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return Container(
       height: _height,
       decoration: BoxDecoration(
@@ -254,8 +256,8 @@ class _TopEdgeScrim extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colors.inkPrimary.withValues(alpha: 0.22),
-            colors.inkPrimary.withValues(alpha: 0),
+            AppColors.dark.paper.withValues(alpha: 0.22),
+            AppColors.dark.paper.withValues(alpha: 0),
           ],
         ),
       ),
@@ -263,10 +265,16 @@ class _TopEdgeScrim extends StatelessWidget {
   }
 }
 
-/// A small translucent pill — the on-glass equivalent of SectionLabel for
-/// content that floats directly over the globe/map instead of a plain
-/// surface. Same colors.inkPrimary-alpha backdrop already used for the
-/// presentation sheet's menu scrim and the gallery card's badges.
+/// A small translucent glass pill — the on-glass equivalent of
+/// SectionLabel for content that floats directly over the globe/map.
+/// Fixed `AppColors.dark.surface` tint (not theme-aware `colors.surface`):
+/// this chrome sits directly over the globe/map's own unpredictable
+/// imagery with no guaranteed-dark scrim behind it (unlike
+/// TripDetailScreen's cover hero, which has one) — a theme-aware fill
+/// would turn near-white in dark app-theme and read as a bright blob
+/// instead of a quiet dark tint. Mirrors TripDetailScreen's own topbar
+/// GlassChrome usage (trip_detail_screen.dart), the same "floating chrome
+/// over unpredictable cover art" position.
 class _GlassPill extends StatelessWidget {
   const _GlassPill({required this.child});
 
@@ -274,12 +282,9 @@ class _GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.inkPrimary.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return GlassChrome(
+      borderRadius: BorderRadius.circular(20),
+      tint: AppColors.dark.surface,
       child: Padding(
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: AppSpacing.sm + 4,
@@ -291,13 +296,10 @@ class _GlassPill extends StatelessWidget {
   }
 }
 
-/// A circular floating action button on the same glass backdrop as
-/// [_GlassPill] — the add-entry and map/list-toggle actions, relocated
-/// off the removed header bar onto the globe itself. The backdrop is
-/// sized and tinted to read as a soft, seamless glass tint rather than a
-/// conspicuous solid disc — matching the button's own footprint (via
-/// IconButton's style, not a separately-sized wrapper) instead of the
-/// larger default Material tap-target circle.
+/// A circular glass icon button on the same fixed-dark backdrop as
+/// [_GlassPill] — the add-entry and map/list-toggle actions, floating on
+/// the globe itself. See [_GlassPill]'s doc comment for why the tint is
+/// fixed rather than theme-aware.
 class _GlassIconButton extends StatelessWidget {
   const _GlassIconButton({
     required this.icon,
@@ -309,18 +311,22 @@ class _GlassIconButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
 
+  static const _size = 36.0;
+
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return IconButton(
-      icon: Icon(icon, color: colors.surface, size: 20),
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        backgroundColor: colors.inkPrimary.withValues(alpha: 0.32),
-        shape: const CircleBorder(),
-        minimumSize: const Size(36, 36),
-        padding: EdgeInsets.zero,
+    return GlassChrome(
+      borderRadius: BorderRadius.circular(_size / 2),
+      tint: AppColors.dark.surface,
+      child: IconButton(
+        icon: Icon(icon, color: AppColors.dark.inkPrimary, size: 20),
+        tooltip: tooltip,
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          shape: const CircleBorder(),
+          minimumSize: const Size(_size, _size),
+          padding: EdgeInsets.zero,
+        ),
       ),
     );
   }

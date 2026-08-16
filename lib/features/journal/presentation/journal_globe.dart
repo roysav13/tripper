@@ -31,9 +31,10 @@ const _plainDotSize = 2.5;
 // the layering comment in _addPoints).
 const _plainBorderSize = 4.0;
 const _haloDotSize = 5.0;
-// Monochrome teal — CLAUDE.md's two-accents rule (teal for actions/
-// places, rust reserved for warnings only) means the halo has to be a
-// low-alpha version of the same accent, not a new hue.
+// One accent, coral — component rule 1 ("one accent, not two"; see
+// docs/superpowers/specs/2026-08-14-tripper-redesign-design.md §4) means
+// the halo has to be a low-alpha version of the same accent, not a new
+// hue.
 const _haloAlpha = 0.28;
 
 // A cluster marker (multiple close-together entries collapsed into one
@@ -786,7 +787,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
 }
 
 /// Covers the sphere while its surface texture is still decoding — a
-/// pulsing accent-teal ring rather than Material's default
+/// pulsing coral ring rather than Material's default
 /// [CircularProgressIndicator], which reads as generic chrome against this
 /// app's serif/mono/hairline visual language.
 class _GlobeLoadingIndicator extends StatefulWidget {
