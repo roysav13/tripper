@@ -29,6 +29,7 @@ final _trip = Trip(
 Future<FakeJournalRepository> _pump(
   WidgetTester tester, {
   List<JournalEntry> entries = const [],
+  ThemeData? theme,
 }) async {
   final repo = FakeJournalRepository(entries);
   await tester.pumpWidget(
@@ -38,7 +39,7 @@ Future<FakeJournalRepository> _pump(
         placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
       ],
       child: MaterialApp(
-        theme: AppTheme.light(),
+        theme: theme ?? AppTheme.light(),
         home: Scaffold(
           body:
               TripJournalTab(trip: _trip, renderGlobe: false, renderMap: false),
@@ -55,36 +56,6 @@ Future<FakeJournalRepository> _pump(
   );
   await tester.pumpAndSettle();
   return repo;
-}
-
-Future<void> _pumpDark(
-  WidgetTester tester, {
-  List<JournalEntry> entries = const [],
-}) async {
-  final repo = FakeJournalRepository(entries);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        journalRepositoryProvider.overrideWithValue(repo),
-        placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.dark(),
-        home: Scaffold(
-          body:
-              TripJournalTab(trip: _trip, renderGlobe: false, renderMap: false),
-        ),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en')],
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -317,7 +288,7 @@ void main() {
       'theme, not an inverted bright one (regression: it used to hand-roll '
       'panels from theme-flipping colors.inkPrimary/colors.surface)',
       (tester) async {
-    await _pumpDark(
+    await _pump(
       tester,
       entries: [
         JournalEntry(
@@ -328,6 +299,7 @@ void main() {
           createdAt: DateTime(2026, 7, 20),
         ),
       ],
+      theme: AppTheme.dark(),
     );
 
     // Both the stats pill and the two icon buttons are GlassChrome now,
@@ -357,5 +329,65 @@ void main() {
       tester.widget<Icon>(find.byIcon(Icons.map_outlined)).color,
       AppColors.dark.inkPrimary,
     );
+
+    // Regression-proofing for the icon buttons' glass panel shape:
+    // GlassChrome sizes itself to its child's actual layout box, and
+    // Material 3's IconButton occupies a padded 48x48 tap-target box by
+    // default (even though its own visible CircleBorder stays 36px) — so
+    // a naive `borderRadius: circular(36 / 2)` paints an 48x48
+    // rounded-square "squircle" with radius 18, not a true circle. Assert
+    // the rendered box is square AND its border radius is exactly half
+    // its side length (a true circle), not a mismatched smaller radius on
+    // a bigger box.
+    final addButtonChrome = tester.widget<GlassChrome>(
+      find.ancestor(
+        of: find.byIcon(Icons.add),
+        matching: find.byType(GlassChrome),
+      ),
+    );
+    final addButtonSize = tester.getSize(
+      find.ancestor(
+        of: find.byIcon(Icons.add),
+        matching: find.byType(GlassChrome),
+      ),
+    );
+    expect(addButtonSize.width, addButtonSize.height);
+    expect(
+      addButtonChrome.borderRadius.topLeft.x,
+      addButtonSize.width / 2,
+    );
+  });
+
+  testWidgets(
+      'the floating top chrome uses the same fixed dark tokens under '
+      'light app theme too, not colors.light\'s bright surface/ink '
+      '(proves the tokens are genuinely fixed, not coincidentally '
+      'matching one theme)', (tester) async {
+    await _pump(
+      tester,
+      entries: [
+        JournalEntry(
+          id: 'e1',
+          tripId: 'trip-1',
+          summary: 'Arrived in Krabi',
+          loggedAt: DateTime(2026, 7, 20),
+          createdAt: DateTime(2026, 7, 20),
+        ),
+      ],
+      theme: AppTheme.light(),
+    );
+
+    final glassChromes =
+        tester.widgetList<GlassChrome>(find.byType(GlassChrome));
+    expect(glassChromes.length, greaterThanOrEqualTo(3));
+    for (final chrome in glassChromes) {
+      expect(chrome.tint, AppColors.dark.surface);
+    }
+
+    final statsMono = tester
+        .widgetList<MonoText>(find.byType(MonoText))
+        .where((m) => m.text.toUpperCase().contains('ENTRIES'))
+        .single;
+    expect(statsMono.color, AppColors.dark.inkPrimary);
   });
 }

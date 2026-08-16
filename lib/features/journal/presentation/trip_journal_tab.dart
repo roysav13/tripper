@@ -104,10 +104,12 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                 ),
         ),
         // Smooths the hard cut where the TabBar above hands off to the
-        // globe/map's own busy, edge-to-edge imagery — the same
-        // inkPrimary-alpha-gradient scrim as _GalleryOverlay below,
-        // mirrored to the top edge instead. IgnorePointer: purely
-        // decorative, must never intercept the globe's own drag/tap.
+        // globe/map's own busy, edge-to-edge imagery. Unlike
+        // _GalleryOverlay below (deliberately out of scope for this
+        // branch, still theme-aware colors.inkPrimary), _TopEdgeScrim
+        // uses fixed AppColors.dark tokens — see its own class doc
+        // comment for why. IgnorePointer: purely decorative, must never
+        // intercept the globe's own drag/tap.
         const PositionedDirectional(
           top: 0,
           start: 0,
@@ -283,7 +285,7 @@ class _GlassPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassChrome(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppShape.pillRadius),
       tint: AppColors.dark.surface,
       child: Padding(
         padding: const EdgeInsetsDirectional.symmetric(
@@ -311,12 +313,24 @@ class _GlassIconButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
 
-  static const _size = 36.0;
+  /// The visible Material/CircleBorder size — the icon button's
+  /// `minimumSize`.
+  static const _visibleSize = 36.0;
+
+  /// Material 3's `IconButton` occupies a padded 48x48 tap-target box by
+  /// default (this app sets no `tapTargetSize`/`visualDensity` override),
+  /// even though its own visible Material/CircleBorder stays
+  /// [_visibleSize]. [GlassChrome] sizes itself to its child's actual
+  /// layout box — not the visible Material inside it — so the radius
+  /// below must be half of THIS size to paint a true circle instead of a
+  /// rounded-square "squircle" on a bigger box. This also happens to meet
+  /// the 48dp minimum touch-target accessibility guideline.
+  static const _tapTargetSize = 48.0;
 
   @override
   Widget build(BuildContext context) {
     return GlassChrome(
-      borderRadius: BorderRadius.circular(_size / 2),
+      borderRadius: BorderRadius.circular(_tapTargetSize / 2),
       tint: AppColors.dark.surface,
       child: IconButton(
         icon: Icon(icon, color: AppColors.dark.inkPrimary, size: 20),
@@ -324,7 +338,7 @@ class _GlassIconButton extends StatelessWidget {
         onPressed: onPressed,
         style: IconButton.styleFrom(
           shape: const CircleBorder(),
-          minimumSize: const Size(_size, _size),
+          minimumSize: const Size(_visibleSize, _visibleSize),
           padding: EdgeInsets.zero,
         ),
       ),
