@@ -31,8 +31,8 @@ const _haloAlpha = 0.28;
 /// Phase 3 — supersedes the 2026-07-23 "stock Google Maps look" decision):
 /// custom colors/labels, but standard Google chrome (zoom controls, map
 /// toolbar, my-location button + blue dot), and default markers are
-/// replaced with custom layered-dot bitmaps (see Task 2 of the Places
-/// redesign plan) — a hybrid of "our palette" and "familiar map UX".
+/// replaced with custom layered-dot bitmaps (see `_dotMarkerBitmap` below)
+/// — a hybrid of "our palette" and "familiar map UX".
 class PlacesMapView extends StatefulWidget {
   const PlacesMapView({
     super.key,

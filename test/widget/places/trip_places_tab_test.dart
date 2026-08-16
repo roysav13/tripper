@@ -6,6 +6,7 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
+import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/trip_places_tab.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/l10n/app_localizations.dart';
@@ -33,6 +34,62 @@ Widget _app(FakePlaceRepository repo) => ProviderScope(
     );
 
 void main() {
+  testWidgets(
+      'filter button is absent when no place in this trip has a category '
+      'or country to filter by', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+      const Place(id: 'b', name: 'Cafe B', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.tune), findsNothing);
+  });
+
+  testWidgets(
+      'filter button shows its coral badge only once a filter is actually '
+      'selected', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Hotel A',
+        tripId: 't1',
+        category: PlaceCategory.hotel,
+      ),
+      const Place(
+        id: 'b',
+        name: 'Cafe B',
+        tripId: 't1',
+        category: PlaceCategory.coffeeShop,
+      ),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    Finder badgeFinder() => find.descendant(
+          of: find.byType(PlaceFilterButton),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is DecoratedBox &&
+                widget.decoration is BoxDecoration &&
+                (widget.decoration as BoxDecoration).shape ==
+                    BoxShape.circle,
+          ),
+        );
+
+    expect(badgeFinder(), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    expect(badgeFinder(), findsNothing);
+
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(badgeFinder(), findsOneWidget);
+  });
+
   testWidgets('category filter narrows this trip\'s visible list',
       (tester) async {
     final repo = FakePlaceRepository([

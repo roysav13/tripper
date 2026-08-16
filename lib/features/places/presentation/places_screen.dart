@@ -99,8 +99,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
               onPressed: () => showPlaceFilterSheet(
                 context,
                 placesProvider: placeListProvider,
-                selectedCategories: _categoryFilter,
-                selectedCountries: _countryFilter,
+                selectedCategories: prunedCategories,
+                selectedCountries: prunedCountries,
                 onCategoriesChanged: (v) =>
                     setState(() => _categoryFilter = v),
                 onCountriesChanged: (v) => setState(() => _countryFilter = v),
@@ -150,6 +150,23 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         body: l10n.placesEmptyBody,
         ctaLabel: l10n.placesEmptyCta,
         onCta: () => AddPlaceScreen.open(context),
+      );
+    }
+    // Fix 1 (final review): the filter sheet redesign removed the
+    // always-visible inline chip row that used to occupy this space when a
+    // filter combination matched nothing — without a branch here, a
+    // zero-result filter fell through to a blank ListView with no
+    // explanation and no way back.
+    if (asyncPlaces.hasValue && places.isNotEmpty && filtered.isEmpty) {
+      return EmptyState(
+        icon: Icons.filter_alt_off_outlined,
+        title: l10n.placesFilterEmptyTitle,
+        body: l10n.placesFilterEmptyBody,
+        ctaLabel: l10n.placesFilterEmptyCta,
+        onCta: () => setState(() {
+          _categoryFilter = {};
+          _countryFilter = {};
+        }),
       );
     }
     if (mapMode) {

@@ -1094,6 +1094,24 @@ abstract class AppLocalizations {
   /// **'Filters'**
   String get placesFilterSheetTitle;
 
+  /// No description provided for @placesFilterEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No places match'**
+  String get placesFilterEmptyTitle;
+
+  /// No description provided for @placesFilterEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different category or country, or clear your filters to see everything again.'**
+  String get placesFilterEmptyBody;
+
+  /// No description provided for @placesFilterEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get placesFilterEmptyCta;
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

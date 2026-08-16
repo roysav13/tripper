@@ -215,6 +215,9 @@
   "listViewToggle": "List view",
   "placesFilterButton": "Filter",
   "placesFilterSheetTitle": "Filters",
+  "placesFilterEmptyTitle": "No places match",
+  "placesFilterEmptyBody": "Try a different category or country, or clear your filters to see everything again.",
+  "placesFilterEmptyCta": "Clear filters",
   "journalGlobeLoading": "Loading globe",
   "journalGlobeClusterCount": "{count, plural, one{1 entry} other{{count} entries}}",
   "@journalGlobeClusterCount": {

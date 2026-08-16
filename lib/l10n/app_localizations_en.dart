@@ -557,6 +557,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placesFilterSheetTitle => 'Filters';
 
   @override
+  String get placesFilterEmptyTitle => 'No places match';
+
+  @override
+  String get placesFilterEmptyBody =>
+      'Try a different category or country, or clear your filters to see everything again.';
+
+  @override
+  String get placesFilterEmptyCta => 'Clear filters';
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

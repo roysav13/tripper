@@ -101,8 +101,8 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
                   onPressed: () => showPlaceFilterSheet(
                     context,
                     placesProvider: tripPlacesProvider(widget.trip.id),
-                    selectedCategories: _categoryFilter,
-                    selectedCountries: _countryFilter,
+                    selectedCategories: prunedCategories,
+                    selectedCountries: prunedCountries,
                     onCategoriesChanged: (v) =>
                         setState(() => _categoryFilter = v),
                     onCountriesChanged: (v) =>

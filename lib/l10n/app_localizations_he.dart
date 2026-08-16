@@ -553,6 +553,16 @@ class AppLocalizationsHe extends AppLocalizations {
   String get placesFilterSheetTitle => 'מסננים';
 
   @override
+  String get placesFilterEmptyTitle => 'אין מקומות מתאימים';
+
+  @override
+  String get placesFilterEmptyBody =>
+      'נסו קטגוריה או מדינה אחרת, או נקו את הסינון כדי לראות הכול מחדש.';
+
+  @override
+  String get placesFilterEmptyCta => 'נקה סינון';
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override

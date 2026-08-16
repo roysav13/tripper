@@ -5,10 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
+import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
-import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
@@ -33,13 +34,11 @@ Place _p(
       visitedAt: visitedAt,
     );
 
-Widget _app(List<Place> places, {List<Trip> trips = const []}) => ProviderScope(
+Widget _app(List<Place> places) => ProviderScope(
       overrides: [
         placeRepositoryProvider
             .overrideWithValue(FakePlaceRepository([...places])),
-        // Trips feed the days-away stat (M5.6) in the same header.
-        tripRepositoryProvider
-            .overrideWithValue(FakeTripRepository([...trips])),
+        tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => _today),
       ],
       child: MaterialApp(
@@ -181,6 +180,61 @@ void main() {
   });
 
   testWidgets(
+      'filter button is absent when no place has a category or country to '
+      'filter by', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(id: 'a', name: 'Hotel A'),
+        const Place(id: 'b', name: 'Cafe B'),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.tune), findsNothing);
+  });
+
+  testWidgets(
+      'filter button shows its coral badge only once a filter is actually '
+      'selected', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(id: 'a', name: 'Hotel A', category: PlaceCategory.hotel),
+        const Place(
+          id: 'b',
+          name: 'Cafe B',
+          category: PlaceCategory.coffeeShop,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    Finder badgeFinder() => find.descendant(
+          of: find.byType(PlaceFilterButton),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is DecoratedBox &&
+                widget.decoration is BoxDecoration &&
+                (widget.decoration as BoxDecoration).shape ==
+                    BoxShape.circle,
+          ),
+        );
+
+    // No filter selected yet — no badge.
+    expect(badgeFinder(), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    // Still no badge while the sheet is open but nothing picked.
+    expect(badgeFinder(), findsNothing);
+
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+
+    // Selecting a category surfaces the badge on the underlying button.
+    expect(badgeFinder(), findsOneWidget);
+  });
+
+  testWidgets(
       'stale category selection is pruned once its only match is edited '
       'away, so the list recovers without a restart', (tester) async {
     final repo = FakePlaceRepository([
@@ -266,6 +320,53 @@ void main() {
   });
 
   testWidgets(
+      'filtering to a combination that matches nothing shows the '
+      'filter-empty state, and its CTA clears the filters', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(
+          id: 'a',
+          name: 'Hotel A',
+          category: PlaceCategory.hotel,
+          country: 'Thailand',
+        ),
+        const Place(
+          id: 'b',
+          name: 'Cafe B',
+          category: PlaceCategory.coffeeShop,
+          country: 'Japan',
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsOneWidget);
+
+    // Hotel + Japan: no place is both, so the combination matches nothing.
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Japan'));
+    await tester.pumpAndSettle();
+
+    // Dismiss the sheet (tap the barrier, away from its content) so the
+    // underlying CTA can be tapped.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel A'), findsNothing);
+    expect(find.text('Cafe B'), findsNothing);
+    expect(find.text('No places match'), findsOneWidget);
+
+    await tester.tap(find.text('Clear filters'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsOneWidget);
+  });
+
+  testWidgets(
       'filter sheet renders many categories and countries without '
       'overflow', (tester) async {
     final many = [
@@ -283,9 +384,17 @@ void main() {
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    // Confirm the sheet actually opened before locating its scroll view —
+    // makes the intent explicit instead of relying on a positional `.last`
+    // find to happen to land on the right widget. SectionLabel renders its
+    // text upper-cased, so the sheet's "Filters" title reads "FILTERS".
+    expect(find.text('FILTERS'), findsOneWidget);
 
     await tester.fling(
-      find.byType(SingleChildScrollView).last,
+      find.descendant(
+        of: find.byType(GlassChrome),
+        matching: find.byType(SingleChildScrollView),
+      ),
       const Offset(0, -2000),
       3000,
     );
