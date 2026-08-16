@@ -114,12 +114,11 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
                 ),
         ),
         // Smooths the hard cut where the TabBar above hands off to the
-        // globe/map's own busy, edge-to-edge imagery. Unlike
-        // _GalleryOverlay below (deliberately out of scope for this
-        // branch, still theme-aware colors.inkPrimary), _TopEdgeScrim
-        // uses fixed AppColors.dark tokens — see its own class doc
-        // comment for why. IgnorePointer: purely decorative, must never
-        // intercept the globe's own drag/tap.
+        // globe/map's own busy, edge-to-edge imagery. Both this scrim and
+        // _GalleryOverlay below use fixed AppColors.dark tokens — see
+        // _TopEdgeScrim's own class doc comment for why. IgnorePointer:
+        // purely decorative, must never intercept the globe's own
+        // drag/tap.
         const PositionedDirectional(
           top: 0,
           start: 0,
@@ -210,9 +209,11 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
 
 /// Backdrop for the gallery strip when it floats over the globe — a
 /// bottom-anchored gradient so the strip's hairline day-track and card
-/// borders stay legible over the globe's own busy, variable-brightness
-/// texture, matching the same colors.inkPrimary-alpha-gradient convention
-/// already used behind on-photo captions elsewhere in this feature.
+/// borders stay legible over the globe/map's own busy, variable-brightness
+/// texture. Fixed `AppColors.dark.paper`-based gradient (not theme-aware
+/// `colors.inkPrimary`), same reasoning as [_TopEdgeScrim]: this sits
+/// directly over the globe/map's own unpredictable imagery, so the scrim
+/// must read as "quiet dark" in both app themes.
 class _GalleryOverlay extends StatelessWidget {
   const _GalleryOverlay({required this.height, required this.child});
 
@@ -221,7 +222,6 @@ class _GalleryOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return SizedBox(
       height: height,
       child: Stack(
@@ -233,8 +233,8 @@ class _GalleryOverlay extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    colors.inkPrimary.withValues(alpha: 0),
-                    colors.inkPrimary.withValues(alpha: 0.35),
+                    AppColors.dark.paper.withValues(alpha: 0),
+                    AppColors.dark.paper.withValues(alpha: 0.35),
                   ],
                 ),
               ),

@@ -298,7 +298,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
             style: PointStyle(
               size: _plainBorderSize * compensation,
-              color: colors.surface,
+              color: AppColors.dark.surface,
             ),
             onTap: onTap,
           ),
@@ -348,7 +348,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
             coordinates: GlobeCoordinates(centroidLat, centroidLng),
             style: PointStyle(
               size: _clusterBorderSize * compensation,
-              color: colors.surface,
+              color: AppColors.dark.surface,
             ),
             onTap: onTap,
           ),
@@ -372,7 +372,9 @@ class _JournalGlobeState extends State<JournalGlobe> {
             ),
             label: l10n.journalGlobeClusterCount(cluster.length),
             isLabelVisible: true,
-            labelTextStyle: AppTextStyles.mono.copyWith(color: colors.surface),
+            labelTextStyle: AppTextStyles.mono.copyWith(
+              color: AppColors.dark.surface,
+            ),
             onTap: onTap,
           ),
         );
@@ -400,7 +402,6 @@ class _JournalGlobeState extends State<JournalGlobe> {
   ///   not just smaller. All three bases are starting values for
   ///   on-device tuning, same as every other constant in this file.
   void _addConnections(FlutterEarthGlobeController controller, double zoom) {
-    final colors = context.colors;
     final lineWidthCompensation = 1 / math.pow(2.3, zoom);
     final dashCompensation = 1 / math.pow(2.0, zoom);
     final dashSpacingCompensation = 1 / math.pow(3.2, zoom);
@@ -411,15 +412,17 @@ class _JournalGlobeState extends State<JournalGlobe> {
           start: GlobeCoordinates(start.lat!, start.lng!),
           end: GlobeCoordinates(end.lat!, end.lng!),
           curveScale: _arcCurveScale,
-          // Thin white dashed lines radiating between visited places —
-          // matches the reference travel-map style (assets/globe/
-          // card_design_presentation.png): colors.surface reads as
-          // near-white against the globe's own busy satellite-style
-          // texture in light mode, and adapts to the theme in dark mode
-          // the same way the dot border rings already do.
+          // Thin dashed lines radiating between visited places — matches
+          // the reference travel-map style (assets/globe/
+          // card_design_presentation.png). Fixed AppColors.dark.surface
+          // (not theme-aware colors.surface): this paints directly over
+          // the always-dark earth_day.jpg/earth_day_high.jpg texture
+          // regardless of app theme, the same reasoning as the dot
+          // border rings above and trip_journal_tab.dart's floating
+          // chrome (Phase 4).
           style: PointConnectionStyle(
             type: PointConnectionType.dashed,
-            color: colors.surface.withValues(alpha: 0.85),
+            color: AppColors.dark.surface.withValues(alpha: 0.85),
             lineWidth: 2.0 * lineWidthCompensation,
             dashSize: 4.0 * dashCompensation,
             spacing: 8.0 * dashSpacingCompensation,
