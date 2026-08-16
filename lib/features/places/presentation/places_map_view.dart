@@ -23,6 +23,20 @@ const _dotHaloRadius = 21.0;
 const _dotHaloBlur = 6.0;
 const _haloAlpha = 0.28;
 
+/// Dots are regenerated at a smaller scale as the camera zooms out, so a
+/// cluster of nearby places doesn't turn into a solid blob of full-size
+/// circles at the world/country zoom levels — the world is smaller on
+/// screen, so the dots marking it should be too. Bucketed rather than
+/// continuous: regenerating the bitmaps is real (if cheap) async work, so
+/// this only fires on a zoom-tier crossing, not on every camera frame.
+double markerScaleForZoom(double zoom) {
+  if (zoom <= 4) return 0.5;
+  if (zoom <= 7) return 0.65;
+  if (zoom <= 10) return 0.8;
+  if (zoom <= 13) return 0.9;
+  return 1.0;
+}
+
 /// Google Maps needs a platform view, which widget tests can't render.
 /// Tests pass `renderMap: false` to get the pin/label scaffolding without
 /// the native surface (SPEC: no network, no platform channels in tests).
@@ -70,10 +84,18 @@ class _PlacesMapViewState extends State<PlacesMapView> {
   /// fires again (e.g., theme/locale change).
   bool _markersInitialized = false;
 
-  /// Built once per widget lifetime (they carry no per-place data) and
-  /// reused for every marker of that state.
+  /// Built once per widget lifetime at the default (full) scale (they
+  /// carry no per-place data) and reused for every marker of that state
+  /// until [_regenerateMarkersForZoom] rebuilds them at a new zoom tier.
   BitmapDescriptor? _wantMarker;
   BitmapDescriptor? _beenMarker;
+
+  /// The zoom-tier scale the current [_wantMarker]/[_beenMarker] were
+  /// drawn at — `null` until the first generation completes. Compared
+  /// against [markerScaleForZoom] on every camera-idle so bitmaps are
+  /// only regenerated on an actual tier crossing, not on every frame of a
+  /// pinch gesture.
+  double? _markerScale;
 
   List<Place> get _located =>
       widget.places.where((p) => p.hasLocation).toList();
@@ -87,27 +109,45 @@ class _PlacesMapViewState extends State<PlacesMapView> {
     super.didChangeDependencies();
     if (widget.renderMap && !_markersInitialized) {
       _markersInitialized = true;
-      _loadMarkerBitmaps();
+      _loadMarkerBitmaps(1);
     }
   }
 
-  Future<void> _loadMarkerBitmaps() async {
+  Future<void> _loadMarkerBitmaps(double scale) async {
     final colors = context.colors;
     final want = await _dotMarkerBitmap(
       coreColor: colors.accent,
       ringColor: colors.surface,
       glow: true,
+      scale: scale,
     );
     final been = await _dotMarkerBitmap(
       coreColor: colors.inkMuted,
       ringColor: colors.surface,
       glow: false,
+      scale: scale,
     );
     if (!mounted) return;
     setState(() {
       _wantMarker = want;
       _beenMarker = been;
+      _markerScale = scale;
     });
+  }
+
+  /// Reads the live camera zoom and, only if it crossed into a different
+  /// [markerScaleForZoom] tier since the markers were last drawn,
+  /// regenerates them at the new scale. Called once right after the map
+  /// is created (before any camera animation has necessarily run) and
+  /// again on every `onCameraIdle`.
+  Future<void> _regenerateMarkersForZoom() async {
+    final controller = _controller;
+    if (controller == null) return;
+    final zoom = await controller.getZoomLevel();
+    if (!mounted) return;
+    final scale = markerScaleForZoom(zoom);
+    if (scale == _markerScale) return;
+    await _loadMarkerBitmaps(scale);
   }
 
   @override
@@ -274,7 +314,9 @@ class _PlacesMapViewState extends State<PlacesMapView> {
             } else {
               _fitToPins();
             }
+            _regenerateMarkersForZoom();
           },
+          onCameraIdle: _regenerateMarkersForZoom,
         ),
         // Soften the hard edge where the app bar / bottom nav meet the map
         // — a quiet ink-tinted fade, not a new accent (built from
@@ -371,32 +413,39 @@ Future<BitmapDescriptor> _dotMarkerBitmap({
   required Color coreColor,
   required Color ringColor,
   required bool glow,
+  required double scale,
 }) async {
+  final canvasSize = _dotCanvasSize * scale;
+  final coreRadius = _dotCoreRadius * scale;
+  final borderRadius = _dotBorderRadius * scale;
+  final haloRadius = _dotHaloRadius * scale;
+  final haloBlur = _dotHaloBlur * scale;
+
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
-  const center = Offset(_dotCanvasSize / 2, _dotCanvasSize / 2);
+  final center = Offset(canvasSize / 2, canvasSize / 2);
 
   if (glow) {
     canvas.drawCircle(
       center,
-      _dotHaloRadius,
+      haloRadius,
       Paint()
         ..color = coreColor.withValues(alpha: _haloAlpha)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _dotHaloBlur),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, haloBlur),
     );
   }
-  canvas.drawCircle(center, _dotBorderRadius, Paint()..color = ringColor);
-  canvas.drawCircle(center, _dotCoreRadius, Paint()..color = coreColor);
+  canvas.drawCircle(center, borderRadius, Paint()..color = ringColor);
+  canvas.drawCircle(center, coreRadius, Paint()..color = coreColor);
 
   final picture = recorder.endRecording();
   final rendered = await picture.toImage(
-    _dotCanvasSize.toInt(),
-    _dotCanvasSize.toInt(),
+    canvasSize.round(),
+    canvasSize.round(),
   );
   final byteData = await rendered.toByteData(format: ui.ImageByteFormat.png);
   return BitmapDescriptor.bytes(
     byteData!.buffer.asUint8List(),
-    width: _dotCanvasSize,
-    height: _dotCanvasSize,
+    width: canvasSize,
+    height: canvasSize,
   );
 }
