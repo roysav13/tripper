@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
@@ -143,11 +144,19 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
         for (final place in sorted)
           Padding(
             padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-            child: PlaceRowCard(
-              place: place,
-              onTap: () => showPlaceActionsSheet(context, ref, place),
-              onToggleVisited: () =>
-                  markPlaceVisited(ref, place, visited: !place.isVisited),
+            child: RowSettleAnimation(
+              placeId: place.id,
+              child: PlaceRowCard(
+                place: place,
+                onTap: () => showPlaceActionsSheet(context, ref, place),
+                onToggleVisited: () {
+                  // M4.4 parity with places_screen.dart's identical
+                  // toggle — a quiet tick on the state change, not a
+                  // heavier impact.
+                  HapticFeedback.selectionClick();
+                  markPlaceVisited(ref, place, visited: !place.isVisited);
+                },
+              ),
             ),
           ),
         const SizedBox(height: AppSpacing.xs),

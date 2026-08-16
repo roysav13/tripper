@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -186,5 +187,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'toggling a place\'s visited state gets the same quiet haptic tick '
+      'as the top-level Places screen (M4.4 parity)', (tester) async {
+    final hapticCalls = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          hapticCalls.add(call.arguments as String);
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Mark as visited'));
+    await tester.pumpAndSettle();
+
+    expect(hapticCalls, ['HapticFeedbackType.selectionClick']);
+  });
+
+  testWidgets(
+      'a place row settles into view via RowSettleAnimation, same as the '
+      'top-level Places screen (M4.4 parity)', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RowSettleAnimation), findsOneWidget);
   });
 }
