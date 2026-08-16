@@ -112,6 +112,24 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
             ],
           ),
         ),
+        if (prunedCategories.isNotEmpty || prunedCountries.isNotEmpty) ...[
+          ActiveFilterStrip(
+            categories: prunedCategories,
+            countries: prunedCountries,
+            onRemoveCategory: (category) => setState(
+              () => _categoryFilter =
+                  _categoryFilter.where((c) => c != category).toSet(),
+            ),
+            onRemoveCountry: (country) => setState(
+              () => _countryFilter =
+                  _countryFilter.where((c) => c != country).toSet(),
+            ),
+            onClearAll: () => setState(() {
+              _categoryFilter = {};
+              _countryFilter = {};
+            }),
+          ),
+        ],
         const SizedBox(height: AppSpacing.sm),
         for (final place in sorted)
           Padding(

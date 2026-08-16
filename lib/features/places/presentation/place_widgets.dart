@@ -46,85 +46,212 @@ String placeCategoryLabel(AppLocalizations l10n, PlaceCategory category) =>
       PlaceCategory.other => l10n.catOther,
     };
 
-/// Category + country filter chips — a controlled widget, all state lives
-/// in the parent screen. Only categories/countries actually present in
-/// [places] render a chip, so there's never a dead-end filter option.
-class PlaceFilterBar extends StatelessWidget {
-  const PlaceFilterBar({
+/// A horizontal strip of active-filter pills shown above the list — the
+/// same "chips row" pattern real map/list apps (Google Maps, Airbnb) use
+/// to keep active facets visible and one-tap removable, instead of hidden
+/// entirely behind an icon until the sheet is reopened. Renders nothing
+/// when nothing is active. Horizontally scrollable rather than wrapping,
+/// so an active-heavy filter never pushes the list down by more than one
+/// row's height.
+class ActiveFilterStrip extends StatelessWidget {
+  const ActiveFilterStrip({
     super.key,
-    required this.places,
-    required this.selectedCategories,
-    required this.selectedCountries,
-    required this.onCategoriesChanged,
-    required this.onCountriesChanged,
+    required this.categories,
+    required this.countries,
+    required this.onRemoveCategory,
+    required this.onRemoveCountry,
+    required this.onClearAll,
   });
 
-  final List<Place> places;
-  final Set<PlaceCategory> selectedCategories;
-  final Set<String> selectedCountries;
-  final ValueChanged<Set<PlaceCategory>> onCategoriesChanged;
-  final ValueChanged<Set<String>> onCountriesChanged;
+  final Set<PlaceCategory> categories;
+  final Set<String> countries;
+  final ValueChanged<PlaceCategory> onRemoveCategory;
+  final ValueChanged<String> onRemoveCountry;
+  final VoidCallback onClearAll;
+
+  static const _height = 36.0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (categories.isEmpty && countries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context)!;
+    final sortedCategories = categories.toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+    final sortedCountries = countries.toList()..sort();
+
+    return SizedBox(
+      height: _height,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (final category in sortedCategories)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+              child: _FilterPill(
+                label: placeCategoryLabel(l10n, category),
+                onRemove: () => onRemoveCategory(category),
+              ),
+            ),
+          for (final country in sortedCountries)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+              child: _FilterPill(
+                label: country,
+                onRemove: () => onRemoveCountry(country),
+              ),
+            ),
+          if (categories.length + countries.length > 1)
+            Center(
+              child: TextButton(
+                onPressed: onClearAll,
+                child: Text(l10n.placesFilterEmptyCta),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One removable active-filter pill: label + a tappable close glyph, coral
+/// outline on a solid surface (never a filled coral background — that's
+/// reserved for the one true CTA per screen, the sheet's "Show N places").
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShape.pillRadius),
+        side: BorderSide(color: colors.accent, width: AppShape.hairlineWidth),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppShape.pillRadius),
+        onTap: onRemove,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: AppSpacing.md,
+            end: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AutoDirectionText(
+                label,
+                style: AppTextStyles.label.copyWith(color: colors.accent),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.close, size: 14, color: colors.accent),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Country facet as a searchable single-column checklist rather than a
+/// wall of pill chips — a wrap of chips reads fine for a small, bounded
+/// set (category has 12 fixed values) but degrades into an unpredictable,
+/// hard-to-scan block once the set is large and dynamic (a trip log can
+/// easily carry 20-30 countries). A search box only appears once the list
+/// is long enough to need one.
+class _CountryChecklist extends StatefulWidget {
+  const _CountryChecklist({
+    required this.countries,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> countries;
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+
+  static const searchThreshold = 6;
+
+  @override
+  State<_CountryChecklist> createState() => _CountryChecklistState();
+}
+
+class _CountryChecklistState extends State<_CountryChecklist> {
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categories = {
-      for (final p in places)
-        if (p.category != null) p.category!,
-    }.toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
-    final countries = {
-      for (final p in places)
-        if (p.country.trim().isNotEmpty) p.country,
-    }.toList()
-      ..sort();
-
-    if (categories.isEmpty && countries.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final colors = context.colors;
+    final query = _search.text.trim().toLowerCase();
+    final visible = query.isEmpty
+        ? widget.countries
+        : widget.countries
+            .where((c) => c.toLowerCase().contains(query))
+            .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (categories.isNotEmpty)
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final category in categories)
-                FilterChip(
-                  avatar: Icon(placeCategoryIcon(category), size: 16),
-                  label: Text(placeCategoryLabel(l10n, category)),
-                  selected: selectedCategories.contains(category),
-                  onSelected: (selected) => onCategoriesChanged(
-                    selected
-                        ? {...selectedCategories, category}
-                        : selectedCategories
-                            .where((c) => c != category)
-                            .toSet(),
-                  ),
-                ),
-            ],
+        if (widget.countries.length > _CountryChecklist.searchThreshold)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+            child: TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: l10n.placesFilterSearchCountry,
+                prefixIcon: const Icon(Icons.search, size: 20),
+                isDense: true,
+              ),
+            ),
           ),
-        if (categories.isNotEmpty && countries.isNotEmpty)
-          const SizedBox(height: AppSpacing.sm),
-        if (countries.isNotEmpty)
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final country in countries)
-                FilterChip(
-                  label: Text(country),
-                  selected: selectedCountries.contains(country),
-                  onSelected: (selected) => onCountriesChanged(
-                    selected
-                        ? {...selectedCountries, country}
-                        : selectedCountries.where((c) => c != country).toSet(),
-                  ),
+        if (visible.isEmpty)
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              vertical: AppSpacing.md,
+            ),
+            child: MonoText(l10n.placesFilterSearchNoResults, muted: true),
+          )
+        else
+          for (final country in visible)
+            InkWell(
+              onTap: () {
+                final next = widget.selected.contains(country)
+                    ? widget.selected.where((c) => c != country).toSet()
+                    : {...widget.selected, country};
+                widget.onChanged(next);
+              },
+              child: Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  vertical: AppSpacing.sm,
                 ),
-            ],
-          ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AutoDirectionText(
+                        country,
+                        style: AppTextStyles.body
+                            .copyWith(color: colors.inkPrimary),
+                      ),
+                    ),
+                    if (widget.selected.contains(country))
+                      Icon(Icons.check, color: colors.accent, size: 20),
+                  ],
+                ),
+              ),
+            ),
       ],
     );
   }
@@ -306,12 +433,12 @@ class PlaceFilterButton extends StatelessWidget {
   }
 }
 
-/// Opens [PlaceFilterBar]'s chips in a glass-chrome modal bottom sheet
+/// Opens the category/country filters in a glass-chrome modal bottom sheet
 /// (redesign spec §5: "glass filter chips on a bottom sheet") instead of
 /// always-visible inline — the same GlassChrome-over-content idiom
 /// phase2a's trip detail screen used for its floating tab bar.
 /// [placesProvider] is watched *inside* the sheet (not passed as a static
-/// list) so a chip whose last matching place is edited/deleted away while
+/// list) so a facet whose last matching place is edited/deleted away while
 /// the sheet is open still disappears live — the same guarantee the
 /// pre-sheet inline chips had via the parent screens' own pruning logic.
 Future<void> showPlaceFilterSheet(
@@ -360,11 +487,36 @@ class _PlaceFilterSheetState extends ConsumerState<_PlaceFilterSheet> {
   late Set<PlaceCategory> _categories = widget.initialCategories;
   late Set<String> _countries = widget.initialCountries;
 
+  void _setCategories(Set<PlaceCategory> next) {
+    setState(() => _categories = next);
+    widget.onCategoriesChanged(next);
+  }
+
+  void _setCountries(Set<String> next) {
+    setState(() => _countries = next);
+    widget.onCountriesChanged(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
     final places =
         ref.watch(widget.placesProvider).valueOrNull ?? const <Place>[];
+
+    final categories = {
+      for (final p in places)
+        if (p.category != null) p.category!,
+    }.toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+    final countries = {
+      for (final p in places)
+        if (p.country.trim().isNotEmpty) p.country,
+    }.toList()
+      ..sort();
+    final matchCount =
+        filterPlaces(places, categories: _categories, countries: _countries)
+            .length;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -376,32 +528,93 @@ class _PlaceFilterSheetState extends ConsumerState<_PlaceFilterSheet> {
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SectionLabel(l10n.placesFilterSheetTitle),
-                  const SizedBox(height: AppSpacing.md),
-                  PlaceFilterBar(
-                    places: places,
-                    selectedCategories: _categories,
-                    selectedCountries: _countries,
-                    onCategoriesChanged: (v) {
-                      setState(() => _categories = v);
-                      widget.onCategoriesChanged(v);
-                    },
-                    onCountriesChanged: (v) {
-                      setState(() => _countries = v);
-                      widget.onCountriesChanged(v);
-                    },
+          child: Padding(
+            padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionLabel(l10n.placesFilterSheetTitle),
+                const SizedBox(height: AppSpacing.md),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category stays a chip grid — 12 fixed values is
+                        // exactly the small, bounded set chips suit well.
+                        if (categories.isNotEmpty) ...[
+                          SectionLabel(l10n.placesFilterCategorySection),
+                          const SizedBox(height: AppSpacing.sm),
+                          Wrap(
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.sm,
+                            children: [
+                              for (final category in categories)
+                                FilterChip(
+                                  avatar: Icon(
+                                    placeCategoryIcon(category),
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    placeCategoryLabel(l10n, category),
+                                  ),
+                                  selected: _categories.contains(category),
+                                  onSelected: (selected) => _setCategories(
+                                    selected
+                                        ? {..._categories, category}
+                                        : _categories
+                                            .where((c) => c != category)
+                                            .toSet(),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                        if (categories.isNotEmpty && countries.isNotEmpty)
+                          const SizedBox(height: AppSpacing.lg),
+                        // Country is dynamic and can be long — a
+                        // searchable checklist scans far better than a
+                        // wall of variable-width chips at that size.
+                        if (countries.isNotEmpty) ...[
+                          SectionLabel(l10n.placesFilterCountrySection),
+                          const SizedBox(height: AppSpacing.sm),
+                          _CountryChecklist(
+                            countries: countries,
+                            selected: _countries,
+                            onChanged: _setCountries,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _categories.isEmpty && _countries.isEmpty
+                          ? null
+                          : () {
+                              _setCategories({});
+                              _setCountries({});
+                            },
+                      child: Text(l10n.placesFilterEmptyCta),
+                    ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors.accent,
+                        foregroundColor: colors.surface,
+                      ),
+                      child: Text(l10n.placesFilterShowResults(matchCount)),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

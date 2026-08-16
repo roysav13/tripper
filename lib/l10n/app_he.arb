@@ -218,6 +218,14 @@
   "placesFilterEmptyTitle": "אין מקומות מתאימים",
   "placesFilterEmptyBody": "נסו קטגוריה או מדינה אחרת, או נקו את הסינון כדי לראות הכול מחדש.",
   "placesFilterEmptyCta": "נקה סינון",
+  "placesFilterCategorySection": "קטגוריה",
+  "placesFilterCountrySection": "מדינה",
+  "placesFilterSearchCountry": "חיפוש מדינות",
+  "placesFilterSearchNoResults": "אין מדינות מתאימות",
+  "placesFilterShowResults": "{count, plural, one{הצג מקום אחד} other{הצג {count} מקומות}}",
+  "@placesFilterShowResults": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "journalGlobeLoading": "טוען את הגלובוס",
   "journalGlobeClusterCount": "{count, plural, one{1 רשומה} two{שתי רשומות} many{{count} רשומות} other{{count} רשומות}}",
   "@journalGlobeClusterCount": {

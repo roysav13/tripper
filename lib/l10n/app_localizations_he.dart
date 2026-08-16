@@ -563,6 +563,29 @@ class AppLocalizationsHe extends AppLocalizations {
   String get placesFilterEmptyCta => 'נקה סינון';
 
   @override
+  String get placesFilterCategorySection => 'קטגוריה';
+
+  @override
+  String get placesFilterCountrySection => 'מדינה';
+
+  @override
+  String get placesFilterSearchCountry => 'חיפוש מדינות';
+
+  @override
+  String get placesFilterSearchNoResults => 'אין מדינות מתאימות';
+
+  @override
+  String placesFilterShowResults(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'הצג $count מקומות',
+      one: 'הצג מקום אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override

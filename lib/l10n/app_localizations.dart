@@ -1112,6 +1112,36 @@ abstract class AppLocalizations {
   /// **'Clear filters'**
   String get placesFilterEmptyCta;
 
+  /// No description provided for @placesFilterCategorySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get placesFilterCategorySection;
+
+  /// No description provided for @placesFilterCountrySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get placesFilterCountrySection;
+
+  /// No description provided for @placesFilterSearchCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Search countries'**
+  String get placesFilterSearchCountry;
+
+  /// No description provided for @placesFilterSearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No countries match'**
+  String get placesFilterSearchNoResults;
+
+  /// No description provided for @placesFilterShowResults.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Show 1 place} other{Show {count} places}}'**
+  String placesFilterShowResults(int count);
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

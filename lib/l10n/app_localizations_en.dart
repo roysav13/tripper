@@ -567,6 +567,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placesFilterEmptyCta => 'Clear filters';
 
   @override
+  String get placesFilterCategorySection => 'Category';
+
+  @override
+  String get placesFilterCountrySection => 'Country';
+
+  @override
+  String get placesFilterSearchCountry => 'Search countries';
+
+  @override
+  String get placesFilterSearchNoResults => 'No countries match';
+
+  @override
+  String placesFilterShowResults(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count places',
+      one: 'Show 1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

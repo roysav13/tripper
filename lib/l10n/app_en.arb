@@ -218,6 +218,14 @@
   "placesFilterEmptyTitle": "No places match",
   "placesFilterEmptyBody": "Try a different category or country, or clear your filters to see everything again.",
   "placesFilterEmptyCta": "Clear filters",
+  "placesFilterCategorySection": "Category",
+  "placesFilterCountrySection": "Country",
+  "placesFilterSearchCountry": "Search countries",
+  "placesFilterSearchNoResults": "No countries match",
+  "placesFilterShowResults": "{count, plural, one{Show 1 place} other{Show {count} places}}",
+  "@placesFilterShowResults": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "journalGlobeLoading": "Loading globe",
   "journalGlobeClusterCount": "{count, plural, one{1 entry} other{{count} entries}}",
   "@journalGlobeClusterCount": {

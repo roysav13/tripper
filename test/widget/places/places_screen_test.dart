@@ -401,4 +401,191 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+      'active-filter strip shows a removable pill per selection, and '
+      'removing one pill updates the list without reopening the sheet',
+      (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(
+          id: 'a',
+          name: 'Hotel A',
+          category: PlaceCategory.hotel,
+          country: 'Thailand',
+        ),
+        const Place(
+          id: 'b',
+          name: 'Restaurant B',
+          category: PlaceCategory.restaurant,
+          country: 'Thailand',
+        ),
+        const Place(
+          id: 'c',
+          name: 'Hotel C',
+          category: PlaceCategory.hotel,
+          country: 'Japan',
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Thailand'));
+    await tester.pumpAndSettle();
+    // Dismiss the sheet to see the strip above the (now filtered) list.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ActiveFilterStrip), findsOneWidget);
+    expect(find.text('Hotel'), findsOneWidget);
+    expect(find.text('Thailand'), findsOneWidget);
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Restaurant B'), findsNothing);
+    expect(find.text('Hotel C'), findsNothing);
+
+    // Tapping the "Hotel" pill removes just that filter.
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel'), findsNothing);
+    expect(find.text('Thailand'), findsOneWidget);
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Restaurant B'), findsOneWidget);
+    expect(find.text('Hotel C'), findsNothing);
+  });
+
+  testWidgets(
+      "the active-filter strip's Clear-filters button removes every "
+      'active filter at once', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(
+          id: 'a',
+          name: 'Hotel A',
+          category: PlaceCategory.hotel,
+          country: 'Thailand',
+        ),
+        const Place(
+          id: 'c',
+          name: 'Hotel C',
+          category: PlaceCategory.hotel,
+          country: 'Japan',
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Thailand'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ActiveFilterStrip), findsOneWidget);
+    // Two active filters — the strip's own "Clear filters" convenience
+    // button appears (a single pill can just be tapped to remove itself).
+    await tester.tap(find.text('Clear filters'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ActiveFilterStrip), findsNothing);
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Hotel C'), findsOneWidget);
+  });
+
+  testWidgets(
+      'country checklist shows a search box once there are enough '
+      'countries, and typing narrows the visible rows', (tester) async {
+    const names = [
+      'Argentina',
+      'Brazil',
+      'Canada',
+      'Denmark',
+      'Egypt',
+      'France',
+      'Germany',
+    ];
+    await tester.pumpWidget(
+      _app([
+        for (final name in names) _p('Spot in $name', country: name),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsOneWidget);
+    for (final name in names) {
+      expect(find.text(name), findsOneWidget);
+    }
+
+    await tester.enterText(find.byType(TextField), 'arg');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Argentina'), findsOneWidget);
+    for (final name in names.where((n) => n != 'Argentina')) {
+      expect(find.text(name), findsNothing);
+    }
+
+    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.pumpAndSettle();
+
+    // MonoText renders uppercase, like the sheet's "FILTERS" title above.
+    expect(find.text('NO COUNTRIES MATCH'), findsOneWidget);
+  });
+
+  testWidgets(
+      'country checklist has no search box when there are only a few '
+      'countries', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        _p('Thai spot', country: 'Thailand'),
+        _p('Japan spot', country: 'Japan'),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets(
+      "the sheet's Show-results button reflects the live selection and "
+      'closes the sheet on tap', (tester) async {
+    await tester.pumpWidget(
+      _app([
+        const Place(id: 'a', name: 'Hotel A', category: PlaceCategory.hotel),
+        const Place(
+          id: 'b',
+          name: 'Cafe B',
+          category: PlaceCategory.coffeeShop,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    expect(find.text('Show 2 places'), findsOneWidget);
+
+    await tester.tap(find.text('Hotel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Show 1 place'), findsOneWidget);
+
+    await tester.tap(find.text('Show 1 place'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GlassChrome), findsNothing);
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsNothing);
+  });
 }

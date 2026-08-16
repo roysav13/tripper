@@ -123,6 +123,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         been,
         tripNames,
         mapMode,
+        prunedCategories,
+        prunedCountries,
       ),
     );
   }
@@ -137,6 +139,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     List<Place> been,
     Map<String, String> tripNames,
     bool mapMode,
+    Set<PlaceCategory> activeCategories,
+    Set<String> activeCountries,
   ) {
     // M4.2 — states audit: same gap as trips/vault — a stream failure used
     // to fall straight through to an unexplained empty screen.
@@ -170,17 +174,35 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
       );
     }
     if (mapMode) {
-      return PlacesMapView(
-        places: filtered,
-        focusPlaceId: ref.watch(selectedPlaceIdProvider),
-        onFocusHandled: () =>
-            ref.read(selectedPlaceIdProvider.notifier).state = null,
-        onPlaceTap: (place) => showPlaceActionsSheet(context, ref, place),
+      return Column(
+        children: [
+          if (activeCategories.isNotEmpty || activeCountries.isNotEmpty)
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
+              child: _activeFilterStrip(activeCategories, activeCountries),
+            ),
+          Expanded(
+            child: PlacesMapView(
+              places: filtered,
+              focusPlaceId: ref.watch(selectedPlaceIdProvider),
+              onFocusHandled: () =>
+                  ref.read(selectedPlaceIdProvider.notifier).state = null,
+              onPlaceTap: (place) => showPlaceActionsSheet(context, ref, place),
+            ),
+          ),
+        ],
       );
     }
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
+        if (activeCategories.isNotEmpty || activeCountries.isNotEmpty) ...[
+          _activeFilterStrip(activeCategories, activeCountries),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         if (want.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsetsDirectional.only(
@@ -207,6 +229,26 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
           for (final place in been) _row(context, place, tripNames),
         ],
       ],
+    );
+  }
+
+  Widget _activeFilterStrip(
+    Set<PlaceCategory> categories,
+    Set<String> countries,
+  ) {
+    return ActiveFilterStrip(
+      categories: categories,
+      countries: countries,
+      onRemoveCategory: (category) => setState(
+        () => _categoryFilter = _categoryFilter.where((c) => c != category).toSet(),
+      ),
+      onRemoveCountry: (country) => setState(
+        () => _countryFilter = _countryFilter.where((c) => c != country).toSet(),
+      ),
+      onClearAll: () => setState(() {
+        _categoryFilter = {};
+        _countryFilter = {};
+      }),
     );
   }
 
