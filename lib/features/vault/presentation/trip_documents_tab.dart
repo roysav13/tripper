@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
@@ -28,6 +29,14 @@ class TripDocumentsTab extends ConsumerWidget {
     final docs = asyncDocs.valueOrNull ?? const <Document>[];
     final risky = docs.where((d) => ExpiryChecker.isRiskyForTrip(d, trip));
 
+    // Same M4.2 states-audit gap the top-level Vault screen already
+    // closed — a stream failure used to fall straight through to a
+    // silent, confusingly-empty tab.
+    if (asyncDocs.hasError) {
+      return ErrorState(
+        onRetry: () => ref.invalidate(tripDocumentsProvider(trip.id)),
+      );
+    }
     if (asyncDocs.hasValue && docs.isEmpty) {
       return EmptyState(
         icon: Icons.folder_outlined,

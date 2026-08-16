@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
@@ -33,6 +34,14 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
     final asyncPlaces = ref.watch(tripPlacesProvider(widget.trip.id));
     final places = asyncPlaces.valueOrNull ?? const <Place>[];
 
+    // Same M4.2 states-audit gap the top-level Places screen already
+    // closed — a stream failure used to fall straight through to a
+    // silent, confusingly-empty tab.
+    if (asyncPlaces.hasError) {
+      return ErrorState(
+        onRetry: () => ref.invalidate(tripPlacesProvider(widget.trip.id)),
+      );
+    }
     if (asyncPlaces.hasValue && places.isEmpty) {
       return EmptyState(
         icon: Icons.place_outlined,

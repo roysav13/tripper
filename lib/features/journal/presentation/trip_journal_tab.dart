@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/glass_chrome.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
@@ -60,6 +61,15 @@ class _TripJournalTabState extends ConsumerState<TripJournalTab> {
     final visitedPlaces = ref.watch(tripVisitedPlacesProvider(widget.trip.id));
     final showMap = ref.watch(journalMapModeProvider);
 
+    // The globe/map floats regardless of data state, so without this
+    // branch a stream failure used to render a confusingly-empty globe
+    // with no explanation, not an error — same M4.2 gap every other
+    // trip-scoped tab already closed.
+    if (asyncEntries.hasError) {
+      return ErrorState(
+        onRetry: () => ref.invalidate(tripJournalProvider(widget.trip.id)),
+      );
+    }
     if (asyncEntries.hasValue && entries.isEmpty) {
       return EmptyState(
         icon: Icons.auto_stories_outlined,

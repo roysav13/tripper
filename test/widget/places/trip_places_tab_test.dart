@@ -173,4 +173,18 @@ void main() {
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsOneWidget);
   });
+
+  testWidgets('a stream failure shows the error state with retry',
+      (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    repo.emitError(Exception('boom'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+  });
 }

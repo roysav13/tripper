@@ -34,6 +34,12 @@ class FakeDocumentRepository implements DocumentRepository {
       for (final d in _docs)
         if (d.tripIds.contains(tripId)) d,
     ];
+    yield* _controller.stream.map(
+      (docs) => [
+        for (final d in docs)
+          if (d.tripIds.contains(tripId)) d,
+      ],
+    );
   }
 
   @override

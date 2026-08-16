@@ -390,4 +390,48 @@ void main() {
         .single;
     expect(statsMono.color, AppColors.dark.inkPrimary);
   });
+
+  testWidgets('a stream failure shows the error state with retry',
+      (tester) async {
+    final repo = FakeJournalRepository([
+      JournalEntry(
+        id: 'e1',
+        tripId: 'trip-1',
+        summary: 'Arrived in Krabi',
+        loggedAt: DateTime(2026, 7, 20),
+        createdAt: DateTime(2026, 7, 20),
+      ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          journalRepositoryProvider.overrideWithValue(repo),
+          placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: TripJournalTab(
+              trip: _trip,
+              renderGlobe: false,
+              renderMap: false,
+            ),
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repo.emitError(Exception('boom'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+  });
 }
