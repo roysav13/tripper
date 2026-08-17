@@ -536,7 +536,10 @@ class _PlaceFilterSheetState extends ConsumerState<_PlaceFilterSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionLabel(l10n.placesFilterSheetTitle),
+                SectionLabel(
+                  l10n.placesFilterSheetTitle,
+                  color: colors.inkPrimary,
+                ),
                 const SizedBox(height: AppSpacing.md),
                 Flexible(
                   child: SingleChildScrollView(
@@ -546,7 +549,10 @@ class _PlaceFilterSheetState extends ConsumerState<_PlaceFilterSheet> {
                         // Category stays a chip grid — 12 fixed values is
                         // exactly the small, bounded set chips suit well.
                         if (categories.isNotEmpty) ...[
-                          SectionLabel(l10n.placesFilterCategorySection),
+                          SectionLabel(
+                            l10n.placesFilterCategorySection,
+                            color: colors.inkPrimary,
+                          ),
                           const SizedBox(height: AppSpacing.sm),
                           Wrap(
                             spacing: AppSpacing.sm,
@@ -579,7 +585,10 @@ class _PlaceFilterSheetState extends ConsumerState<_PlaceFilterSheet> {
                         // searchable checklist scans far better than a
                         // wall of variable-width chips at that size.
                         if (countries.isNotEmpty) ...[
-                          SectionLabel(l10n.placesFilterCountrySection),
+                          SectionLabel(
+                            l10n.placesFilterCountrySection,
+                            color: colors.inkPrimary,
+                          ),
                           const SizedBox(height: AppSpacing.sm),
                           _CountryChecklist(
                             countries: countries,
