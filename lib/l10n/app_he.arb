@@ -192,9 +192,6 @@
       "date": { "type": "String" }
     }
   },
-  "statsCountries": "מדינות",
-  "statsPlacesVisited": "מקומות שביקרת בהם",
-  "statsDaysTraveled": "ימים בדרכים",
   "placeFormTitle": "הוספת מקום",
   "placeFormName": "שם המקום",
   "placeFormCity": "עיר",

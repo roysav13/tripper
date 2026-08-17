@@ -192,9 +192,6 @@
       "date": { "type": "String" }
     }
   },
-  "statsCountries": "Countries",
-  "statsPlacesVisited": "Places visited",
-  "statsDaysTraveled": "Days away",
   "placeFormTitle": "Add place",
   "placeFormName": "Place name",
   "placeFormCity": "City",

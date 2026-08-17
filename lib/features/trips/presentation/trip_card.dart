@@ -103,9 +103,9 @@ class TripCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: AppSpacing.md,
-                    right: AppSpacing.md,
+                  PositionedDirectional(
+                    start: AppSpacing.md,
+                    end: AppSpacing.md,
                     bottom: AppSpacing.sm,
                     child: Row(
                       children: [

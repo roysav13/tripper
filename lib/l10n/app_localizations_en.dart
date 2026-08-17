@@ -488,15 +488,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get statsCountries => 'Countries';
-
-  @override
-  String get statsPlacesVisited => 'Places visited';
-
-  @override
-  String get statsDaysTraveled => 'Days away';
-
-  @override
   String get placeFormTitle => 'Add place';
 
   @override

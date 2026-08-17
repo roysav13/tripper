@@ -378,11 +378,11 @@ class _EdgeShadow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final atTop = alignment == Alignment.topCenter;
-    return Positioned(
+    return PositionedDirectional(
       top: atTop ? 0 : null,
       bottom: atTop ? null : 0,
-      left: 0,
-      right: 0,
+      start: 0,
+      end: 0,
       height: _height,
       // Decorative only — never intercepts map pan/zoom/marker taps.
       child: IgnorePointer(

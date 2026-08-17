@@ -956,24 +956,6 @@ abstract class AppLocalizations {
   /// **'Visited {date}'**
   String visitedOn(String date);
 
-  /// No description provided for @statsCountries.
-  ///
-  /// In en, this message translates to:
-  /// **'Countries'**
-  String get statsCountries;
-
-  /// No description provided for @statsPlacesVisited.
-  ///
-  /// In en, this message translates to:
-  /// **'Places visited'**
-  String get statsPlacesVisited;
-
-  /// No description provided for @statsDaysTraveled.
-  ///
-  /// In en, this message translates to:
-  /// **'Days away'**
-  String get statsDaysTraveled;
-
   /// No description provided for @placeFormTitle.
   ///
   /// In en, this message translates to:

@@ -67,7 +67,7 @@ No new font assets — reuses the three already bundled (`Fraunces`, `IBM Plex S
 
 1. **One accent, not two.** Coral does all interactive/active/CTA work. Amber is reserved exclusively for expiry/danger-adjacent warnings — never reused as a second accent.
 2. **Gradients are scoped, not banned.** Only on hero/cover-photo scrims and generated trip-cover art. Never on buttons, text backgrounds, or flat surfaces.
-3. **Glass/blur is for chrome over imagery only** — nav bars, tab bars, top bars sitting on a photo or gradient hero. Regular content cards stay solid for reliable contrast and cheap repaint.
+3. **Glass/blur is for chrome over imagery only, or a sheet this spec explicitly names as glass** — nav bars, tab bars, top bars sitting on a photo or gradient hero, and the Places filter sheet (§5). Regular content cards stay solid for reliable contrast and cheap repaint.
 4. **Hairline borders survive** on solid cards, recolored (`rgba(255,255,255,.08)` dark / `#E7E1D8` light) — keeps the "printed, not app-y" feel under the new skin.
 5. **Two pin/marker states, one accent** — coral+glow = want-to-go, muted parchment/grey = been-there. Applies identically to map pins and the journal globe's dots.
 6. **Contrast is non-negotiable.** Every text-on-photo/gradient moment gets a scrim strong enough to hit WCAG AA — this replaces, rather than loosens, the old contrast discipline (recall the M4 audit that already tightened `inkMuted` twice for this reason).
