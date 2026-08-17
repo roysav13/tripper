@@ -1568,6 +1568,30 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get settingsExpiryNoticeOff;
 
+  /// No description provided for @settingsNearbyPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby places'**
+  String get settingsNearbyPlaces;
+
+  /// No description provided for @settingsNearbyPlacesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find highly-rated places near you or a saved spot, right from the Places tab.'**
+  String get settingsNearbyPlacesHint;
+
+  /// No description provided for @settingsNearbyPlacesCallCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 lookup this install} other{{count} lookups this install}}'**
+  String settingsNearbyPlacesCallCount(int count);
+
+  /// No description provided for @settingsNearbyPlacesNoKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires a Maps API key to be configured'**
+  String get settingsNearbyPlacesNoKey;
+
   /// No description provided for @docExpiryNotificationTitle.
   ///
   /// In en, this message translates to:

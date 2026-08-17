@@ -834,6 +834,27 @@ class AppLocalizationsHe extends AppLocalizations {
   String get settingsExpiryNoticeOff => 'כבוי';
 
   @override
+  String get settingsNearbyPlaces => 'מקומות בקרבת מקום';
+
+  @override
+  String get settingsNearbyPlacesHint =>
+      'מצא מקומות מדורגים גבוה בקרבתך או ליד מקום שמור, ישירות מלשונית המקומות.';
+
+  @override
+  String settingsNearbyPlacesCallCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count חיפושים בהתקנה זו',
+      one: 'חיפוש אחד בהתקנה זו',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsNearbyPlacesNoKey => 'דורש הגדרת מפתח Maps API';
+
+  @override
   String docExpiryNotificationTitle(String title) {
     return 'המסמך $title עומד לפוג בקרוב';
   }

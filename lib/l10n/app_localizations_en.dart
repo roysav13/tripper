@@ -839,6 +839,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsExpiryNoticeOff => 'Off';
 
   @override
+  String get settingsNearbyPlaces => 'Nearby places';
+
+  @override
+  String get settingsNearbyPlacesHint =>
+      'Find highly-rated places near you or a saved spot, right from the Places tab.';
+
+  @override
+  String settingsNearbyPlacesCallCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lookups this install',
+      one: '1 lookup this install',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsNearbyPlacesNoKey =>
+      'Requires a Maps API key to be configured';
+
+  @override
   String docExpiryNotificationTitle(String title) {
     return '$title expires soon';
   }

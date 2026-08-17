@@ -16,6 +16,7 @@ import '../../../core/widgets/section_label.dart';
 import '../../../features/expenses/domain/currencies.dart';
 import '../../../features/expenses/presentation/currency_picker.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../places/data/google_places_geocoder.dart' show kGoogleMapsApiKey;
 
 /// Presets rather than a free-typed number — matches the app's preference
 /// for SegmentedButton choices over raw text input, and avoids validating
@@ -56,6 +57,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final locale = ref.watch(localeProvider);
     final lockEnabled = ref.watch(vaultLockEnabledProvider);
     final noticeDays = ref.watch(documentExpiryNoticeDaysProvider);
+    final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
+    final nearbyCallCount = ref.watch(nearbyApiCallCountProvider);
 
     if (!ref.watch(vaultLockProvider)) {
       return Scaffold(
@@ -159,6 +162,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onSelectionChanged: (selection) => ref
                 .read(documentExpiryNoticeDaysProvider.notifier)
                 .set(selection.first),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SectionLabel(l10n.settingsNearbyPlaces),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.settingsNearbyPlacesHint,
+            style: TextStyle(fontSize: 13, color: colors.inkSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.settingsNearbyPlaces),
+            subtitle: Text(
+              kGoogleMapsApiKey.isEmpty
+                  ? l10n.settingsNearbyPlacesNoKey
+                  : l10n.settingsNearbyPlacesCallCount(nearbyCallCount),
+              style: TextStyle(fontSize: 12, color: colors.inkMuted),
+            ),
+            value: nearbyEnabled,
+            activeTrackColor: colors.accent,
+            onChanged: kGoogleMapsApiKey.isEmpty
+                ? null
+                : (value) => ref
+                    .read(nearbyPlacesEnabledProvider.notifier)
+                    .set(enabled: value),
           ),
           const SizedBox(height: AppSpacing.xl),
           SectionLabel(l10n.settingsHomeCurrency),

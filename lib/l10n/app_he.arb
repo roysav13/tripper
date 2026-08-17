@@ -325,6 +325,13 @@
   "settingsNotifications": "התראות",
   "settingsExpiryNoticeHint": "כמה זמן לפני תאריך התפוגה של מסמך הוא נחשב 'מתקרב'.",
   "settingsExpiryNoticeOff": "כבוי",
+  "settingsNearbyPlaces": "מקומות בקרבת מקום",
+  "settingsNearbyPlacesHint": "מצא מקומות מדורגים גבוה בקרבתך או ליד מקום שמור, ישירות מלשונית המקומות.",
+  "settingsNearbyPlacesCallCount": "{count, plural, one{חיפוש אחד בהתקנה זו} other{{count} חיפושים בהתקנה זו}}",
+  "@settingsNearbyPlacesCallCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsNearbyPlacesNoKey": "דורש הגדרת מפתח Maps API",
   "docExpiryNotificationTitle": "המסמך {title} עומד לפוג בקרוב",
   "@docExpiryNotificationTitle": {
     "placeholders": { "title": { "type": "String" } }

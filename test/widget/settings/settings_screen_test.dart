@@ -56,4 +56,47 @@ void main() {
     final container = ProviderScope.containerOf(element);
     expect(container.read(localeProvider), const Locale('en'));
   });
+
+  testWidgets('nearby places toggle defaults off and switches on',
+      (tester) async {
+    await tester.pumpWidget(await _app());
+    await tester.pumpAndSettle();
+
+    final toggle = find.widgetWithText(SwitchListTile, 'Nearby places');
+    expect(toggle, findsOneWidget);
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+
+    final element = tester.element(find.byType(SettingsScreen));
+    final container = ProviderScope.containerOf(element);
+    expect(container.read(nearbyPlacesEnabledProvider), isTrue);
+  });
+
+  testWidgets('nearby places call count subtitle reflects stored count',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          await testPreferencesOverride({'nearby_api_call_count': 3}),
+          biometricAuthenticatorProvider.overrideWithValue((_) async => true),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const SettingsScreen(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('he')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('3 lookups this install'), findsOneWidget);
+  });
 }
