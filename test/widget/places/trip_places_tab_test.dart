@@ -361,4 +361,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Near me'), findsOneWidget);
   });
+
+  testWidgets('a place with a plannedDate shows its DAY N chip',
+      (tester) async {
+    final trip = Trip(
+      id: 't1',
+      name: 'Thailand',
+      destinations: const ['Krabi'],
+      startDate: DateTime(2026, 7, 15),
+      endDate: DateTime(2026, 7, 25),
+    );
+    final repo = FakePlaceRepository([
+      Place(
+        id: 'a',
+        name: 'Railay viewpoint',
+        tripId: 't1',
+        plannedDate: DateTime(2026, 7, 17),
+      ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeRepositoryProvider.overrideWithValue(repo),
+          clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+          locationServiceProvider.overrideWithValue(
+            FakeLocationService(
+              const LocationUnavailable(LocationUnavailableReason.error),
+            ),
+          ),
+          // Required — see _app's override above: the real controller reads
+          // sharedPreferencesProvider synchronously in build(), which
+          // throws if unmocked.
+          nearbyPlacesEnabledProvider.overrideWith(
+            () => _FixedNearbyToggle(false),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(body: TripPlacesTab(trip: trip)),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 15 Jul is day 1, so 17 Jul is day 3.
+    expect(find.textContaining('DAY 3'), findsOneWidget);
+  });
 }

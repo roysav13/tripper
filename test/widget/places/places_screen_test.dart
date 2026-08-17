@@ -14,6 +14,7 @@ import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
+import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
@@ -691,5 +692,59 @@ void main() {
     await tester.tap(find.byTooltip('Find nearby'));
     await tester.pumpAndSettle();
     expect(find.text('Near me'), findsOneWidget);
+  });
+
+  testWidgets('a place with a plannedDate shows its DAY N chip',
+      (tester) async {
+    final trip = Trip(
+      id: 't1',
+      name: 'Thailand',
+      destinations: const [],
+      startDate: DateTime(2026, 7, 15),
+      endDate: DateTime(2026, 7, 25),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeRepositoryProvider.overrideWithValue(
+            FakePlaceRepository([
+              Place(
+                id: 'p1',
+                name: 'Railay viewpoint',
+                tripId: 't1',
+                plannedDate: DateTime(2026, 7, 17),
+              ),
+            ]),
+          ),
+          tripRepositoryProvider.overrideWithValue(FakeTripRepository([trip])),
+          clockProvider.overrideWithValue(() => _today),
+          locationServiceProvider.overrideWithValue(
+            FakeLocationService(
+              const LocationUnavailable(LocationUnavailableReason.error),
+            ),
+          ),
+          // Required — see _app's override above: the real controller reads
+          // sharedPreferencesProvider synchronously in build(), which
+          // throws if unmocked.
+          nearbyPlacesEnabledProvider.overrideWith(
+            () => _FixedNearbyToggle(false),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const PlacesScreen(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('DAY 3'), findsOneWidget);
   });
 }

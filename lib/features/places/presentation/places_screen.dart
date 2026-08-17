@@ -18,6 +18,7 @@ import '../../../core/widgets/filtering/filter_sort_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_view.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../trips/domain/trip.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
 import '../domain/place_sort.dart';
@@ -89,6 +90,7 @@ class _PlacesScreenBody extends ConsumerWidget {
     final asyncPlaces = ref.watch(placeListProvider);
     final trips = ref.watch(tripListProvider).valueOrNull ?? [];
     final tripNames = {for (final t in trips) t.id: t.name};
+    final tripsById = {for (final t in trips) t.id: t};
     final mapMode = ref.watch(placesMapModeProvider);
     final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
 
@@ -144,6 +146,7 @@ class _PlacesScreenBody extends ConsumerWidget {
         l10n,
         asyncPlaces,
         tripNames,
+        tripsById,
         mapMode,
         want,
         been,
@@ -157,6 +160,7 @@ class _PlacesScreenBody extends ConsumerWidget {
     AppLocalizations l10n,
     AsyncValue<List<Place>> asyncPlaces,
     Map<String, String> tripNames,
+    Map<String, Trip> tripsById,
     bool mapMode,
     List<Place> want,
     List<Place> been,
@@ -224,7 +228,8 @@ class _PlacesScreenBody extends ConsumerWidget {
               accent: true,
             ),
           ),
-          for (final place in want) _row(context, ref, place, tripNames),
+          for (final place in want)
+            _row(context, ref, place, tripNames, tripsById),
         ],
         if (been.isNotEmpty) ...[
           Padding(
@@ -236,7 +241,8 @@ class _PlacesScreenBody extends ConsumerWidget {
               '${l10n.placesBeenSection} · ${been.length}',
             ),
           ),
-          for (final place in been) _row(context, ref, place, tripNames),
+          for (final place in been)
+            _row(context, ref, place, tripNames, tripsById),
         ],
       ],
     );
@@ -268,10 +274,15 @@ class _PlacesScreenBody extends ConsumerWidget {
     WidgetRef ref,
     Place place,
     Map<String, String> tripNames,
+    Map<String, Trip> tripsById,
   ) {
     final loc = currentLocation;
     final distanceKm = loc != null && place.hasLocation
         ? placeDistanceFromKm(place, lat: loc.lat, lng: loc.lng)
+        : null;
+    final trip = place.tripId == null ? null : tripsById[place.tripId];
+    final dayNumber = (trip?.startDate != null && place.plannedDate != null)
+        ? trip!.dayNumber(place.plannedDate!)
         : null;
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
@@ -281,6 +292,7 @@ class _PlacesScreenBody extends ConsumerWidget {
           place: place,
           tripName: place.tripId == null ? null : tripNames[place.tripId],
           distanceKm: distanceKm,
+          dayNumber: dayNumber,
           onTap: () => showPlaceActionsSheet(context, ref, place),
           onToggleVisited: () {
             HapticFeedback.selectionClick();

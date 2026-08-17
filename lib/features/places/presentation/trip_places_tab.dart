@@ -162,6 +162,7 @@ class _TripPlacesTabBody extends ConsumerWidget {
               placeId: place.id,
               child: PlaceRowCard(
                 place: place,
+                dayNumber: _dayNumberFor(place),
                 distanceKm: currentLocation != null && place.hasLocation
                     ? placeDistanceFromKm(
                         place,
@@ -186,6 +187,11 @@ class _TripPlacesTabBody extends ConsumerWidget {
       ],
     );
   }
+
+  int? _dayNumberFor(Place place) =>
+      (trip.startDate != null && place.plannedDate != null)
+          ? trip.dayNumber(place.plannedDate!)
+          : null;
 
   Widget _activeFilterStrip(WidgetRef ref) {
     final active = <ActiveFilterEntry>[];

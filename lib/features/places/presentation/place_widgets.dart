@@ -61,6 +61,7 @@ class PlaceRowCard extends StatefulWidget {
     required this.place,
     this.tripName,
     this.distanceKm,
+    this.dayNumber,
     this.onToggleVisited,
     this.onTap,
   });
@@ -73,6 +74,11 @@ class PlaceRowCard extends StatefulWidget {
   /// caller (which already watches `currentLocationProvider`) rather than
   /// read from global state here.
   final double? distanceKm;
+
+  /// 1-based trip day this place is tagged for — `null` when untagged or
+  /// the place has no trip. Computed by the caller (`Trip.dayNumber`)
+  /// rather than read from global state here.
+  final int? dayNumber;
   final VoidCallback? onToggleVisited;
   final VoidCallback? onTap;
 
@@ -94,6 +100,7 @@ class _PlaceRowCardState extends State<PlaceRowCard> {
       if (place.city.isNotEmpty) place.city,
       if (place.country.isNotEmpty) place.country,
       if (widget.distanceKm case final km?) formatPlaceDistance(l10n, km),
+      if (widget.dayNumber case final day?) l10n.nearbyDayNumber(day),
       if (visited && place.visitedAt != null)
         l10n.visitedOn(
           DateFormat('dd MMM yyyy', l10n.localeName).format(place.visitedAt!),
