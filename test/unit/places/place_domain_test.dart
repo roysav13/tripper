@@ -118,4 +118,41 @@ void main() {
       expect(a, isNot(c));
     });
   });
+
+  group('Place plannedDate', () {
+    test('defaults to null', () {
+      const place = Place(id: 'p1', name: 'Test');
+      expect(place.plannedDate, isNull);
+    });
+
+    test('copyWith sets and clears plannedDate', () {
+      const place = Place(id: 'p1', name: 'Test');
+      final planned =
+          place.copyWith(plannedDate: () => DateTime(2026, 8, 20));
+      expect(planned.plannedDate, DateTime(2026, 8, 20));
+
+      final cleared = planned.copyWith(plannedDate: () => null);
+      expect(cleared.plannedDate, isNull);
+    });
+
+    test('equality includes plannedDate', () {
+      final a = Place(
+        id: 'p1',
+        name: 'Test',
+        plannedDate: DateTime(2026, 8, 20),
+      );
+      final b = Place(
+        id: 'p1',
+        name: 'Test',
+        plannedDate: DateTime(2026, 8, 20),
+      );
+      final c = Place(
+        id: 'p1',
+        name: 'Test',
+        plannedDate: DateTime(2026, 8, 21),
+      );
+      expect(a, b);
+      expect(a, isNot(c));
+    });
+  });
 }

@@ -35,6 +35,7 @@ class Place {
     this.category,
     this.summary,
     this.summaryFetchedAt,
+    this.plannedDate,
   });
 
   final String id;
@@ -64,6 +65,14 @@ class Place {
   final String? summary;
   final DateTime? summaryFetchedAt;
 
+  /// Which day of the trip this place is intended for — a deliberately
+  /// minimal successor to the withdrawn Plan tab
+  /// (docs/adr/ADR-001-itinerary-redesign.md): no time, no ordering, no
+  /// derived anchors. Only ever set via the Near By add flow in this
+  /// round; editing it from the general place editor is a later, separate
+  /// decision.
+  final DateTime? plannedDate;
+
   bool get hasSummary => summary != null && summary!.trim().isNotEmpty;
 
   bool get isVisited => status == PlaceStatus.beenThere;
@@ -82,6 +91,7 @@ class Place {
     PlaceCategory? Function()? category,
     String? Function()? summary,
     DateTime? Function()? summaryFetchedAt,
+    DateTime? Function()? plannedDate,
   }) {
     return Place(
       id: id,
@@ -98,6 +108,7 @@ class Place {
       summary: summary == null ? this.summary : summary(),
       summaryFetchedAt:
           summaryFetchedAt == null ? this.summaryFetchedAt : summaryFetchedAt(),
+      plannedDate: plannedDate == null ? this.plannedDate : plannedDate(),
     );
   }
 
@@ -116,7 +127,8 @@ class Place {
       other.notes == notes &&
       other.category == category &&
       other.summary == summary &&
-      other.summaryFetchedAt == summaryFetchedAt;
+      other.summaryFetchedAt == summaryFetchedAt &&
+      other.plannedDate == plannedDate;
 
   @override
   int get hashCode => Object.hash(
@@ -133,6 +145,7 @@ class Place {
         category,
         summary,
         summaryFetchedAt,
+        plannedDate,
       );
 }
 
