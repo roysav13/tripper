@@ -182,7 +182,9 @@ void main() {
     expect(find.text('A passport'), findsOneWidget);
     expect(find.text('A hotel booking'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilterChip, 'Stay'));
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stay'));
     await tester.pumpAndSettle();
 
     expect(find.text('A passport'), findsNothing);
@@ -218,7 +220,11 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Oldest doc')).dy),
     );
 
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Relevant date'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
     // Relevant date is soonest-first — the doc with the nearer expiry
@@ -227,5 +233,44 @@ void main() {
       tester.getTopLeft(find.text('Oldest doc')).dy,
       lessThan(tester.getTopLeft(find.text('Newest doc')).dy),
     );
+  });
+
+  testWidgets(
+      'active-filter strip shows a removable pill for the selected '
+      'category, and removing it restores the full list', (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        Document(
+          id: 'p',
+          title: 'A passport',
+          category: DocumentCategory.passportId,
+          createdAt: _today,
+        ),
+        Document(
+          id: 's',
+          title: 'A hotel booking',
+          category: DocumentCategory.stay,
+          createdAt: _today,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A passport'), findsNothing);
+    expect(find.text('A hotel booking'), findsOneWidget);
+
+    // Tapping the "Stay" pill in the active-filter strip removes it.
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A passport'), findsOneWidget);
+    expect(find.text('A hotel booking'), findsOneWidget);
   });
 }

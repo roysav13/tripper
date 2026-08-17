@@ -11,6 +11,7 @@ import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../data/geocoding_service.dart';
+import '../data/place_summary_service.dart';
 import '../domain/place.dart';
 import 'map_style.dart';
 import 'place_providers.dart';
@@ -509,16 +510,38 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       return;
     }
     setState(() => _saving = true);
-    await ref.read(placeRepositoryProvider).createPlace(
-          name: _name.text,
-          country: _country,
-          city: _city,
-          lat: _picked?.latitude,
-          lng: _picked?.longitude,
-          tripId: _tripId,
-          notes: _description.text,
-          category: _category,
-        );
+    final name = _name.text;
+    final lat = _picked?.latitude;
+    final lng = _picked?.longitude;
+    // Read the repo/fetcher before the await — `ref` isn't safe to touch
+    // once this state has been popped and disposed, but the fetch below
+    // deliberately keeps running after that (see `unawaited` below).
+    final repo = ref.read(placeRepositoryProvider);
+    final summaryFetcher = ref.read(placeSummaryFetcherProvider);
+    final id = await repo.createPlace(
+      name: name,
+      country: _country,
+      city: _city,
+      lat: lat,
+      lng: lng,
+      tripId: _tripId,
+      notes: _description.text,
+      category: _category,
+    );
+    // Enhancement, not a gate (CLAUDE.md hard rule 4) — the save flow
+    // doesn't wait on this, and any failure just leaves the summary empty.
+    unawaited(
+      fetchAndStorePlaceSummary(
+        fetcher: summaryFetcher,
+        repo: repo,
+        placeId: id,
+        name: name,
+        city: _city,
+        country: _country,
+        lat: lat,
+        lng: lng,
+      ),
+    );
     if (mounted) Navigator.of(context).pop();
   }
 }

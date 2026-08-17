@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../places/data/geocoding_service.dart';
+import '../../places/data/place_summary_service.dart';
 import '../../places/domain/place.dart';
 import '../../places/presentation/map_style.dart';
 import '../../places/presentation/place_providers.dart';
@@ -442,6 +443,10 @@ class _JournalLocationPickerState extends ConsumerState<JournalLocationPicker> {
     if (isNewNamedPlace) {
       setState(() => _saving = true);
       final places = ref.read(placeRepositoryProvider);
+      // Read before the awaits below — `ref` isn't safe to touch once
+      // this screen has popped and disposed, but the summary fetch below
+      // deliberately keeps running after that (see `unawaited`).
+      final summaryFetcher = ref.read(placeSummaryFetcherProvider);
       placeId = await places.createPlace(
         name: name,
         lat: picked.latitude,
@@ -452,6 +457,18 @@ class _JournalLocationPickerState extends ConsumerState<JournalLocationPicker> {
         placeId,
         visited: true,
         visitedOn: ref.read(clockProvider)(),
+      );
+      // Enhancement, not a gate (CLAUDE.md hard rule 4) — doesn't block
+      // this flow, and any failure just leaves the summary empty.
+      unawaited(
+        fetchAndStorePlaceSummary(
+          fetcher: summaryFetcher,
+          repo: places,
+          placeId: placeId,
+          name: name,
+          lat: picked.latitude,
+          lng: picked.longitude,
+        ),
       );
     } else if (placeId != null) {
       final existing = tripPlaces.firstWhere((p) => p.id == placeId);

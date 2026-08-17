@@ -112,4 +112,18 @@ class FakePlaceRepository implements PlaceRepository {
   Future<void> deletePlace(String id) async {
     emit([..._places.where((p) => p.id != id)]);
   }
+
+  @override
+  Future<void> setSummary(String id, {String? summary}) async {
+    emit([
+      for (final p in _places)
+        if (p.id == id)
+          p.copyWith(
+            summary: () => summary,
+            summaryFetchedAt: () => _clock,
+          )
+        else
+          p,
+    ]);
+  }
 }

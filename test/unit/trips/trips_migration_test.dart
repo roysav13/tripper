@@ -24,6 +24,29 @@ CREATE TABLE trips (
   created_at INTEGER NOT NULL
 )''';
 
+  /// The v12 places table — before summary/summaryFetchedAt existed.
+  /// Needed here for the same reason `createV12Trips` is needed above: a
+  /// fresh `AppDatabase` creates places at its CURRENT shape (via
+  /// `onCreate`), summary columns included, so replaying `onUpgrade` from
+  /// `from: 12` would otherwise make the migration's own (correct)
+  /// places.summary addColumn step collide with columns this synthetic
+  /// setup already has — unrelated to what this test covers.
+  const createV12Places = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  category INTEGER
+)''';
+
   test(
       'v12 -> v13 adds coverPhotoPath to an existing trips table, null '
       '(= no photo, render the generated gradient), keeping existing rows',
@@ -31,10 +54,12 @@ CREATE TABLE trips (
     await db.customStatement('PRAGMA foreign_keys = OFF');
     await db.customStatement('DROP TABLE trips');
     await db.customStatement(createV12Trips);
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createV12Places);
     await db.customStatement('PRAGMA foreign_keys = ON');
     await db.customStatement(
       'INSERT INTO trips (id, name, color_tag, archived, '
-      "completion_prompt_shown, created_at) "
+      'completion_prompt_shown, created_at) '
       "VALUES ('t1', 'Thailand', 0, 0, 0, 0)",
     );
 

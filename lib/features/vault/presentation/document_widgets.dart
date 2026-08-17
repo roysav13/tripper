@@ -44,50 +44,6 @@ String documentMetaLine(AppLocalizations l10n, Document doc) {
   return parts.join(' · ');
 }
 
-/// Category filter chips — a controlled widget, all state lives in the
-/// parent screen (mirrors places' PlaceFilterBar). Only categories
-/// actually present in [docs] render a chip, so there's never a dead-end
-/// filter option.
-class DocumentFilterBar extends StatelessWidget {
-  const DocumentFilterBar({
-    super.key,
-    required this.docs,
-    required this.selectedCategories,
-    required this.onCategoriesChanged,
-  });
-
-  final List<Document> docs;
-  final Set<DocumentCategory> selectedCategories;
-  final ValueChanged<Set<DocumentCategory>> onCategoriesChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final categories = {for (final d in docs) d.category}.toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
-
-    if (categories.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: [
-        for (final category in categories)
-          FilterChip(
-            avatar: Icon(categoryIcon(category), size: 16),
-            label: Text(categoryLabel(l10n, category)),
-            selected: selectedCategories.contains(category),
-            onSelected: (selected) => onCategoriesChanged(
-              selected
-                  ? {...selectedCategories, category}
-                  : selectedCategories.where((c) => c != category).toSet(),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 /// One document = one card (matches the trips list), used in the vault
 /// and in a trip's Documents tab. A real elevated Material card with a
 /// leading accent edge — coral normally, amber when the document has

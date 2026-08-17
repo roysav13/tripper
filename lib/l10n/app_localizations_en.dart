@@ -309,6 +309,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vaultSortRelevant => 'Relevant date';
 
   @override
+  String get vaultFilterCategorySection => 'Category';
+
+  @override
+  String vaultFilterShowResults(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count documents',
+      one: 'Show 1 document',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get catPassport => 'Passport / ID';
 
   @override
@@ -483,6 +497,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placeUnvisit => 'Move back to wishlist';
 
   @override
+  String get placeSummaryShow => 'View summary';
+
+  @override
+  String get placeSummaryHide => 'Hide summary';
+
+  @override
   String visitedOn(String date) {
     return 'Visited $date';
   }
@@ -540,6 +560,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get listViewToggle => 'List view';
+
+  @override
+  String get filterClearAll => 'Clear filters';
+
+  @override
+  String get filterSortButtonTooltip => 'Sort & filter';
+
+  @override
+  String get filterSortSheetTitle => 'Sort & filter';
+
+  @override
+  String get filterSortSortSection => 'Sort';
+
+  @override
+  String get sortAToZ => 'A–Z';
+
+  @override
+  String get sortZToA => 'Z–A';
+
+  @override
+  String get sortOldestFirst => 'Oldest first';
+
+  @override
+  String get sortNewestFirst => 'Newest first';
+
+  @override
+  String get sortNearestFirst => 'Nearest first';
+
+  @override
+  String get sortFarthestFirst => 'Farthest first';
+
+  @override
+  String get placesSortRecommended => 'Recommended';
+
+  @override
+  String get placesSortName => 'Name';
+
+  @override
+  String get placesSortVisitedDate => 'Date visited';
+
+  @override
+  String get placesSortDistance => 'Distance';
+
+  @override
+  String get placesSortDistanceFetching => 'Fetching your location…';
+
+  @override
+  String get placesSortDistanceServiceDisabled =>
+      'Turn on location services to sort by distance';
+
+  @override
+  String get placesSortDistancePermissionDenied =>
+      'Allow location access to sort by distance';
+
+  @override
+  String get placesSortDistanceError => 'Couldn\'t get your location';
+
+  @override
+  String get placesSortDistanceRetry => 'Retry';
+
+  @override
+  String get placesSortDistanceOpenSettings => 'Settings';
+
+  @override
+  String placeDistanceKmAway(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String placeDistanceMetersAway(int m) {
+    return '$m m away';
+  }
 
   @override
   String get placesFilterButton => 'Filter';

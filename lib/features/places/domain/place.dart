@@ -33,6 +33,8 @@ class Place {
     this.tripId,
     this.notes = '',
     this.category,
+    this.summary,
+    this.summaryFetchedAt,
   });
 
   final String id;
@@ -52,6 +54,18 @@ class Place {
   /// entered).
   final PlaceCategory? category;
 
+  /// Wikipedia-sourced summary of the place, fetched automatically once
+  /// on save. Null with [summaryFetchedAt] also null = never attempted
+  /// yet (fetch is in flight or the place predates this feature). Null
+  /// with [summaryFetchedAt] set = attempted and nothing came back
+  /// (offline, or no matching Wikipedia article) — a real, distinct state
+  /// from "not tried", so the UI never retries a place that already came
+  /// back empty.
+  final String? summary;
+  final DateTime? summaryFetchedAt;
+
+  bool get hasSummary => summary != null && summary!.trim().isNotEmpty;
+
   bool get isVisited => status == PlaceStatus.beenThere;
   bool get hasLocation => lat != null && lng != null;
 
@@ -66,6 +80,8 @@ class Place {
     String? Function()? tripId,
     String? notes,
     PlaceCategory? Function()? category,
+    String? Function()? summary,
+    DateTime? Function()? summaryFetchedAt,
   }) {
     return Place(
       id: id,
@@ -79,6 +95,9 @@ class Place {
       tripId: tripId == null ? this.tripId : tripId(),
       notes: notes ?? this.notes,
       category: category == null ? this.category : category(),
+      summary: summary == null ? this.summary : summary(),
+      summaryFetchedAt:
+          summaryFetchedAt == null ? this.summaryFetchedAt : summaryFetchedAt(),
     );
   }
 
@@ -95,7 +114,9 @@ class Place {
       other.visitedAt == visitedAt &&
       other.tripId == tripId &&
       other.notes == notes &&
-      other.category == category;
+      other.category == category &&
+      other.summary == summary &&
+      other.summaryFetchedAt == summaryFetchedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -110,40 +131,9 @@ class Place {
         tripId,
         notes,
         category,
+        summary,
+        summaryFetchedAt,
       );
-}
-
-/// Section ordering (SPEC): wishlist first (by name), visited last
-/// (most recently visited first).
-List<Place> sortForList(List<Place> places) {
-  final want = places.where((p) => !p.isVisited).toList()
-    ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-  final been = places.where((p) => p.isVisited).toList()
-    ..sort((a, b) {
-      final av = a.visitedAt, bv = b.visitedAt;
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      return bv.compareTo(av);
-    });
-  return [...want, ...been];
-}
-
-/// Places matching the filter: AND across the two dimensions, OR within
-/// each (an empty set for a dimension means that dimension doesn't
-/// filter at all). Pure — unit-tested without widgets.
-List<Place> filterPlaces(
-  List<Place> places, {
-  Set<PlaceCategory> categories = const {},
-  Set<String> countries = const {},
-}) {
-  return [
-    for (final p in places)
-      if ((categories.isEmpty ||
-              (p.category != null && categories.contains(p.category))) &&
-          (countries.isEmpty || countries.contains(p.country)))
-        p,
-  ];
 }
 
 /// Trophy-case stats over existing data — no new entities (SPEC §3.1).

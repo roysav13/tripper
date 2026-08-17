@@ -632,6 +632,18 @@ abstract class AppLocalizations {
   /// **'Relevant date'**
   String get vaultSortRelevant;
 
+  /// No description provided for @vaultFilterCategorySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get vaultFilterCategorySection;
+
+  /// No description provided for @vaultFilterShowResults.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Show 1 document} other{Show {count} documents}}'**
+  String vaultFilterShowResults(int count);
+
   /// No description provided for @catPassport.
   ///
   /// In en, this message translates to:
@@ -950,6 +962,18 @@ abstract class AppLocalizations {
   /// **'Move back to wishlist'**
   String get placeUnvisit;
 
+  /// No description provided for @placeSummaryShow.
+  ///
+  /// In en, this message translates to:
+  /// **'View summary'**
+  String get placeSummaryShow;
+
+  /// No description provided for @placeSummaryHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide summary'**
+  String get placeSummaryHide;
+
   /// No description provided for @visitedOn.
   ///
   /// In en, this message translates to:
@@ -1063,6 +1087,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'List view'**
   String get listViewToggle;
+
+  /// No description provided for @filterClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get filterClearAll;
+
+  /// No description provided for @filterSortButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & filter'**
+  String get filterSortButtonTooltip;
+
+  /// No description provided for @filterSortSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & filter'**
+  String get filterSortSheetTitle;
+
+  /// No description provided for @filterSortSortSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get filterSortSortSection;
+
+  /// No description provided for @sortAToZ.
+  ///
+  /// In en, this message translates to:
+  /// **'A–Z'**
+  String get sortAToZ;
+
+  /// No description provided for @sortZToA.
+  ///
+  /// In en, this message translates to:
+  /// **'Z–A'**
+  String get sortZToA;
+
+  /// No description provided for @sortOldestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get sortOldestFirst;
+
+  /// No description provided for @sortNewestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewestFirst;
+
+  /// No description provided for @sortNearestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest first'**
+  String get sortNearestFirst;
+
+  /// No description provided for @sortFarthestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Farthest first'**
+  String get sortFarthestFirst;
+
+  /// No description provided for @placesSortRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get placesSortRecommended;
+
+  /// No description provided for @placesSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get placesSortName;
+
+  /// No description provided for @placesSortVisitedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date visited'**
+  String get placesSortVisitedDate;
+
+  /// No description provided for @placesSortDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get placesSortDistance;
+
+  /// No description provided for @placesSortDistanceFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching your location…'**
+  String get placesSortDistanceFetching;
+
+  /// No description provided for @placesSortDistanceServiceDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services to sort by distance'**
+  String get placesSortDistanceServiceDisabled;
+
+  /// No description provided for @placesSortDistancePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location access to sort by distance'**
+  String get placesSortDistancePermissionDenied;
+
+  /// No description provided for @placesSortDistanceError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location'**
+  String get placesSortDistanceError;
+
+  /// No description provided for @placesSortDistanceRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get placesSortDistanceRetry;
+
+  /// No description provided for @placesSortDistanceOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get placesSortDistanceOpenSettings;
+
+  /// No description provided for @placeDistanceKmAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String placeDistanceKmAway(String km);
+
+  /// No description provided for @placeDistanceMetersAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{m} m away'**
+  String placeDistanceMetersAway(int m);
 
   /// No description provided for @placesFilterButton.
   ///

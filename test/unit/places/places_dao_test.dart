@@ -98,6 +98,36 @@ void main() {
     expect(place.category, isNull);
   });
 
+  test('setSummary stamps the clock and survives an unrelated update',
+      () async {
+    final id = await repo.createPlace(name: 'Railay viewpoint');
+    var place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.summary, isNull);
+    expect(place.summaryFetchedAt, isNull);
+
+    await repo.setSummary(id, summary: 'A quiet limestone cove.');
+    place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.summary, 'A quiet limestone cove.');
+    expect(place.summaryFetchedAt, today);
+
+    // Editing an unrelated field (e.g. notes) must not wipe the summary
+    // that a background fetch already stored.
+    await repo.updatePlace(place.copyWith(notes: 'Bring water shoes'));
+    place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.summary, 'A quiet limestone cove.');
+    expect(place.summaryFetchedAt, today);
+  });
+
+  test(
+      'setSummary with a null result still stamps fetchedAt — attempted, '
+      'not "never tried"', () async {
+    final id = await repo.createPlace(name: 'Corner store');
+    await repo.setSummary(id, summary: null);
+    final place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.summary, isNull);
+    expect(place.summaryFetchedAt, today);
+  });
+
   test('watchForTrip only emits that trip\'s places', () async {
     final tripId = await tripRepo.createTrip(
       name: 'Rome',

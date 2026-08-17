@@ -6,6 +6,7 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/journal/presentation/journal_location_picker.dart';
 import 'package:tripper/features/places/data/geocoding_service.dart';
+import 'package:tripper/features/places/data/place_summary_service.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
@@ -45,6 +46,10 @@ Widget _wrap({
         placeRepositoryProvider.overrideWithValue(places),
         geocoderProvider.overrideWithValue(geocoder),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        // Network off by default (CLAUDE.md hard rule 5) — the "new named
+        // place" flow triggers a background summary fetch.
+        placeSummaryFetcherProvider
+            .overrideWithValue(const NoopPlaceSummaryFetcher()),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -176,6 +181,8 @@ void main() {
           placeRepositoryProvider.overrideWithValue(places),
           geocoderProvider.overrideWithValue(_FakeGeocoder(const [])),
           clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+          placeSummaryFetcherProvider
+              .overrideWithValue(const NoopPlaceSummaryFetcher()),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),

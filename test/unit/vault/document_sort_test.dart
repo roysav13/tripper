@@ -70,94 +70,37 @@ void main() {
     });
   });
 
-  group('sortDocuments', () {
-    test('createdDate orders newest first', () {
-      final sorted = sortDocuments(
-        [
-          _doc('old', createdAt: DateTime(2026, 1, 1)),
-          _doc('new', createdAt: DateTime(2026, 6, 1)),
-          _doc('mid', createdAt: DateTime(2026, 3, 1)),
-        ],
-        DocumentSortOrder.createdDate,
-      );
-      expect(sorted.map((d) => d.id).toList(), ['new', 'mid', 'old']);
-    });
-
-    test('relevantDate orders soonest first', () {
-      final sorted = sortDocuments(
-        [
-          _doc(
-            'far',
-            createdAt: DateTime(2026, 1, 1),
-            expiry: DateTime(2027, 1, 1),
-          ),
-          _doc(
-            'soon',
-            createdAt: DateTime(2026, 1, 1),
-            expiry: DateTime(2026, 8, 1),
-          ),
-          _doc(
-            'mid',
-            createdAt: DateTime(2026, 1, 1),
-            expiry: DateTime(2026, 10, 1),
-          ),
-        ],
-        DocumentSortOrder.relevantDate,
-      );
-      expect(sorted.map((d) => d.id).toList(), ['soon', 'mid', 'far']);
-    });
-
-    test(
-        'relevantDate pushes dateless documents last, tiebroken by '
-        'createdAt (newest first)', () {
-      final sorted = sortDocuments(
-        [
-          _doc('dateless-old', createdAt: DateTime(2026, 1, 1)),
-          _doc(
-            'dated',
-            createdAt: DateTime(2026, 1, 1),
-            expiry: DateTime(2026, 9, 1),
-          ),
-          _doc('dateless-new', createdAt: DateTime(2026, 6, 1)),
-        ],
-        DocumentSortOrder.relevantDate,
-      );
-      expect(
-        sorted.map((d) => d.id).toList(),
-        ['dated', 'dateless-new', 'dateless-old'],
-      );
+  group('compareDocumentsByCreatedDate', () {
+    test('ascending by createdAt', () {
+      final docs = [
+        _doc('new', createdAt: DateTime(2026, 6, 1)),
+        _doc('old', createdAt: DateTime(2026, 1, 1)),
+        _doc('mid', createdAt: DateTime(2026, 3, 1)),
+      ]..sort(compareDocumentsByCreatedDate);
+      expect(docs.map((d) => d.id).toList(), ['old', 'mid', 'new']);
     });
   });
 
-  group('filterDocumentsByCategory', () {
-    final docs = [
-      _doc(
-        'a',
-        category: DocumentCategory.passportId,
-        createdAt: DateTime(2026, 1, 1),
-      ),
-      _doc(
-        'b',
-        category: DocumentCategory.flight,
-        createdAt: DateTime(2026, 1, 1),
-      ),
-      _doc(
-        'c',
-        category: DocumentCategory.stay,
-        createdAt: DateTime(2026, 1, 1),
-      ),
-    ];
-
-    test('empty category set means no filtering', () {
-      expect(filterDocumentsByCategory(docs, {}).length, 3);
-    });
-
-    test('non-empty set keeps only matching categories', () {
-      final filtered = filterDocumentsByCategory(
-        docs,
-        {DocumentCategory.passportId, DocumentCategory.stay},
-      );
-      expect(filtered.map((d) => d.id).toList(), ['a', 'c']);
+  group('compareDocumentsByRelevantDate', () {
+    test('ascending by relevantDateOf (soonest first)', () {
+      final docs = [
+        _doc(
+          'far',
+          createdAt: DateTime(2026, 1, 1),
+          expiry: DateTime(2027, 1, 1),
+        ),
+        _doc(
+          'soon',
+          createdAt: DateTime(2026, 1, 1),
+          expiry: DateTime(2026, 8, 1),
+        ),
+        _doc(
+          'mid',
+          createdAt: DateTime(2026, 1, 1),
+          expiry: DateTime(2026, 10, 1),
+        ),
+      ]..sort(compareDocumentsByRelevantDate);
+      expect(docs.map((d) => d.id).toList(), ['soon', 'mid', 'far']);
     });
   });
 }

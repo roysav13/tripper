@@ -4,15 +4,19 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
+import 'package:tripper/core/location/location_providers.dart';
+import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/filtering/active_filter_strip.dart';
+import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
-import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/fake_location_service.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
@@ -24,6 +28,8 @@ Place _p(
   DateTime? visitedAt,
   String country = '',
   String city = '',
+  double? lat,
+  double? lng,
 }) =>
     Place(
       id: name,
@@ -32,14 +38,27 @@ Place _p(
       city: city,
       status: visited ? PlaceStatus.beenThere : PlaceStatus.wantToGo,
       visitedAt: visitedAt,
+      lat: lat,
+      lng: lng,
     );
 
-Widget _app(List<Place> places) => ProviderScope(
+Widget _app(List<Place> places, {LocationFix? locationFix}) => ProviderScope(
       overrides: [
         placeRepositoryProvider
             .overrideWithValue(FakePlaceRepository([...places])),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => _today),
+        // The real GeolocatorLocationService talks to the OS on desktop
+        // platforms (geolocator_windows calls the win32 Location API
+        // directly, no MethodChannel to gracefully no-op in a widget
+        // test) — mocked at the repository boundary like every other
+        // provider here rather than left to hit real device state.
+        locationServiceProvider.overrideWithValue(
+          FakeLocationService(
+            locationFix ??
+                const LocationUnavailable(LocationUnavailableReason.error),
+          ),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -180,8 +199,9 @@ void main() {
   });
 
   testWidgets(
-      'filter button is absent when no place has a category or country to '
-      'filter by', (tester) async {
+      'filter/sort button is still shown (for Sort) even when no place has '
+      'a category or country to filter by, but the sheet shows no facet '
+      'sections', (tester) async {
     await tester.pumpWidget(
       _app([
         const Place(id: 'a', name: 'Hotel A'),
@@ -190,7 +210,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.tune), findsNothing);
+    expect(find.byIcon(Icons.tune), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SORT & FILTER'), findsOneWidget);
+    expect(find.text('SORT'), findsOneWidget);
+    expect(find.text('CATEGORY'), findsNothing);
+    expect(find.text('COUNTRY'), findsNothing);
   });
 
   testWidgets(
@@ -209,13 +237,12 @@ void main() {
     await tester.pumpAndSettle();
 
     Finder badgeFinder() => find.descendant(
-          of: find.byType(PlaceFilterButton),
+          of: find.byType(FilterSortButton),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is DecoratedBox &&
                 widget.decoration is BoxDecoration &&
-                (widget.decoration as BoxDecoration).shape ==
-                    BoxShape.circle,
+                (widget.decoration as BoxDecoration).shape == BoxShape.circle,
           ),
         );
 
@@ -232,6 +259,40 @@ void main() {
 
     // Selecting a category surfaces the badge on the underlying button.
     expect(badgeFinder(), findsOneWidget);
+  });
+
+  testWidgets(
+      'sort sheet lists Distance and shows an inline unavailable status '
+      "when there's no location fix (no geolocator plugin registered in "
+      'the widget-test harness — same path a real permission denial or '
+      'GPS failure takes)', (tester) async {
+    await tester.pumpWidget(
+      _app([_p('Railay viewpoint', city: 'Krabi', country: 'Thailand')]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Distance'), findsOneWidget);
+    expect(find.text("Couldn't get your location"), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a place card shows its distance from the current fix once one lands',
+      (tester) async {
+    // Bangkok fix; Ayutthaya is ~67km away.
+    await tester.pumpWidget(
+      _app(
+        [_p('Ayutthaya', lat: 14.3532, lng: 100.5686)],
+        locationFix: const LocationAvailable(13.7563, 100.5018),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // MonoText (metadata line) renders its text uppercased.
+    expect(find.text('67 KM AWAY'), findsOneWidget);
   });
 
   testWidgets(
@@ -387,8 +448,8 @@ void main() {
     // Confirm the sheet actually opened before locating its scroll view —
     // makes the intent explicit instead of relying on a positional `.last`
     // find to happen to land on the right widget. SectionLabel renders its
-    // text upper-cased, so the sheet's "Filters" title reads "FILTERS".
-    expect(find.text('FILTERS'), findsOneWidget);
+    // text upper-cased, so the sheet's title reads "SORT & FILTER".
+    expect(find.text('SORT & FILTER'), findsOneWidget);
 
     await tester.fling(
       find.descendant(

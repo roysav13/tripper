@@ -306,6 +306,20 @@ class AppLocalizationsHe extends AppLocalizations {
   String get vaultSortRelevant => 'תאריך רלוונטי';
 
   @override
+  String get vaultFilterCategorySection => 'קטגוריה';
+
+  @override
+  String vaultFilterShowResults(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'הצג $count מסמכים',
+      one: 'הצג מסמך אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get catPassport => 'דרכון / תעודת זהות';
 
   @override
@@ -479,6 +493,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get placeUnvisit => 'העבר בחזרה לרשימת המשאלות';
 
   @override
+  String get placeSummaryShow => 'הצג תקציר';
+
+  @override
+  String get placeSummaryHide => 'הסתר תקציר';
+
+  @override
   String visitedOn(String date) {
     return 'ביקרת ב-$date';
   }
@@ -536,6 +556,78 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get listViewToggle => 'תצוגת רשימה';
+
+  @override
+  String get filterClearAll => 'נקה סינון';
+
+  @override
+  String get filterSortButtonTooltip => 'מיון וסינון';
+
+  @override
+  String get filterSortSheetTitle => 'מיון וסינון';
+
+  @override
+  String get filterSortSortSection => 'מיון';
+
+  @override
+  String get sortAToZ => 'א–ת';
+
+  @override
+  String get sortZToA => 'ת–א';
+
+  @override
+  String get sortOldestFirst => 'הישן ביותר';
+
+  @override
+  String get sortNewestFirst => 'החדש ביותר';
+
+  @override
+  String get sortNearestFirst => 'הקרוב ביותר';
+
+  @override
+  String get sortFarthestFirst => 'הרחוק ביותר';
+
+  @override
+  String get placesSortRecommended => 'מומלץ';
+
+  @override
+  String get placesSortName => 'שם';
+
+  @override
+  String get placesSortVisitedDate => 'תאריך ביקור';
+
+  @override
+  String get placesSortDistance => 'מרחק';
+
+  @override
+  String get placesSortDistanceFetching => 'מאתר מיקום…';
+
+  @override
+  String get placesSortDistanceServiceDisabled =>
+      'הפעל שירותי מיקום כדי למיין לפי מרחק';
+
+  @override
+  String get placesSortDistancePermissionDenied =>
+      'אפשר גישה למיקום כדי למיין לפי מרחק';
+
+  @override
+  String get placesSortDistanceError => 'לא ניתן היה לאתר את המיקום';
+
+  @override
+  String get placesSortDistanceRetry => 'נסה שוב';
+
+  @override
+  String get placesSortDistanceOpenSettings => 'הגדרות';
+
+  @override
+  String placeDistanceKmAway(String km) {
+    return 'במרחק $km ק\"מ';
+  }
+
+  @override
+  String placeDistanceMetersAway(int m) {
+    return 'במרחק $m מ\'';
+  }
 
   @override
   String get placesFilterButton => 'סינון';

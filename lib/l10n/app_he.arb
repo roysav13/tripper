@@ -120,6 +120,13 @@
   "vaultAllSection": "כל המסמכים",
   "vaultSortCreated": "נוצר",
   "vaultSortRelevant": "תאריך רלוונטי",
+  "vaultFilterCategorySection": "קטגוריה",
+  "vaultFilterShowResults": "{count, plural, one{הצג מסמך אחד} other{הצג {count} מסמכים}}",
+  "@vaultFilterShowResults": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "catPassport": "דרכון / תעודת זהות",
   "catVisa": "ויזה",
   "catFlight": "טיסה",
@@ -186,6 +193,8 @@
   "placeOpenInGoogleMaps": "פתח ב-Google Maps",
   "placeOpenMapsFailed": "לא ניתן היה לפתוח את Google Maps.",
   "placeUnvisit": "העבר בחזרה לרשימת המשאלות",
+  "placeSummaryShow": "הצג תקציר",
+  "placeSummaryHide": "הסתר תקציר",
   "visitedOn": "ביקרת ב-{date}",
   "@visitedOn": {
     "placeholders": {
@@ -210,6 +219,38 @@
   "catNature": "טבע",
   "mapViewToggle": "תצוגת מפה",
   "listViewToggle": "תצוגת רשימה",
+  "filterClearAll": "נקה סינון",
+  "filterSortButtonTooltip": "מיון וסינון",
+  "filterSortSheetTitle": "מיון וסינון",
+  "filterSortSortSection": "מיון",
+  "sortAToZ": "א–ת",
+  "sortZToA": "ת–א",
+  "sortOldestFirst": "הישן ביותר",
+  "sortNewestFirst": "החדש ביותר",
+  "sortNearestFirst": "הקרוב ביותר",
+  "sortFarthestFirst": "הרחוק ביותר",
+  "placesSortRecommended": "מומלץ",
+  "placesSortName": "שם",
+  "placesSortVisitedDate": "תאריך ביקור",
+  "placesSortDistance": "מרחק",
+  "placesSortDistanceFetching": "מאתר מיקום…",
+  "placesSortDistanceServiceDisabled": "הפעל שירותי מיקום כדי למיין לפי מרחק",
+  "placesSortDistancePermissionDenied": "אפשר גישה למיקום כדי למיין לפי מרחק",
+  "placesSortDistanceError": "לא ניתן היה לאתר את המיקום",
+  "placesSortDistanceRetry": "נסה שוב",
+  "placesSortDistanceOpenSettings": "הגדרות",
+  "placeDistanceKmAway": "במרחק {km} ק\"מ",
+  "@placeDistanceKmAway": {
+    "placeholders": {
+      "km": { "type": "String" }
+    }
+  },
+  "placeDistanceMetersAway": "במרחק {m} מ'",
+  "@placeDistanceMetersAway": {
+    "placeholders": {
+      "m": { "type": "int" }
+    }
+  },
   "placesFilterButton": "סינון",
   "placesFilterSheetTitle": "מסננים",
   "placesFilterEmptyTitle": "אין מקומות מתאימים",

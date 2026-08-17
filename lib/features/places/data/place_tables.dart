@@ -29,6 +29,11 @@ class Places extends Table {
   /// or a place the user hasn't categorized yet).
   IntColumn get category => integer().nullable()();
 
+  /// Wikipedia-sourced summary, fetched once on save. Null = not fetched
+  /// yet or nothing came back — [summaryFetchedAt] tells the two apart.
+  TextColumn get summary => text().nullable()();
+  DateTimeColumn get summaryFetchedAt => dateTime().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/app.dart';
 import 'package:tripper/core/database/database_provider.dart';
+import 'package:tripper/core/location/location_providers.dart';
+import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
@@ -16,6 +18,7 @@ import 'package:tripper/features/vault/presentation/document_providers.dart';
 
 import '../helpers/fake_document_repository.dart';
 import '../helpers/fake_expense_repository.dart';
+import '../helpers/fake_location_service.dart';
 import '../helpers/fake_place_repository.dart';
 import '../helpers/fake_trip_repository.dart';
 import '../helpers/test_preferences.dart';
@@ -81,6 +84,14 @@ Future<Widget> _populatedApp({
         // Without this the M5.5b conversion wiring reaches the real Drift
         // database (via expensesDao), opening a second AppDatabase.
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
+        // Without this the real GeolocatorLocationService reaches the OS
+        // (win32 Location API on desktop) when the places filter sheet's
+        // Distance option is rendered.
+        locationServiceProvider.overrideWithValue(
+          FakeLocationService(
+            const LocationUnavailable(LocationUnavailableReason.error),
+          ),
+        ),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
         launchRedirectDoneProvider.overrideWith((ref) => true),
         biometricAuthenticatorProvider.overrideWithValue((_) async => true),

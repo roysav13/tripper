@@ -29,6 +29,11 @@ abstract interface class PlaceRepository {
   });
   Future<void> bulkMarkVisited(List<String> ids, DateTime visitedOn);
   Future<void> deletePlace(String id);
+
+  /// Records the outcome of a summary fetch — [summary] null means the
+  /// attempt found nothing (offline, no key, or Google has none for this
+  /// place), still a completed attempt, not "never tried".
+  Future<void> setSummary(String id, {String? summary});
 }
 
 class DriftPlaceRepository implements PlaceRepository {
@@ -93,6 +98,8 @@ class DriftPlaceRepository implements PlaceRepository {
         tripId: Value(place.tripId),
         notes: place.notes.trim(),
         category: Value(place.category?.index),
+        summary: Value(place.summary),
+        summaryFetchedAt: Value(place.summaryFetchedAt),
       ),
     );
   }
@@ -117,6 +124,10 @@ class DriftPlaceRepository implements PlaceRepository {
   @override
   Future<void> deletePlace(String id) => _dao.deletePlace(id);
 
+  @override
+  Future<void> setSummary(String id, {String? summary}) =>
+      _dao.setSummary(id, summary, _clock());
+
   Place _toDomain(PlaceRow row) => Place(
         id: row.id,
         name: row.name,
@@ -130,5 +141,7 @@ class DriftPlaceRepository implements PlaceRepository {
         notes: row.notes,
         category:
             row.category == null ? null : PlaceCategory.values[row.category!],
+        summary: row.summary,
+        summaryFetchedAt: row.summaryFetchedAt,
       );
 }

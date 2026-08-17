@@ -46,4 +46,13 @@ class PlacesDao extends DatabaseAccessor<AppDatabase> with _$PlacesDaoMixin {
       ),
     );
   }
+
+  Future<void> setSummary(String id, String? summary, DateTime fetchedAt) {
+    return (update(places)..where((p) => p.id.equals(id))).write(
+      PlacesCompanion(
+        summary: Value(summary),
+        summaryFetchedAt: Value(fetchedAt),
+      ),
+    );
+  }
 }

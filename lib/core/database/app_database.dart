@@ -29,6 +29,8 @@ part 'app_database.g.dart';
 ///   v12 — Places.category (place categorization + filtering)
 ///   v13 — Trips.coverPhotoPath (Immersive Golden Hour redesign;
 ///         generated-gradient fallback renders when this is null)
+///   v14 — Places.summary + Places.summaryFetchedAt (Wikipedia-sourced
+///         location summary, fetched automatically on save)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -55,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -89,8 +91,14 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.createTable(places);
-          } else if (from < 12) {
-            await m.addColumn(places, places.category);
+          } else {
+            if (from < 12) {
+              await m.addColumn(places, places.category);
+            }
+            if (from < 14) {
+              await m.addColumn(places, places.summary);
+              await m.addColumn(places, places.summaryFetchedAt);
+            }
           }
           if (from < 7) {
             // Created at the current definition — conversion columns

@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/app_database.dart';
 
 /// Schema-bump rule (testing conventions): every schema bump ships a
-/// migration test in the same commit. v12 adds Places.category.
+/// migration test in the same commit. v12 adds Places.category; v14 adds
+/// Places.summary + Places.summaryFetchedAt.
 void main() {
   late AppDatabase db;
 
@@ -29,6 +30,23 @@ CREATE TABLE places (
   trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
   notes TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL
+)''';
+
+  /// The v12 places table — category added, before summary/summaryFetchedAt.
+  const createV12Places = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  category INTEGER
 )''';
 
   /// The v4-shaped trips table — before Trips.completionPromptShown
@@ -129,5 +147,48 @@ CREATE TABLE trips (
     final coverPhotoRows =
         await db.customSelect('SELECT cover_photo_path FROM trips').get();
     expect(coverPhotoRows.single.read<String?>('cover_photo_path'), isNull);
+  });
+
+  test(
+      'v12 -> v14 adds summary + summaryFetchedAt, both null, keeping '
+      'existing rows', () async {
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createV12Places);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
+    await db.customStatement(insertTrip);
+    await db.customStatement(
+      'INSERT INTO places (id, name, country, city, status, notes, '
+      "created_at, category) VALUES ('p1', 'Railay', 'Thailand', 'Krabi', "
+      "0, '', 0, 1)",
+    );
+
+    await db.migration.onUpgrade(Migrator(db), 12, 14);
+
+    final rows = await db
+        .customSelect('SELECT name, summary, summary_fetched_at FROM places')
+        .get();
+    expect(rows.single.read<String>('name'), 'Railay');
+    expect(rows.single.read<String?>('summary'), isNull);
+    expect(rows.single.read<int?>('summary_fetched_at'), isNull);
+  });
+
+  test(
+      'v4 -> v14 in one jump does NOT try to add a column to a table it '
+      'just created (same class of bug as the v4->v12 case above)', () async {
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createV4Trips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
+    await db.customStatement(insertV4Trip);
+
+    await expectLater(
+      db.migration.onUpgrade(Migrator(db), 4, 14),
+      completes,
+    );
+    await db.customSelect('SELECT category, summary FROM places').get();
   });
 }

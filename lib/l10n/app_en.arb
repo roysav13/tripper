@@ -120,6 +120,13 @@
   "vaultAllSection": "All documents",
   "vaultSortCreated": "Created",
   "vaultSortRelevant": "Relevant date",
+  "vaultFilterCategorySection": "Category",
+  "vaultFilterShowResults": "{count, plural, one{Show 1 document} other{Show {count} documents}}",
+  "@vaultFilterShowResults": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "catPassport": "Passport / ID",
   "catVisa": "Visa",
   "catFlight": "Flight",
@@ -186,6 +193,8 @@
   "placeOpenInGoogleMaps": "Open in Google Maps",
   "placeOpenMapsFailed": "Couldn't open Google Maps.",
   "placeUnvisit": "Move back to wishlist",
+  "placeSummaryShow": "View summary",
+  "placeSummaryHide": "Hide summary",
   "visitedOn": "Visited {date}",
   "@visitedOn": {
     "placeholders": {
@@ -210,6 +219,38 @@
   "catNature": "Nature",
   "mapViewToggle": "Map view",
   "listViewToggle": "List view",
+  "filterClearAll": "Clear filters",
+  "filterSortButtonTooltip": "Sort & filter",
+  "filterSortSheetTitle": "Sort & filter",
+  "filterSortSortSection": "Sort",
+  "sortAToZ": "A–Z",
+  "sortZToA": "Z–A",
+  "sortOldestFirst": "Oldest first",
+  "sortNewestFirst": "Newest first",
+  "sortNearestFirst": "Nearest first",
+  "sortFarthestFirst": "Farthest first",
+  "placesSortRecommended": "Recommended",
+  "placesSortName": "Name",
+  "placesSortVisitedDate": "Date visited",
+  "placesSortDistance": "Distance",
+  "placesSortDistanceFetching": "Fetching your location…",
+  "placesSortDistanceServiceDisabled": "Turn on location services to sort by distance",
+  "placesSortDistancePermissionDenied": "Allow location access to sort by distance",
+  "placesSortDistanceError": "Couldn't get your location",
+  "placesSortDistanceRetry": "Retry",
+  "placesSortDistanceOpenSettings": "Settings",
+  "placeDistanceKmAway": "{km} km away",
+  "@placeDistanceKmAway": {
+    "placeholders": {
+      "km": { "type": "String" }
+    }
+  },
+  "placeDistanceMetersAway": "{m} m away",
+  "@placeDistanceMetersAway": {
+    "placeholders": {
+      "m": { "type": "int" }
+    }
+  },
   "placesFilterButton": "Filter",
   "placesFilterSheetTitle": "Filters",
   "placesFilterEmptyTitle": "No places match",

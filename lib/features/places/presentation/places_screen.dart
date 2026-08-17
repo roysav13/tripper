@@ -2,87 +2,101 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/filtering/filter_engine.dart';
+import '../../../core/filtering/filter_sort_config.dart';
+import '../../../core/filtering/filter_sort_controller.dart';
+import '../../../core/location/location_providers.dart';
+import '../../../core/location/location_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/filtering/active_filter_strip.dart';
+import '../../../core/widgets/filtering/filter_sort_button.dart';
+import '../../../core/widgets/filtering/filter_sort_sheet.dart';
+import '../../../core/widgets/filtering/filter_sort_view.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
+import '../domain/place_sort.dart';
 import 'add_place_screen.dart';
 import 'place_actions_sheet.dart';
+import 'place_distance_sort_status.dart';
+import 'place_filter_config.dart';
 import 'place_providers.dart';
 import 'place_visit_actions.dart';
 import 'place_widgets.dart';
 import 'places_map_view.dart';
 
-class PlacesScreen extends ConsumerStatefulWidget {
+const _scope = 'places';
+
+class PlacesScreen extends ConsumerWidget {
   const PlacesScreen({super.key});
 
   @override
-  ConsumerState<PlacesScreen> createState() => _PlacesScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    // Fetched proactively as soon as this screen opens (not gated behind
+    // tapping "Distance") so the sort feels instant once picked; degrades
+    // to `null` — every place valueless for that option, list keeps its
+    // prior order — while pending, denied, or failed.
+    final fix = ref.watch(currentLocationProvider).valueOrNull;
+    final currentLocation =
+        fix is LocationAvailable ? (lat: fix.lat, lng: fix.lng) : null;
+    final config = buildPlaceFilterSortConfig(
+      l10n,
+      currentLocation: currentLocation,
+    );
+
+    return FilterSortView<Place, PlaceSortField>(
+      itemsProvider: placeListProvider,
+      controllerFamily: placeFilterSortProvider,
+      scope: _scope,
+      config: config,
+      builder: (context, all, visible, state) => _PlacesScreenBody(
+        all: all,
+        visible: visible,
+        sortState: state,
+        config: config,
+        currentLocation: currentLocation,
+      ),
+    );
+  }
 }
 
-class _PlacesScreenState extends ConsumerState<PlacesScreen> {
-  Set<PlaceCategory> _categoryFilter = {};
-  Set<String> _countryFilter = {};
+class _PlacesScreenBody extends ConsumerWidget {
+  const _PlacesScreenBody({
+    required this.all,
+    required this.visible,
+    required this.sortState,
+    required this.config,
+    required this.currentLocation,
+  });
+
+  final List<Place> all;
+  final List<Place> visible;
+  final FilterSortState<PlaceSortField> sortState;
+  final FilterSortConfig<Place, PlaceSortField> config;
+  final ({double lat, double lng})? currentLocation;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final asyncPlaces = ref.watch(placeListProvider);
-    final places = asyncPlaces.valueOrNull ?? const <Place>[];
-
-    // Cross-task issue (final review): a filter chip only renders for
-    // categories/countries actually present in `places`. If the last place
-    // matching an active filter is edited or deleted, its chip disappears
-    // but the stale selection lingered in state forever (StatefulShellRoute
-    // keeps this State alive across navigation) — stranding the list empty
-    // with no visible way to recover. Prune the selection against what's
-    // still present every build, and write the pruned result back so the
-    // filter bar's displayed selection never outlives its chip.
-    final availableCategories = {
-      for (final p in places)
-        if (p.category != null) p.category!,
-    };
-    final availableCountries = {
-      for (final p in places)
-        if (p.country.trim().isNotEmpty) p.country,
-    };
-    final prunedCategories = _categoryFilter.intersection(availableCategories);
-    final prunedCountries = _countryFilter.intersection(availableCountries);
-    if (prunedCategories.length != _categoryFilter.length ||
-        prunedCountries.length != _countryFilter.length) {
-      // Mutating state synchronously inside build() throws — defer to
-      // after this frame completes.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _categoryFilter = prunedCategories;
-          _countryFilter = prunedCountries;
-        });
-      });
-    }
-    final filtered = filterPlaces(
-      places,
-      categories: prunedCategories,
-      countries: prunedCountries,
-    );
     final trips = ref.watch(tripListProvider).valueOrNull ?? [];
     final tripNames = {for (final t in trips) t.id: t.name};
     final mapMode = ref.watch(placesMapModeProvider);
 
-    final want = filtered.where((p) => !p.isVisited).toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final been = sortForList(filtered).where((p) => p.isVisited).toList();
+    final want = visible.where((p) => !p.isVisited).toList();
+    final been = visible.where((p) => p.isVisited).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.tabPlaces),
         actions: [
-          if (places.isNotEmpty)
+          if (all.isNotEmpty)
             IconButton(
               icon: Icon(
                 mapMode ? Icons.view_list_outlined : Icons.map_outlined,
@@ -92,18 +106,19 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
               onPressed: () =>
                   ref.read(placesMapModeProvider.notifier).state = !mapMode,
             ),
-          if (availableCategories.isNotEmpty || availableCountries.isNotEmpty)
-            PlaceFilterButton(
-              active:
-                  prunedCategories.isNotEmpty || prunedCountries.isNotEmpty,
-              onPressed: () => showPlaceFilterSheet(
+          if (all.isNotEmpty)
+            FilterSortButton(
+              active: !sortState.selection.isEmpty,
+              onPressed: () => showFilterSortSheet<Place, PlaceSortField>(
                 context,
-                placesProvider: placeListProvider,
-                selectedCategories: prunedCategories,
-                selectedCountries: prunedCountries,
-                onCategoriesChanged: (v) =>
-                    setState(() => _categoryFilter = v),
-                onCountriesChanged: (v) => setState(() => _countryFilter = v),
+                itemsProvider: placeListProvider,
+                controllerFamily: placeFilterSortProvider,
+                scope: _scope,
+                config: config,
+                sortSubtitleBuilder: (context, ref, field) =>
+                    field == PlaceSortField.distance
+                        ? const PlaceDistanceSortStatus()
+                        : null,
               ),
             ),
           IconButton(
@@ -115,39 +130,31 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
       ),
       body: _body(
         context,
+        ref,
         l10n,
         asyncPlaces,
-        places,
-        filtered,
-        want,
-        been,
         tripNames,
         mapMode,
-        prunedCategories,
-        prunedCountries,
+        want,
+        been,
       ),
     );
   }
 
   Widget _body(
     BuildContext context,
+    WidgetRef ref,
     AppLocalizations l10n,
     AsyncValue<List<Place>> asyncPlaces,
-    List<Place> places,
-    List<Place> filtered,
-    List<Place> want,
-    List<Place> been,
     Map<String, String> tripNames,
     bool mapMode,
-    Set<PlaceCategory> activeCategories,
-    Set<String> activeCountries,
+    List<Place> want,
+    List<Place> been,
   ) {
-    // M4.2 — states audit: same gap as trips/vault — a stream failure used
-    // to fall straight through to an unexplained empty screen.
     if (asyncPlaces.hasError) {
       return ErrorState(onRetry: () => ref.invalidate(placeListProvider));
     }
-    if (asyncPlaces.hasValue && places.isEmpty) {
+    if (asyncPlaces.hasValue && all.isEmpty) {
       return EmptyState(
         icon: Icons.place_outlined,
         title: l10n.placesEmptyTitle,
@@ -156,37 +163,30 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         onCta: () => AddPlaceScreen.open(context),
       );
     }
-    // Fix 1 (final review): the filter sheet redesign removed the
-    // always-visible inline chip row that used to occupy this space when a
-    // filter combination matched nothing — without a branch here, a
-    // zero-result filter fell through to a blank ListView with no
-    // explanation and no way back.
-    if (asyncPlaces.hasValue && places.isNotEmpty && filtered.isEmpty) {
+    if (asyncPlaces.hasValue && all.isNotEmpty && visible.isEmpty) {
       return EmptyState(
         icon: Icons.filter_alt_off_outlined,
         title: l10n.placesFilterEmptyTitle,
         body: l10n.placesFilterEmptyBody,
         ctaLabel: l10n.placesFilterEmptyCta,
-        onCta: () => setState(() {
-          _categoryFilter = {};
-          _countryFilter = {};
-        }),
+        onCta: () =>
+            ref.read(placeFilterSortProvider(_scope).notifier).clearFilters(),
       );
     }
     if (mapMode) {
       return Column(
         children: [
-          if (activeCategories.isNotEmpty || activeCountries.isNotEmpty)
+          if (!sortState.selection.isEmpty)
             Padding(
               padding: const EdgeInsetsDirectional.symmetric(
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.sm,
               ),
-              child: _activeFilterStrip(activeCategories, activeCountries),
+              child: _activeFilterStrip(ref),
             ),
           Expanded(
             child: PlacesMapView(
-              places: filtered,
+              places: visible,
               focusPlaceId: ref.watch(selectedPlaceIdProvider),
               onFocusHandled: () =>
                   ref.read(selectedPlaceIdProvider.notifier).state = null,
@@ -199,8 +199,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
-        if (activeCategories.isNotEmpty || activeCountries.isNotEmpty) ...[
-          _activeFilterStrip(activeCategories, activeCountries),
+        if (!sortState.selection.isEmpty) ...[
+          _activeFilterStrip(ref),
           const SizedBox(height: AppSpacing.sm),
         ],
         if (want.isNotEmpty) ...[
@@ -214,7 +214,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
               accent: true,
             ),
           ),
-          for (final place in want) _row(context, place, tripNames),
+          for (final place in want) _row(context, ref, place, tripNames),
         ],
         if (been.isNotEmpty) ...[
           Padding(
@@ -226,37 +226,43 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
               '${l10n.placesBeenSection} · ${been.length}',
             ),
           ),
-          for (final place in been) _row(context, place, tripNames),
+          for (final place in been) _row(context, ref, place, tripNames),
         ],
       ],
     );
   }
 
-  Widget _activeFilterStrip(
-    Set<PlaceCategory> categories,
-    Set<String> countries,
-  ) {
+  Widget _activeFilterStrip(WidgetRef ref) {
+    final active = <ActiveFilterEntry>[];
+    for (final facet in config.facets) {
+      final available = availableFacetValues(all, facet);
+      for (final valueId in sortState.selection.valuesFor(facet.id)) {
+        for (final value in available) {
+          if (value.id == valueId) {
+            active.add(ActiveFilterEntry(facetId: facet.id, value: value));
+            break;
+          }
+        }
+      }
+    }
+    final notifier = ref.read(placeFilterSortProvider(_scope).notifier);
     return ActiveFilterStrip(
-      categories: categories,
-      countries: countries,
-      onRemoveCategory: (category) => setState(
-        () => _categoryFilter = _categoryFilter.where((c) => c != category).toSet(),
-      ),
-      onRemoveCountry: (country) => setState(
-        () => _countryFilter = _countryFilter.where((c) => c != country).toSet(),
-      ),
-      onClearAll: () => setState(() {
-        _categoryFilter = {};
-        _countryFilter = {};
-      }),
+      active: active,
+      onRemove: notifier.removeValue,
+      onClearAll: notifier.clearFilters,
     );
   }
 
   Widget _row(
     BuildContext context,
+    WidgetRef ref,
     Place place,
     Map<String, String> tripNames,
   ) {
+    final loc = currentLocation;
+    final distanceKm = loc != null && place.hasLocation
+        ? placeDistanceFromKm(place, lat: loc.lat, lng: loc.lng)
+        : null;
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
       child: RowSettleAnimation(
@@ -264,11 +270,9 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         child: PlaceRowCard(
           place: place,
           tripName: place.tripId == null ? null : tripNames[place.tripId],
+          distanceKm: distanceKm,
           onTap: () => showPlaceActionsSheet(context, ref, place),
           onToggleVisited: () {
-            // M4.4 — a quiet tick on the state change the whole tab is
-            // built around; selectionClick (not a heavier impact) matches
-            // the "classic, nothing springy" tone.
             HapticFeedback.selectionClick();
             markPlaceVisited(ref, place, visited: !place.isVisited);
           },

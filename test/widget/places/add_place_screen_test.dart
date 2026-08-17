@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/data/geocoding_service.dart';
+import 'package:tripper/features/places/data/place_summary_service.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/add_place_screen.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
@@ -55,12 +56,39 @@ const _railay = GeoResult(
   city: 'Ao Nang',
 );
 
-Widget _app(FakeGeocoder geocoder, FakePlaceRepository repo) => ProviderScope(
+class _FixedSummaryFetcher implements PlaceSummaryFetcher {
+  _FixedSummaryFetcher(this.result);
+  final String? result;
+
+  @override
+  Future<String?> fetchSummary({
+    required String name,
+    String city = '',
+    String country = '',
+    double? lat,
+    double? lng,
+  }) async =>
+      result;
+}
+
+Widget _app(
+  FakeGeocoder geocoder,
+  FakePlaceRepository repo, {
+  PlaceSummaryFetcher? summaryFetcher,
+}) =>
+    ProviderScope(
       overrides: [
         geocoderProvider.overrideWithValue(geocoder),
         placeRepositoryProvider.overrideWithValue(repo),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        // Always overridden, never left at the real default — unlike the
+        // old Google-backed fetcher, Wikipedia needs no key to reach the
+        // network, so there's no "unconfigured, quietly no-ops" fallback
+        // to lean on here (CLAUDE.md hard rule 5: network off by default).
+        placeSummaryFetcherProvider.overrideWithValue(
+          summaryFetcher ?? const NoopPlaceSummaryFetcher(),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -187,5 +215,32 @@ void main() {
     final saved = (await repo.watchAll().first).single;
     expect(saved.category, PlaceCategory.restaurant);
     expect(saved.notes, 'A description');
+  });
+
+  testWidgets('save fires a background summary fetch that lands after pop',
+      (tester) async {
+    final repo = FakePlaceRepository([]);
+    await tester.pumpWidget(
+      _app(
+        FakeGeocoder([_railay]),
+        repo,
+        summaryFetcher: _FixedSummaryFetcher('A quiet limestone cove.'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'railay');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Railay Beach'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    // Save doesn't wait on the summary fetch — it's not a gate on the save
+    // flow (CLAUDE.md hard rule 4) — so it lands on a later pump.
+    await tester.pumpAndSettle();
+
+    final saved = (await repo.watchAll().first).single;
+    expect(saved.summary, 'A quiet limestone cove.');
+    expect(saved.summaryFetchedAt, isNotNull);
   });
 }

@@ -4,7 +4,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
+import 'package:tripper/core/location/location_providers.dart';
+import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/place_widgets.dart';
@@ -12,14 +15,25 @@ import 'package:tripper/features/places/presentation/trip_places_tab.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/fake_location_service.dart';
 import '../../helpers/fake_place_repository.dart';
 
 const _trip = Trip(id: 't1', name: 'Thailand', destinations: ['Krabi']);
 
-Widget _app(FakePlaceRepository repo) => ProviderScope(
+Widget _app(FakePlaceRepository repo, {LocationFix? locationFix}) =>
+    ProviderScope(
       overrides: [
         placeRepositoryProvider.overrideWithValue(repo),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        // See places_screen_test.dart — the real GeolocatorLocationService
+        // hits the OS (win32 Location API on desktop) rather than
+        // gracefully no-op-ing when unmocked in a widget test.
+        locationServiceProvider.overrideWithValue(
+          FakeLocationService(
+            locationFix ??
+                const LocationUnavailable(LocationUnavailableReason.error),
+          ),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -36,8 +50,8 @@ Widget _app(FakePlaceRepository repo) => ProviderScope(
 
 void main() {
   testWidgets(
-      'filter button is absent when no place in this trip has a category '
-      'or country to filter by', (tester) async {
+      'filter/sort button is shown (for Sort) even when no place in this '
+      'trip has a category or country to filter by', (tester) async {
     final repo = FakePlaceRepository([
       const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
       const Place(id: 'b', name: 'Cafe B', tripId: 't1'),
@@ -45,7 +59,7 @@ void main() {
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.tune), findsNothing);
+    expect(find.byIcon(Icons.tune), findsOneWidget);
   });
 
   testWidgets(
@@ -69,7 +83,7 @@ void main() {
     await tester.pumpAndSettle();
 
     Finder badgeFinder() => find.descendant(
-          of: find.byType(PlaceFilterButton),
+          of: find.byType(FilterSortButton),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is DecoratedBox &&
@@ -88,6 +102,48 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(badgeFinder(), findsOneWidget);
+  });
+
+  testWidgets(
+      'sort sheet lists Distance and shows an inline unavailable status '
+      "when there's no location fix", (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Distance'), findsOneWidget);
+    expect(find.text("Couldn't get your location"), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a place card shows its distance from the current fix once one lands',
+      (tester) async {
+    // Bangkok fix; Ayutthaya is ~67km away.
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Ayutthaya',
+        tripId: 't1',
+        lat: 14.3532,
+        lng: 100.5686,
+      ),
+    ]);
+    await tester.pumpWidget(
+      _app(
+        repo,
+        locationFix: const LocationAvailable(13.7563, 100.5018),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // MonoText (metadata line) renders its text uppercased.
+    expect(find.text('67 KM AWAY'), findsOneWidget);
   });
 
   testWidgets('category filter narrows this trip\'s visible list',
