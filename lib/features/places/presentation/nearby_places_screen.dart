@@ -8,7 +8,6 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
-import '../data/geocoding_service.dart' show GeocodingException;
 import '../domain/nearby_place.dart';
 import '../domain/place_sort.dart';
 import 'nearby_place_detail_sheet.dart';
@@ -52,7 +51,7 @@ class _NearbyPlacesScreenState extends ConsumerState<NearbyPlacesScreen> {
         _results = results;
         _state = _LoadState.loaded;
       });
-    } on GeocodingException catch (e) {
+    } catch (e) {
       debugPrint('[places] nearby search failed: $e');
       if (!mounted) return;
       setState(() => _state = _LoadState.error);

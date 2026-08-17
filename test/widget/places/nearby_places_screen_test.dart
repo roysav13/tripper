@@ -11,6 +11,8 @@ import 'package:tripper/features/places/presentation/nearby_places_screen.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/test_preferences.dart';
+
 class _FakeFetcher implements NearbyPlacesFetcher {
   _FakeFetcher(this.results);
   _FakeFetcher.failing() : results = const [], _shouldFail = true;
@@ -38,10 +40,15 @@ const _highRated = NearbyPlaceResult(
   primaryType: 'bar',
 );
 
-Widget _app(NearbyPlacesFetcher fetcher) => ProviderScope(
+Future<Widget> _app(NearbyPlacesFetcher fetcher) async => ProviderScope(
       overrides: [
         nearbyPlacesFetcherProvider.overrideWithValue(fetcher),
         nearbyPlacesCacheProvider.overrideWithValue(NearbyPlacesCache()),
+        // A cache-miss fetch calls NearbyPlacesService's onRealFetch, which
+        // increments nearbyApiCallCountProvider — its controller reads
+        // sharedPreferencesProvider synchronously in build(), which throws
+        // if unmocked.
+        await testPreferencesOverride(),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -59,7 +66,7 @@ Widget _app(NearbyPlacesFetcher fetcher) => ProviderScope(
 void main() {
   testWidgets('initial state shows only the find button, no list',
       (tester) async {
-    await tester.pumpWidget(_app(_FakeFetcher(const [_highRated])));
+    await tester.pumpWidget(await _app(_FakeFetcher(const [_highRated])));
     await tester.pumpAndSettle();
     expect(find.text('Find nearby'), findsOneWidget);
     expect(find.text('Railay Beach Bar'), findsNothing);
@@ -67,7 +74,7 @@ void main() {
 
   testWidgets('tapping find renders results with rating and distance',
       (tester) async {
-    await tester.pumpWidget(_app(_FakeFetcher(const [_highRated])));
+    await tester.pumpWidget(await _app(_FakeFetcher(const [_highRated])));
     await tester.tap(find.text('Find nearby'));
     await tester.pumpAndSettle();
 
@@ -78,7 +85,7 @@ void main() {
   testWidgets('no results after the rating filter shows the empty state',
       (tester) async {
     await tester.pumpWidget(
-      _app(
+      await _app(
         _FakeFetcher(const [
           NearbyPlaceResult(
             placeId: 'low',
@@ -99,7 +106,7 @@ void main() {
 
   testWidgets('a fetch failure shows the error state with retry',
       (tester) async {
-    await tester.pumpWidget(_app(_FakeFetcher.failing()));
+    await tester.pumpWidget(await _app(_FakeFetcher.failing()));
     await tester.tap(find.text('Find nearby'));
     await tester.pumpAndSettle();
 
