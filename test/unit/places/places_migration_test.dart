@@ -5,7 +5,7 @@ import 'package:tripper/core/database/app_database.dart';
 
 /// Schema-bump rule (testing conventions): every schema bump ships a
 /// migration test in the same commit. v12 adds Places.category; v14 adds
-/// Places.summary + Places.summaryFetchedAt.
+/// Places.summary + Places.summaryFetchedAt; v15 adds Places.plannedDate.
 void main() {
   late AppDatabase db;
 
@@ -47,6 +47,26 @@ CREATE TABLE places (
   notes TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL,
   category INTEGER
+)''';
+
+  /// The v14 places table — summary/summaryFetchedAt added, before
+  /// plannedDate existed.
+  const createV14Places = '''
+CREATE TABLE places (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  country TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  status INTEGER NOT NULL,
+  visited_at INTEGER,
+  trip_id TEXT REFERENCES trips (id) ON DELETE SET NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  category INTEGER,
+  summary TEXT,
+  summary_fetched_at INTEGER
 )''';
 
   /// The v4-shaped trips table — before Trips.completionPromptShown
@@ -190,5 +210,50 @@ CREATE TABLE trips (
       completes,
     );
     await db.customSelect('SELECT category, summary FROM places').get();
+  });
+
+  test(
+      'v14 -> v15 adds the planned_date column to an existing table, null '
+      '(= not assigned to a day), keeping existing rows', () async {
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement(createV14Places);
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createPreCoverPhotoTrips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
+    await db.customStatement(insertTrip);
+    await db.customStatement(
+      'INSERT INTO places (id, name, country, city, status, notes, '
+      "created_at, category) VALUES ('p1', 'Railay', 'Thailand', 'Krabi', "
+      "0, '', 0, 1)",
+    );
+
+    await db.migration.onUpgrade(Migrator(db), 14, 15);
+
+    final rows = await db
+        .customSelect('SELECT name, planned_date FROM places')
+        .get();
+    expect(rows.single.read<String>('name'), 'Railay');
+    expect(rows.single.read<int?>('planned_date'), isNull);
+  });
+
+  test(
+      'v4 -> v15 in one jump does NOT try to add a column to a table it '
+      'just created (same class of bug as the v4->v12/v4->v14 cases above)',
+      () async {
+    await db.customStatement('DROP TABLE places');
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    await db.customStatement('DROP TABLE trips');
+    await db.customStatement(createV4Trips);
+    await db.customStatement('PRAGMA foreign_keys = ON');
+    await db.customStatement(insertV4Trip);
+
+    await expectLater(
+      db.migration.onUpgrade(Migrator(db), 4, 15),
+      completes,
+    );
+    await db
+        .customSelect('SELECT category, summary, planned_date FROM places')
+        .get();
   });
 }

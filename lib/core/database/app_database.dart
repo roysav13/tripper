@@ -31,6 +31,8 @@ part 'app_database.g.dart';
 ///         generated-gradient fallback renders when this is null)
 ///   v14 — Places.summary + Places.summaryFetchedAt (Wikipedia-sourced
 ///         location summary, fetched automatically on save)
+///   v15 — Places.plannedDate (Near By day-tag — see
+///         docs/superpowers/specs/2026-08-17-near-by-places-design.md)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -57,7 +59,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +100,9 @@ class AppDatabase extends _$AppDatabase {
             if (from < 14) {
               await m.addColumn(places, places.summary);
               await m.addColumn(places, places.summaryFetchedAt);
+            }
+            if (from < 15) {
+              await m.addColumn(places, places.plannedDate);
             }
           }
           if (from < 7) {

@@ -1590,6 +1590,12 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
   late final GeneratedColumn<DateTime> summaryFetchedAt =
       GeneratedColumn<DateTime>('summary_fetched_at', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _plannedDateMeta =
+      const VerificationMeta('plannedDate');
+  @override
+  late final GeneratedColumn<DateTime> plannedDate = GeneratedColumn<DateTime>(
+      'planned_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1605,7 +1611,8 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
         createdAt,
         category,
         summary,
-        summaryFetchedAt
+        summaryFetchedAt,
+        plannedDate
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1682,6 +1689,12 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
           summaryFetchedAt.isAcceptableOrUnknown(
               data['summary_fetched_at']!, _summaryFetchedAtMeta));
     }
+    if (data.containsKey('planned_date')) {
+      context.handle(
+          _plannedDateMeta,
+          plannedDate.isAcceptableOrUnknown(
+              data['planned_date']!, _plannedDateMeta));
+    }
     return context;
   }
 
@@ -1719,6 +1732,8 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}summary']),
       summaryFetchedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}summary_fetched_at']),
+      plannedDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}planned_date']),
     );
   }
 
@@ -1755,6 +1770,11 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
   /// or nothing came back — [summaryFetchedAt] tells the two apart.
   final String? summary;
   final DateTime? summaryFetchedAt;
+
+  /// Which day of the trip this place is intended for — set only via the
+  /// Near By add flow. Null = not assigned to a day (every place that
+  /// existed before this column shipped, plus most manually-added ones).
+  final DateTime? plannedDate;
   const PlaceRow(
       {required this.id,
       required this.name,
@@ -1769,7 +1789,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       required this.createdAt,
       this.category,
       this.summary,
-      this.summaryFetchedAt});
+      this.summaryFetchedAt,
+      this.plannedDate});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1801,6 +1822,9 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
     if (!nullToAbsent || summaryFetchedAt != null) {
       map['summary_fetched_at'] = Variable<DateTime>(summaryFetchedAt);
     }
+    if (!nullToAbsent || plannedDate != null) {
+      map['planned_date'] = Variable<DateTime>(plannedDate);
+    }
     return map;
   }
 
@@ -1829,6 +1853,9 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       summaryFetchedAt: summaryFetchedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(summaryFetchedAt),
+      plannedDate: plannedDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plannedDate),
     );
   }
 
@@ -1851,6 +1878,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       summary: serializer.fromJson<String?>(json['summary']),
       summaryFetchedAt:
           serializer.fromJson<DateTime?>(json['summaryFetchedAt']),
+      plannedDate: serializer.fromJson<DateTime?>(json['plannedDate']),
     );
   }
   @override
@@ -1871,6 +1899,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       'category': serializer.toJson<int?>(category),
       'summary': serializer.toJson<String?>(summary),
       'summaryFetchedAt': serializer.toJson<DateTime?>(summaryFetchedAt),
+      'plannedDate': serializer.toJson<DateTime?>(plannedDate),
     };
   }
 
@@ -1888,7 +1917,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           DateTime? createdAt,
           Value<int?> category = const Value.absent(),
           Value<String?> summary = const Value.absent(),
-          Value<DateTime?> summaryFetchedAt = const Value.absent()}) =>
+          Value<DateTime?> summaryFetchedAt = const Value.absent(),
+          Value<DateTime?> plannedDate = const Value.absent()}) =>
       PlaceRow(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -1906,6 +1936,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
         summaryFetchedAt: summaryFetchedAt.present
             ? summaryFetchedAt.value
             : this.summaryFetchedAt,
+        plannedDate:
+            plannedDate.present ? plannedDate.value : this.plannedDate,
       );
   PlaceRow copyWithCompanion(PlacesCompanion data) {
     return PlaceRow(
@@ -1925,6 +1957,9 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       summaryFetchedAt: data.summaryFetchedAt.present
           ? data.summaryFetchedAt.value
           : this.summaryFetchedAt,
+      plannedDate: data.plannedDate.present
+          ? data.plannedDate.value
+          : this.plannedDate,
     );
   }
 
@@ -1944,14 +1979,29 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           ..write('createdAt: $createdAt, ')
           ..write('category: $category, ')
           ..write('summary: $summary, ')
-          ..write('summaryFetchedAt: $summaryFetchedAt')
+          ..write('summaryFetchedAt: $summaryFetchedAt, ')
+          ..write('plannedDate: $plannedDate')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, lat, lng, country, city, status,
-      visitedAt, tripId, notes, createdAt, category, summary, summaryFetchedAt);
+  int get hashCode => Object.hash(
+      id,
+      name,
+      lat,
+      lng,
+      country,
+      city,
+      status,
+      visitedAt,
+      tripId,
+      notes,
+      createdAt,
+      category,
+      summary,
+      summaryFetchedAt,
+      plannedDate);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1969,7 +2019,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
           other.createdAt == this.createdAt &&
           other.category == this.category &&
           other.summary == this.summary &&
-          other.summaryFetchedAt == this.summaryFetchedAt);
+          other.summaryFetchedAt == this.summaryFetchedAt &&
+          other.plannedDate == this.plannedDate);
 }
 
 class PlacesCompanion extends UpdateCompanion<PlaceRow> {
@@ -1987,6 +2038,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
   final Value<int?> category;
   final Value<String?> summary;
   final Value<DateTime?> summaryFetchedAt;
+  final Value<DateTime?> plannedDate;
   final Value<int> rowid;
   const PlacesCompanion({
     this.id = const Value.absent(),
@@ -2003,6 +2055,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     this.category = const Value.absent(),
     this.summary = const Value.absent(),
     this.summaryFetchedAt = const Value.absent(),
+    this.plannedDate = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PlacesCompanion.insert({
@@ -2020,6 +2073,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     this.category = const Value.absent(),
     this.summary = const Value.absent(),
     this.summaryFetchedAt = const Value.absent(),
+    this.plannedDate = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -2040,6 +2094,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     Expression<int>? category,
     Expression<String>? summary,
     Expression<DateTime>? summaryFetchedAt,
+    Expression<DateTime>? plannedDate,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2057,6 +2112,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       if (category != null) 'category': category,
       if (summary != null) 'summary': summary,
       if (summaryFetchedAt != null) 'summary_fetched_at': summaryFetchedAt,
+      if (plannedDate != null) 'planned_date': plannedDate,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2076,6 +2132,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       Value<int?>? category,
       Value<String?>? summary,
       Value<DateTime?>? summaryFetchedAt,
+      Value<DateTime?>? plannedDate,
       Value<int>? rowid}) {
     return PlacesCompanion(
       id: id ?? this.id,
@@ -2092,6 +2149,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
       category: category ?? this.category,
       summary: summary ?? this.summary,
       summaryFetchedAt: summaryFetchedAt ?? this.summaryFetchedAt,
+      plannedDate: plannedDate ?? this.plannedDate,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2141,6 +2199,9 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
     if (summaryFetchedAt.present) {
       map['summary_fetched_at'] = Variable<DateTime>(summaryFetchedAt.value);
     }
+    if (plannedDate.present) {
+      map['planned_date'] = Variable<DateTime>(plannedDate.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2164,6 +2225,7 @@ class PlacesCompanion extends UpdateCompanion<PlaceRow> {
           ..write('category: $category, ')
           ..write('summary: $summary, ')
           ..write('summaryFetchedAt: $summaryFetchedAt, ')
+          ..write('plannedDate: $plannedDate, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5734,6 +5796,7 @@ typedef $$PlacesTableCreateCompanionBuilder = PlacesCompanion Function({
   Value<int?> category,
   Value<String?> summary,
   Value<DateTime?> summaryFetchedAt,
+  Value<DateTime?> plannedDate,
   Value<int> rowid,
 });
 typedef $$PlacesTableUpdateCompanionBuilder = PlacesCompanion Function({
@@ -5751,6 +5814,7 @@ typedef $$PlacesTableUpdateCompanionBuilder = PlacesCompanion Function({
   Value<int?> category,
   Value<String?> summary,
   Value<DateTime?> summaryFetchedAt,
+  Value<DateTime?> plannedDate,
   Value<int> rowid,
 });
 
@@ -5849,6 +5913,9 @@ class $$PlacesTableFilterComposer
   ColumnFilters<DateTime> get summaryFetchedAt => $composableBuilder(
       column: $table.summaryFetchedAt,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get plannedDate => $composableBuilder(
+      column: $table.plannedDate, builder: (column) => ColumnFilters(column));
 
   $$TripsTableFilterComposer get tripId {
     final $$TripsTableFilterComposer composer = $composerBuilder(
@@ -5962,6 +6029,10 @@ class $$PlacesTableOrderingComposer
       column: $table.summaryFetchedAt,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get plannedDate => $composableBuilder(
+      column: $table.plannedDate,
+      builder: (column) => ColumnOrderings(column));
+
   $$TripsTableOrderingComposer get tripId {
     final $$TripsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -6030,6 +6101,9 @@ class $$PlacesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get summaryFetchedAt => $composableBuilder(
       column: $table.summaryFetchedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get plannedDate => $composableBuilder(
+      column: $table.plannedDate, builder: (column) => column);
 
   $$TripsTableAnnotationComposer get tripId {
     final $$TripsTableAnnotationComposer composer = $composerBuilder(
@@ -6132,6 +6206,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             Value<int?> category = const Value.absent(),
             Value<String?> summary = const Value.absent(),
             Value<DateTime?> summaryFetchedAt = const Value.absent(),
+            Value<DateTime?> plannedDate = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlacesCompanion(
@@ -6149,6 +6224,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             category: category,
             summary: summary,
             summaryFetchedAt: summaryFetchedAt,
+            plannedDate: plannedDate,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -6166,6 +6242,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             Value<int?> category = const Value.absent(),
             Value<String?> summary = const Value.absent(),
             Value<DateTime?> summaryFetchedAt = const Value.absent(),
+            Value<DateTime?> plannedDate = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlacesCompanion.insert(
@@ -6183,6 +6260,7 @@ class $$PlacesTableTableManager extends RootTableManager<
             category: category,
             summary: summary,
             summaryFetchedAt: summaryFetchedAt,
+            plannedDate: plannedDate,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

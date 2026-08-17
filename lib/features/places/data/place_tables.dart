@@ -34,6 +34,11 @@ class Places extends Table {
   TextColumn get summary => text().nullable()();
   DateTimeColumn get summaryFetchedAt => dateTime().nullable()();
 
+  /// Which day of the trip this place is intended for — set only via the
+  /// Near By add flow. Null = not assigned to a day (every place that
+  /// existed before this column shipped, plus most manually-added ones).
+  DateTimeColumn get plannedDate => dateTime().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
