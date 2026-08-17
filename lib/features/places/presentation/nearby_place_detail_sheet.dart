@@ -181,7 +181,11 @@ class _NearbyPlaceDetailSheetState
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    // Read the repo/fetcher before the await — `ref` isn't safe to touch
+    // once this state has been popped and disposed, but the fetch below
+    // deliberately keeps running after that (see `unawaited` below).
     final repo = ref.read(placeRepositoryProvider);
+    final summaryFetcher = ref.read(placeSummaryFetcherProvider);
     final name = _name.text.trim().isEmpty ? widget.result.name : _name.text;
     final id = await repo.createPlace(
       name: name,
@@ -198,7 +202,7 @@ class _NearbyPlaceDetailSheetState
       // manual add flow uses; the save itself doesn't wait on it.
       unawaited(
         fetchAndStorePlaceSummary(
-          fetcher: ref.read(placeSummaryFetcherProvider),
+          fetcher: summaryFetcher,
           repo: repo,
           placeId: id,
           name: widget.result.name,
