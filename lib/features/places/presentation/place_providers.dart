@@ -4,6 +4,11 @@ import 'package:http/http.dart' as http;
 import '../../../core/database/database_provider.dart';
 import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/filtering/sort_spec.dart';
+import '../../../core/settings/settings_service.dart'
+    show nearbyApiCallCountProvider;
+import '../data/google_places_geocoder.dart' show kGoogleMapsApiKey;
+import '../data/nearby_places_cache.dart';
+import '../data/nearby_places_service.dart';
 import '../data/place_repository.dart';
 import '../data/place_summary_service.dart';
 import '../data/places_dao.dart';
@@ -53,5 +58,28 @@ final placeFilterSortProvider = NotifierProvider.family<
     String>(
   () => FilterSortController<PlaceSortField>(
     const SortSpec(PlaceSortField.recommended, SortDirection.ascending),
+  ),
+);
+
+/// Constructing this never touches the network by itself — the real HTTP
+/// call only happens inside `searchNearby`, gated at the call site by
+/// `nearbyPlacesEnabledProvider` (settings + entry-point UI).
+final nearbyPlacesFetcherProvider = Provider<NearbyPlacesFetcher>(
+  (ref) => GoogleNearbyPlacesFetcher(http.Client(), apiKey: kGoogleMapsApiKey),
+);
+
+/// Session-scoped (not autoDispose) — deliberately survives navigating
+/// away from the results screen and back, for the same reason it isn't
+/// persisted to disk: the cache's job is "don't double-charge a browsing
+/// session," and the session is the whole app run.
+final nearbyPlacesCacheProvider =
+    Provider<NearbyPlacesCache>((ref) => NearbyPlacesCache());
+
+final nearbyPlacesServiceProvider = Provider<NearbyPlacesService>(
+  (ref) => NearbyPlacesService(
+    ref.watch(nearbyPlacesFetcherProvider),
+    ref.watch(nearbyPlacesCacheProvider),
+    ref.watch(clockProvider),
+    () => ref.read(nearbyApiCallCountProvider.notifier).increment(),
   ),
 );

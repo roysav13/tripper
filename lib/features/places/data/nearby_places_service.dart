@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../domain/nearby_place.dart';
 import 'geocoding_service.dart';
+import 'nearby_places_cache.dart';
 
 /// Fixed radius, no picker in v1 (design decision, easy follow-up).
 const _nearbyRadiusMeters = 2000.0;
@@ -107,4 +108,43 @@ List<NearbyPlaceResult> parseSearchNearby(String body) {
     );
   }
   return results;
+}
+
+/// Composes a fetcher, a cache, an injected clock, and a real-fetch side
+/// effect (the caller wires this to the settings call counter) — this
+/// class itself has no Riverpod dependency, so it's directly unit-testable
+/// with fakes for every collaborator.
+class NearbyPlacesService {
+  NearbyPlacesService(
+    this._fetcher,
+    this._cache,
+    this._clock,
+    this._onRealFetch,
+  );
+
+  final NearbyPlacesFetcher _fetcher;
+  final NearbyPlacesCache _cache;
+  final DateTime Function() _clock;
+  final Future<void> Function() _onRealFetch;
+
+  Future<List<NearbyPlaceResult>> search({
+    required double lat,
+    required double lng,
+  }) async {
+    final now = _clock();
+    final cached = _cache.lookup(lat, lng, now);
+    final raw = cached ?? await _fetchAndCache(lat, lng, now);
+    return filterAndSortNearbyResults(raw, lat: lat, lng: lng);
+  }
+
+  Future<List<NearbyPlaceResult>> _fetchAndCache(
+    double lat,
+    double lng,
+    DateTime now,
+  ) async {
+    final results = await _fetcher.searchNearby(lat: lat, lng: lng);
+    _cache.store(lat, lng, results, now);
+    await _onRealFetch();
+    return results;
+  }
 }
