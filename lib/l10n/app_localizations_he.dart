@@ -669,6 +669,21 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get nearbyEntryTooltip => 'מצא בקרבת מקום';
+
+  @override
+  String get nearbyAnchorNearMe => 'בקרבתי';
+
+  @override
+  String get nearbyAnchorNearMeUnavailable => 'הפעל מיקום כדי להשתמש באפשרות זו';
+
+  @override
+  String get nearbyAnchorSavedPlace => 'ליד מקום שמור';
+
+  @override
+  String get nearbyAnchorNoSavedPlaces => 'אין עדיין מקומות שמורים עם מיקום';
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override

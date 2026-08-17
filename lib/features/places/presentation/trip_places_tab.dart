@@ -7,6 +7,7 @@ import '../../../core/filtering/filter_sort_config.dart';
 import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/location/location_providers.dart';
 import '../../../core/location/location_service.dart';
+import '../../../core/settings/settings_service.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
@@ -20,6 +21,7 @@ import '../../trips/domain/trip.dart';
 import '../domain/place.dart';
 import '../domain/place_sort.dart';
 import 'add_place_screen.dart';
+import 'nearby_anchor_sheet.dart';
 import 'place_actions_sheet.dart';
 import 'place_distance_sort_status.dart';
 import 'place_filter_config.dart';
@@ -92,6 +94,7 @@ class _TripPlacesTabBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final asyncPlaces = ref.watch(itemsProvider);
+    final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
 
     if (asyncPlaces.hasError) {
       return ErrorState(
@@ -122,6 +125,17 @@ class _TripPlacesTabBody extends ConsumerWidget {
                   l10n.tripPlacesProgress(visitedCount, all.length),
                 ),
               ),
+              if (nearbyEnabled)
+                IconButton(
+                  icon: const Icon(Icons.travel_explore),
+                  tooltip: l10n.nearbyEntryTooltip,
+                  onPressed: () => showNearbyAnchorSheet(
+                    context,
+                    ref,
+                    places: all,
+                    tripId: trip.id,
+                  ),
+                ),
               FilterSortButton(
                 active: !sortState.selection.isEmpty,
                 onPressed: () => showFilterSortSheet<Place, PlaceSortField>(

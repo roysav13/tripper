@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/location/location_providers.dart';
 import 'package:tripper/core/location/location_service.dart';
+import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/features/places/domain/place.dart';
@@ -19,6 +20,13 @@ import '../../helpers/fake_location_service.dart';
 import '../../helpers/fake_place_repository.dart';
 
 const _trip = Trip(id: 't1', name: 'Thailand', destinations: ['Krabi']);
+
+class _FixedNearbyToggle extends NearbyPlacesEnabledController {
+  _FixedNearbyToggle(this._value);
+  final bool _value;
+  @override
+  bool build() => _value;
+}
 
 Widget _app(FakePlaceRepository repo, {LocationFix? locationFix}) =>
     ProviderScope(
@@ -34,6 +42,43 @@ Widget _app(FakePlaceRepository repo, {LocationFix? locationFix}) =>
                 const LocationUnavailable(LocationUnavailableReason.error),
           ),
         ),
+        // TripPlacesTab now watches nearbyPlacesEnabledProvider; its real
+        // controller reads sharedPreferencesProvider synchronously in
+        // build(), which throws if unmocked. This helper doesn't expose a
+        // toggle (see _appWithNearby below for that) — it's just always
+        // off here so every existing test in this file keeps working.
+        nearbyPlacesEnabledProvider.overrideWith(
+          () => _FixedNearbyToggle(false),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: TripPlacesTab(trip: _trip)),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
+    );
+
+Widget _appWithNearby(
+  FakePlaceRepository repo, {
+  required bool nearbyEnabled,
+}) =>
+    ProviderScope(
+      overrides: [
+        placeRepositoryProvider.overrideWithValue(repo),
+        clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        locationServiceProvider.overrideWithValue(
+          FakeLocationService(
+            const LocationUnavailable(LocationUnavailableReason.error),
+          ),
+        ),
+        nearbyPlacesEnabledProvider
+            .overrideWith(() => _FixedNearbyToggle(nearbyEnabled)),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -284,5 +329,36 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RowSettleAnimation), findsOneWidget);
+  });
+
+  testWidgets('nearby entry button is hidden when the feature is off',
+      (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    await tester.pumpWidget(_appWithNearby(repo, nearbyEnabled: false));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Find nearby'), findsNothing);
+  });
+
+  testWidgets(
+      'nearby entry button opens the anchor sheet when the feature is on',
+      (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Hotel A',
+        tripId: 't1',
+        lat: 8.0119,
+        lng: 98.8378,
+      ),
+    ]);
+    await tester.pumpWidget(_appWithNearby(repo, nearbyEnabled: true));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Find nearby'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Find nearby'));
+    await tester.pumpAndSettle();
+    expect(find.text('Near me'), findsOneWidget);
   });
 }

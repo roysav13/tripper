@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/location/location_providers.dart';
 import 'package:tripper/core/location/location_service.dart';
+import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/active_filter_strip.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
@@ -42,7 +43,12 @@ Place _p(
       lng: lng,
     );
 
-Widget _app(List<Place> places, {LocationFix? locationFix}) => ProviderScope(
+Widget _app(
+  List<Place> places, {
+  LocationFix? locationFix,
+  bool nearbyEnabled = false,
+}) =>
+    ProviderScope(
       overrides: [
         placeRepositoryProvider
             .overrideWithValue(FakePlaceRepository([...places])),
@@ -59,6 +65,9 @@ Widget _app(List<Place> places, {LocationFix? locationFix}) => ProviderScope(
                 const LocationUnavailable(LocationUnavailableReason.error),
           ),
         ),
+        nearbyPlacesEnabledProvider.overrideWith(
+          () => _FixedNearbyToggle(nearbyEnabled),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -72,6 +81,13 @@ Widget _app(List<Place> places, {LocationFix? locationFix}) => ProviderScope(
         supportedLocales: const [Locale('en')],
       ),
     );
+
+class _FixedNearbyToggle extends NearbyPlacesEnabledController {
+  _FixedNearbyToggle(this._value);
+  final bool _value;
+  @override
+  bool build() => _value;
+}
 
 void main() {
   testWidgets('empty state invites the first place', (tester) async {
@@ -312,6 +328,12 @@ void main() {
           placeRepositoryProvider.overrideWithValue(repo),
           tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
           clockProvider.overrideWithValue(() => _today),
+          // PlacesScreen now watches nearbyPlacesEnabledProvider; its real
+          // controller reads sharedPreferencesProvider synchronously in
+          // build(), which throws if unmocked (see _app's override above).
+          nearbyPlacesEnabledProvider.overrideWith(
+            () => _FixedNearbyToggle(false),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
@@ -648,5 +670,26 @@ void main() {
     expect(find.byType(GlassChrome), findsNothing);
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsNothing);
+  });
+
+  testWidgets('nearby entry button is hidden when the feature is off',
+      (tester) async {
+    await tester.pumpWidget(_app([_p('Railay viewpoint')]));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Find nearby'), findsNothing);
+  });
+
+  testWidgets(
+      'nearby entry button opens the anchor sheet when the feature is on',
+      (tester) async {
+    await tester.pumpWidget(
+      _app([_p('Railay viewpoint')], nearbyEnabled: true),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Find nearby'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Find nearby'));
+    await tester.pumpAndSettle();
+    expect(find.text('Near me'), findsOneWidget);
   });
 }

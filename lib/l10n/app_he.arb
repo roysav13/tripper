@@ -264,6 +264,11 @@
   "@placesFilterShowResults": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "nearbyEntryTooltip": "מצא בקרבת מקום",
+  "nearbyAnchorNearMe": "בקרבתי",
+  "nearbyAnchorNearMeUnavailable": "הפעל מיקום כדי להשתמש באפשרות זו",
+  "nearbyAnchorSavedPlace": "ליד מקום שמור",
+  "nearbyAnchorNoSavedPlaces": "אין עדיין מקומות שמורים עם מיקום",
   "journalGlobeLoading": "טוען את הגלובוס",
   "journalGlobeClusterCount": "{count, plural, one{1 רשומה} two{שתי רשומות} many{{count} רשומות} other{{count} רשומות}}",
   "@journalGlobeClusterCount": {

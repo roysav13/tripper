@@ -673,6 +673,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get nearbyEntryTooltip => 'Find nearby';
+
+  @override
+  String get nearbyAnchorNearMe => 'Near me';
+
+  @override
+  String get nearbyAnchorNearMeUnavailable => 'Turn on location to use this';
+
+  @override
+  String get nearbyAnchorSavedPlace => 'Near a saved place';
+
+  @override
+  String get nearbyAnchorNoSavedPlaces => 'No saved places with a location yet';
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

@@ -1280,6 +1280,36 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Show 1 place} other{Show {count} places}}'**
   String placesFilterShowResults(int count);
 
+  /// No description provided for @nearbyEntryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Find nearby'**
+  String get nearbyEntryTooltip;
+
+  /// No description provided for @nearbyAnchorNearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get nearbyAnchorNearMe;
+
+  /// No description provided for @nearbyAnchorNearMeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to use this'**
+  String get nearbyAnchorNearMeUnavailable;
+
+  /// No description provided for @nearbyAnchorSavedPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Near a saved place'**
+  String get nearbyAnchorSavedPlace;
+
+  /// No description provided for @nearbyAnchorNoSavedPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved places with a location yet'**
+  String get nearbyAnchorNoSavedPlaces;
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

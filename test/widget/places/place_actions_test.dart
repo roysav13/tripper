@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/database/database_provider.dart';
+import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
@@ -13,11 +14,24 @@ import 'package:tripper/l10n/app_localizations.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
+class _FixedNearbyToggle extends NearbyPlacesEnabledController {
+  _FixedNearbyToggle(this._value);
+  final bool _value;
+  @override
+  bool build() => _value;
+}
+
 Widget _app(FakePlaceRepository repo) => ProviderScope(
       overrides: [
         placeRepositoryProvider.overrideWithValue(repo),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        // PlacesScreen now watches nearbyPlacesEnabledProvider; its real
+        // controller reads sharedPreferencesProvider synchronously in
+        // build(), which throws if unmocked (see places_screen_test.dart).
+        nearbyPlacesEnabledProvider.overrideWith(
+          () => _FixedNearbyToggle(false),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

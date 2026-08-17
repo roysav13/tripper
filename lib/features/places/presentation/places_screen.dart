@@ -7,6 +7,7 @@ import '../../../core/filtering/filter_sort_config.dart';
 import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/location/location_providers.dart';
 import '../../../core/location/location_service.dart';
+import '../../../core/settings/settings_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -21,6 +22,7 @@ import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
 import '../domain/place_sort.dart';
 import 'add_place_screen.dart';
+import 'nearby_anchor_sheet.dart';
 import 'place_actions_sheet.dart';
 import 'place_distance_sort_status.dart';
 import 'place_filter_config.dart';
@@ -88,6 +90,7 @@ class _PlacesScreenBody extends ConsumerWidget {
     final trips = ref.watch(tripListProvider).valueOrNull ?? [];
     final tripNames = {for (final t in trips) t.id: t.name};
     final mapMode = ref.watch(placesMapModeProvider);
+    final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
 
     final want = visible.where((p) => !p.isVisited).toList();
     final been = visible.where((p) => p.isVisited).toList();
@@ -120,6 +123,13 @@ class _PlacesScreenBody extends ConsumerWidget {
                         ? const PlaceDistanceSortStatus()
                         : null,
               ),
+            ),
+          if (nearbyEnabled)
+            IconButton(
+              icon: Icon(Icons.travel_explore, color: colors.inkSecondary),
+              tooltip: l10n.nearbyEntryTooltip,
+              onPressed: () =>
+                  showNearbyAnchorSheet(context, ref, places: all),
             ),
           IconButton(
             icon: Icon(Icons.add, color: colors.accent),
