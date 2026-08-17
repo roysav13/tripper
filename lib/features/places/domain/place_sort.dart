@@ -82,3 +82,14 @@ double placeDistanceFromKm(
   required double lng,
 }) =>
     _haversineDistanceKm(lat, lng, place.lat!, place.lng!);
+
+/// Distance between two raw coordinate pairs, in km — same haversine math
+/// as [placeDistanceFromKm], for callers (like [NearbyPlaceResult]) that
+/// aren't a [Place].
+double distanceBetweenKm({
+  required double lat1,
+  required double lng1,
+  required double lat2,
+  required double lng2,
+}) =>
+    _haversineDistanceKm(lat1, lng1, lat2, lng2);

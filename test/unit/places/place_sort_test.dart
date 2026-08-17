@@ -106,4 +106,22 @@ void main() {
       expect(placeDistanceFromKm(here, lat: lat, lng: lng), closeTo(0, 0.01));
     });
   });
+
+  group('distanceBetweenKm', () {
+    test('matches placeDistanceFromKm for the same two points', () {
+      const lat = 13.7563;
+      const lng = 100.5018;
+      expect(
+        distanceBetweenKm(lat1: lat, lng1: lng, lat2: 14.3532, lng2: 100.5686),
+        closeTo(67, 5),
+      );
+    });
+
+    test('the same point is ~0km away', () {
+      expect(
+        distanceBetweenKm(lat1: 1, lng1: 1, lat2: 1, lng2: 1),
+        closeTo(0, 0.01),
+      );
+    });
+  });
 }
