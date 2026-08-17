@@ -21,31 +21,46 @@ class EmptyState extends StatelessWidget {
   final String ctaLabel;
   final VoidCallback onCta;
 
+  /// Wrapped in a min-height-constrained scroll view rather than a bare
+  /// Center: this widget can render inside deliberately cramped parents
+  /// (Trip Detail's tabs, squeezed under its fixed hero/tab-bar chrome) —
+  /// centers exactly like a bare Center when there's room, scrolls instead
+  /// of overflowing when there isn't. An "active trip with nothing logged
+  /// yet" is every trip's actual starting state, not an edge case.
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsetsDirectional.all(AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: colors.inkMuted),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              title,
-              style: AppTextStyles.title.copyWith(color: colors.inkPrimary),
-              textAlign: TextAlign.center,
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpacing.xxl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 40, color: colors.inkMuted),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    title,
+                    style:
+                        AppTextStyles.title.copyWith(color: colors.inkPrimary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    body,
+                    style: AppTextStyles.body
+                        .copyWith(color: colors.inkSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  FilledButton(onPressed: onCta, child: Text(ctaLabel)),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              body,
-              style: AppTextStyles.body.copyWith(color: colors.inkSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton(onPressed: onCta, child: Text(ctaLabel)),
-          ],
+          ),
         ),
       ),
     );
