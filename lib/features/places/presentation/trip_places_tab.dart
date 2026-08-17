@@ -106,8 +106,8 @@ class _TripPlacesTabState extends ConsumerState<TripPlacesTab> {
               if (availableCategories.isNotEmpty ||
                   availableCountries.isNotEmpty)
                 PlaceFilterButton(
-                  active: prunedCategories.isNotEmpty ||
-                      prunedCountries.isNotEmpty,
+                  active:
+                      prunedCategories.isNotEmpty || prunedCountries.isNotEmpty,
                   onPressed: () => showPlaceFilterSheet(
                     context,
                     placesProvider: tripPlacesProvider(widget.trip.id),

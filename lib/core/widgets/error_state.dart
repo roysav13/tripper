@@ -8,6 +8,11 @@ import '../theme/app_typography.dart';
 /// Designed error state (M4.2): what happened + what to do, never a raw
 /// exception on screen. Mirrors [EmptyState]'s layout so the two read as
 /// the same family of "nothing to show you right now" screens.
+///
+/// Requires a bounded-height parent: internally this wraps its content in a
+/// [ConstrainedBox] whose `minHeight` is computed from the incoming layout
+/// constraints, so placing this inside an unbounded-height ancestor (e.g. a
+/// [Column] without [Expanded], or an unconstrained scroll view) throws.
 class ErrorState extends StatelessWidget {
   const ErrorState({
     super.key,
@@ -55,8 +60,8 @@ class ErrorState extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     body ?? l10n.errorStateBody,
-                    style: AppTextStyles.body
-                        .copyWith(color: colors.inkSecondary),
+                    style:
+                        AppTextStyles.body.copyWith(color: colors.inkSecondary),
                     textAlign: TextAlign.center,
                   ),
                   if (onRetry != null) ...[

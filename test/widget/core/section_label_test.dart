@@ -5,7 +5,8 @@ import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/section_label.dart';
 
 void main() {
-  testWidgets('an explicit color overrides the computed accent/inkMuted default',
+  testWidgets(
+      'an explicit color overrides the computed accent/inkMuted default',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(

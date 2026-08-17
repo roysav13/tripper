@@ -298,7 +298,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
             coordinates: GlobeCoordinates(entry.lat!, entry.lng!),
             style: PointStyle(
               size: _plainBorderSize * compensation,
-              color: AppColors.dark.surface,
+              color: AppColors.dark.inkPrimary,
             ),
             onTap: onTap,
           ),
@@ -348,7 +348,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
             coordinates: GlobeCoordinates(centroidLat, centroidLng),
             style: PointStyle(
               size: _clusterBorderSize * compensation,
-              color: AppColors.dark.surface,
+              color: AppColors.dark.inkPrimary,
             ),
             onTap: onTap,
           ),
@@ -373,7 +373,7 @@ class _JournalGlobeState extends State<JournalGlobe> {
             label: l10n.journalGlobeClusterCount(cluster.length),
             isLabelVisible: true,
             labelTextStyle: AppTextStyles.mono.copyWith(
-              color: AppColors.dark.surface,
+              color: AppColors.dark.inkPrimary,
             ),
             onTap: onTap,
           ),
@@ -414,15 +414,15 @@ class _JournalGlobeState extends State<JournalGlobe> {
           curveScale: _arcCurveScale,
           // Thin dashed lines radiating between visited places — matches
           // the reference travel-map style (assets/globe/
-          // card_design_presentation.png). Fixed AppColors.dark.surface
-          // (not theme-aware colors.surface): this paints directly over
-          // the always-dark earth_day.jpg/earth_day_high.jpg texture
-          // regardless of app theme, the same reasoning as the dot
-          // border rings above and trip_journal_tab.dart's floating
-          // chrome (Phase 4).
+          // card_design_presentation.png). Fixed AppColors.dark.inkPrimary
+          // (not theme-aware colors.surface): this is a foreground mark
+          // that must read against the always-dark earth_day.jpg/
+          // earth_day_high.jpg texture regardless of app theme — same
+          // ink-on-fixed-fill reasoning as the dot border rings above and
+          // trip_journal_tab.dart's floating chrome (Phase 4).
           style: PointConnectionStyle(
             type: PointConnectionType.dashed,
-            color: AppColors.dark.surface.withValues(alpha: 0.85),
+            color: AppColors.dark.inkPrimary.withValues(alpha: 0.85),
             lineWidth: 2.0 * lineWidthCompensation,
             dashSize: 4.0 * dashCompensation,
             spacing: 8.0 * dashSpacingCompensation,

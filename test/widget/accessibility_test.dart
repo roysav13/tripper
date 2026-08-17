@@ -74,6 +74,7 @@ Future<Widget> _populatedApp({
               country: 'Thailand',
               city: 'Krabi',
               tripId: 't1',
+              category: PlaceCategory.attraction,
             ),
           ]),
         ),

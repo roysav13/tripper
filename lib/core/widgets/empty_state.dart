@@ -5,6 +5,11 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 /// Designed empty state: invitation, not apology (SPEC copy rules).
+///
+/// Requires a bounded-height parent: internally this wraps its content in a
+/// [ConstrainedBox] whose `minHeight` is computed from the incoming layout
+/// constraints, so placing this inside an unbounded-height ancestor (e.g. a
+/// [Column] without [Expanded], or an unconstrained scroll view) throws.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -51,8 +56,8 @@ class EmptyState extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     body,
-                    style: AppTextStyles.body
-                        .copyWith(color: colors.inkSecondary),
+                    style:
+                        AppTextStyles.body.copyWith(color: colors.inkSecondary),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xl),

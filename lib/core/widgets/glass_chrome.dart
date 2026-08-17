@@ -8,9 +8,8 @@ import '../theme/app_spacing.dart';
 /// Blurred glass chrome for nav/tab/top bars sitting over a photo or
 /// gradient hero (redesign spec §4, component rule 3), or a modal sheet
 /// the spec explicitly designates as glass (the Places filter sheet,
-/// spec §5) — never for regular content cards. Never use this for
-/// regular content cards — those stay solid ([PaperCard]) for reliable
-/// contrast and cheap repaint.
+/// spec §5). Never use this for regular content cards — those stay solid
+/// ([PaperCard]) for reliable contrast and cheap repaint.
 class GlassChrome extends StatelessWidget {
   const GlassChrome({
     super.key,

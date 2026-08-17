@@ -74,8 +74,7 @@ void main() {
             (widget) =>
                 widget is DecoratedBox &&
                 widget.decoration is BoxDecoration &&
-                (widget.decoration as BoxDecoration).shape ==
-                    BoxShape.circle,
+                (widget.decoration as BoxDecoration).shape == BoxShape.circle,
           ),
         );
 

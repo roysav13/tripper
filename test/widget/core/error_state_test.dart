@@ -47,4 +47,25 @@ void main() {
     expect(find.text('Could not load this.'), findsOneWidget);
     expect(find.byType(OutlinedButton), findsOneWidget);
   });
+
+  testWidgets(
+      'does not render a retry button when onRetry is null, even when '
+      'squeezed', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        SizedBox(
+          height: 150,
+          child: const ErrorState(
+            title: 'Something went wrong',
+            body: 'Could not load this.',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Retry'), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
+  });
 }
