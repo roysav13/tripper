@@ -1334,6 +1334,24 @@ abstract class AppLocalizations {
   /// **'Try a different anchor, or check back later — nearby results can change.'**
   String get nearbyEmptyBody;
 
+  /// No description provided for @nearbyAddToWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to wishlist'**
+  String get nearbyAddToWishlist;
+
+  /// No description provided for @nearbyDayPickerPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a day'**
+  String get nearbyDayPickerPrompt;
+
+  /// No description provided for @nearbyDayNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {n}'**
+  String nearbyDayNumber(int n);
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

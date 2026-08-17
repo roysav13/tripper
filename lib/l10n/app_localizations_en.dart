@@ -701,6 +701,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Try a different anchor, or check back later — nearby results can change.';
 
   @override
+  String get nearbyAddToWishlist => 'Add to wishlist';
+
+  @override
+  String get nearbyDayPickerPrompt => 'Assign a day';
+
+  @override
+  String nearbyDayNumber(int n) => 'Day $n';
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

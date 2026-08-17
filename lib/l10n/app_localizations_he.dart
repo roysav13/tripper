@@ -697,6 +697,15 @@ class AppLocalizationsHe extends AppLocalizations {
       'נסה נקודת עוגן אחרת, או בדוק שוב מאוחר יותר — תוצאות קרובות יכולות להשתנות.';
 
   @override
+  String get nearbyAddToWishlist => 'הוסף לרשימת המשאלות';
+
+  @override
+  String get nearbyDayPickerPrompt => 'שייך ליום';
+
+  @override
+  String nearbyDayNumber(int n) => 'יום $n';
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override

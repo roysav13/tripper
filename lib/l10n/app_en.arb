@@ -273,6 +273,12 @@
   "nearbyFindButton": "Find nearby",
   "nearbyEmptyTitle": "No highly-rated places found",
   "nearbyEmptyBody": "Try a different anchor, or check back later — nearby results can change.",
+  "nearbyAddToWishlist": "Add to wishlist",
+  "nearbyDayPickerPrompt": "Assign a day",
+  "nearbyDayNumber": "Day {n}",
+  "@nearbyDayNumber": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "journalGlobeLoading": "Loading globe",
   "journalGlobeClusterCount": "{count, plural, one{1 entry} other{{count} entries}}",
   "@journalGlobeClusterCount": {

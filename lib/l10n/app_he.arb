@@ -273,6 +273,12 @@
   "nearbyFindButton": "מצא מקומות בקרבת מקום",
   "nearbyEmptyTitle": "לא נמצאו מקומות מדורגים גבוה",
   "nearbyEmptyBody": "נסה נקודת עוגן אחרת, או בדוק שוב מאוחר יותר — תוצאות קרובות יכולות להשתנות.",
+  "nearbyAddToWishlist": "הוסף לרשימת המשאלות",
+  "nearbyDayPickerPrompt": "שייך ליום",
+  "nearbyDayNumber": "יום {n}",
+  "@nearbyDayNumber": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "journalGlobeLoading": "טוען את הגלובוס",
   "journalGlobeClusterCount": "{count, plural, one{1 רשומה} two{שתי רשומות} many{{count} רשומות} other{{count} רשומות}}",
   "@journalGlobeClusterCount": {
