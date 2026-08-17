@@ -1310,6 +1310,30 @@ abstract class AppLocalizations {
   /// **'No saved places with a location yet'**
   String get nearbyAnchorNoSavedPlaces;
 
+  /// No description provided for @nearbyResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get nearbyResultsTitle;
+
+  /// No description provided for @nearbyFindButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Find nearby'**
+  String get nearbyFindButton;
+
+  /// No description provided for @nearbyEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No highly-rated places found'**
+  String get nearbyEmptyTitle;
+
+  /// No description provided for @nearbyEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different anchor, or check back later — nearby results can change.'**
+  String get nearbyEmptyBody;
+
   /// No description provided for @journalGlobeLoading.
   ///
   /// In en, this message translates to:

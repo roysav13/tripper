@@ -269,6 +269,10 @@
   "nearbyAnchorNearMeUnavailable": "Turn on location to use this",
   "nearbyAnchorSavedPlace": "Near a saved place",
   "nearbyAnchorNoSavedPlaces": "No saved places with a location yet",
+  "nearbyResultsTitle": "Nearby",
+  "nearbyFindButton": "Find nearby",
+  "nearbyEmptyTitle": "No highly-rated places found",
+  "nearbyEmptyBody": "Try a different anchor, or check back later — nearby results can change.",
   "journalGlobeLoading": "Loading globe",
   "journalGlobeClusterCount": "{count, plural, one{1 entry} other{{count} entries}}",
   "@journalGlobeClusterCount": {

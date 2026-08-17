@@ -45,8 +45,9 @@ String placeCategoryLabel(AppLocalizations l10n, PlaceCategory category) =>
 
 /// Under 1 km shows meters (no useful decimal at that scale); under 10 km
 /// keeps one decimal of km precision; beyond that, whole km — mirrors how
-/// map apps taper precision as distance grows.
-String _formatDistance(AppLocalizations l10n, double km) {
+/// map apps taper precision as distance grows. Shared with the Near By
+/// results/detail views.
+String formatPlaceDistance(AppLocalizations l10n, double km) {
   if (km < 1) return l10n.placeDistanceMetersAway((km * 1000).round());
   final label = km < 10 ? km.toStringAsFixed(1) : km.round().toString();
   return l10n.placeDistanceKmAway(label);
@@ -92,7 +93,7 @@ class _PlaceRowCardState extends State<PlaceRowCard> {
     final metaParts = <String>[
       if (place.city.isNotEmpty) place.city,
       if (place.country.isNotEmpty) place.country,
-      if (widget.distanceKm case final km?) _formatDistance(l10n, km),
+      if (widget.distanceKm case final km?) formatPlaceDistance(l10n, km),
       if (visited && place.visitedAt != null)
         l10n.visitedOn(
           DateFormat('dd MMM yyyy', l10n.localeName).format(place.visitedAt!),

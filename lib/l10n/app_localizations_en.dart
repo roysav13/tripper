@@ -688,6 +688,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nearbyAnchorNoSavedPlaces => 'No saved places with a location yet';
 
   @override
+  String get nearbyResultsTitle => 'Nearby';
+
+  @override
+  String get nearbyFindButton => 'Find nearby';
+
+  @override
+  String get nearbyEmptyTitle => 'No highly-rated places found';
+
+  @override
+  String get nearbyEmptyBody =>
+      'Try a different anchor, or check back later — nearby results can change.';
+
+  @override
   String get journalGlobeLoading => 'Loading globe';
 
   @override

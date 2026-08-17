@@ -269,6 +269,10 @@
   "nearbyAnchorNearMeUnavailable": "הפעל מיקום כדי להשתמש באפשרות זו",
   "nearbyAnchorSavedPlace": "ליד מקום שמור",
   "nearbyAnchorNoSavedPlaces": "אין עדיין מקומות שמורים עם מיקום",
+  "nearbyResultsTitle": "בקרבת מקום",
+  "nearbyFindButton": "מצא מקומות בקרבת מקום",
+  "nearbyEmptyTitle": "לא נמצאו מקומות מדורגים גבוה",
+  "nearbyEmptyBody": "נסה נקודת עוגן אחרת, או בדוק שוב מאוחר יותר — תוצאות קרובות יכולות להשתנות.",
   "journalGlobeLoading": "טוען את הגלובוס",
   "journalGlobeClusterCount": "{count, plural, one{1 רשומה} two{שתי רשומות} many{{count} רשומות} other{{count} רשומות}}",
   "@journalGlobeClusterCount": {

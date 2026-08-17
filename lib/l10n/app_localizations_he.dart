@@ -684,6 +684,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String get nearbyAnchorNoSavedPlaces => 'אין עדיין מקומות שמורים עם מיקום';
 
   @override
+  String get nearbyResultsTitle => 'בקרבת מקום';
+
+  @override
+  String get nearbyFindButton => 'מצא מקומות בקרבת מקום';
+
+  @override
+  String get nearbyEmptyTitle => 'לא נמצאו מקומות מדורגים גבוה';
+
+  @override
+  String get nearbyEmptyBody =>
+      'נסה נקודת עוגן אחרת, או בדוק שוב מאוחר יותר — תוצאות קרובות יכולות להשתנות.';
+
+  @override
   String get journalGlobeLoading => 'טוען את הגלובוס';
 
   @override
