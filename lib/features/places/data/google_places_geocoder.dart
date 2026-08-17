@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
@@ -8,6 +9,13 @@ import 'geocoding_service.dart';
 /// Key comes from --dart-define (see tool/run.ps1); empty means "not
 /// configured", and the caller falls back to Nominatim.
 const kGoogleMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
+
+/// Wraps [kGoogleMapsApiKey] behind a provider so widget tests can
+/// simulate "a Maps key is configured" without a real `--dart-define`
+/// (mirrors how every other network-capability gate in this app is an
+/// overridable provider, not a raw constant read directly by a widget).
+final mapsApiKeyConfiguredProvider =
+    Provider<bool>((ref) => kGoogleMapsApiKey.isNotEmpty);
 
 /// Places API (New). Autocomplete + Place Details, English-forced.
 ///

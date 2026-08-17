@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/features/places/data/google_places_geocoder.dart';
 import 'package:tripper/features/settings/presentation/settings_screen.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
@@ -59,7 +60,26 @@ void main() {
 
   testWidgets('nearby places toggle defaults off and switches on',
       (tester) async {
-    await tester.pumpWidget(await _app());
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          await testPreferencesOverride(),
+          biometricAuthenticatorProvider.overrideWithValue((_) async => true),
+          mapsApiKeyConfiguredProvider.overrideWithValue(true),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const SettingsScreen(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('he')],
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final toggle = find.widgetWithText(SwitchListTile, 'Nearby places');
@@ -81,6 +101,7 @@ void main() {
         overrides: [
           await testPreferencesOverride({'nearby_api_call_count': 3}),
           biometricAuthenticatorProvider.overrideWithValue((_) async => true),
+          mapsApiKeyConfiguredProvider.overrideWithValue(true),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
