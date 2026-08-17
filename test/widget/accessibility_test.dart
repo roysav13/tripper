@@ -9,6 +9,7 @@ import 'package:tripper/features/expenses/presentation/expense_providers.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
+import 'package:tripper/features/trips/presentation/trip_card.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/features/vault/domain/document.dart';
 import 'package:tripper/features/vault/presentation/document_providers.dart';
@@ -61,6 +62,7 @@ Future<Widget> _populatedApp({
               category: DocumentCategory.passportId,
               createdAt: DateTime(2026, 7, 19),
               isPinned: true,
+              tripIds: const ['t1'],
             ),
           ]),
         ),
@@ -71,6 +73,7 @@ Future<Widget> _populatedApp({
               name: 'Railay viewpoint',
               country: 'Thailand',
               city: 'Krabi',
+              tripId: 't1',
             ),
           ]),
         ),
@@ -170,6 +173,71 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets(
+      'trip detail (hero, glass topbar/tabbar, Documents/Places/Expenses '
+      'tabs, and the places filter sheet) meets contrast guidelines',
+      (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(await _populatedApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TripCard));
+    await tester.pumpAndSettle();
+
+    final tabs = find.byType(Tab);
+    await tester.tap(tabs.at(0)); // Documents
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(tabs.at(1)); // Places
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(tabs.at(2)); // Expenses
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    handle.dispose();
+  });
+
+  testWidgets(
+      'trip detail meets contrast guidelines (dark) — same tour as the '
+      'light-mode test above', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(await _populatedApp(themeMode: ThemeMode.dark));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TripCard));
+    await tester.pumpAndSettle();
+
+    final tabs = find.byType(Tab);
+    await tester.tap(tabs.at(0)); // Documents
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(tabs.at(1)); // Places
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(tabs.at(2)); // Expenses
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    handle.dispose();
+  });
+
   testWidgets('layout survives 1.3x text scaling without overflow',
       (tester) async {
     await tester.pumpWidget(
@@ -208,6 +276,46 @@ void main() {
       tester.widget<Text>(find.text('Thailand')).textDirection,
       TextDirection.ltr,
     );
+
+    // Trip Detail excursion (Documents/Places/Expenses tabs + the Places
+    // filter sheet) — a stack push from a TripCard tap, not a bottom-nav
+    // branch, so the pre-Phase-5 sweep above never reached it. Journal is
+    // deliberately excluded here — see this plan's Global Constraints;
+    // it gets its own RTL coverage in trip_journal_tab_test.dart instead.
+    await tester.tap(find.byType(TripCard));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // Trip is "active" (today falls within start/end), so Trip Detail
+    // opens on the Expenses tab (index 2) by default — visit all in a
+    // fixed, known order regardless.
+    final tabs = find.byType(Tab);
+    expect(tabs, findsNWidgets(4));
+
+    await tester.tap(tabs.at(0)); // Documents
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(tabs.at(1)); // Places
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // Open the Places filter sheet (GlassChrome over the trip's places
+    // list) — never exercised under RTL before this.
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    // Dismiss via the modal barrier, away from the sheet's own content.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(tabs.at(2)); // Expenses
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // Back to the Trips list before continuing the existing sweep below.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
 
     await tester.tap(
       find.descendant(

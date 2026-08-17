@@ -434,4 +434,85 @@ void main() {
 
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets(
+      'the floating top chrome mirrors correctly under RTL — stats pill '
+      'starts, action buttons end (Hebrew locale, via the renderGlobe: '
+      'false / renderMap: false seam, not the full app)', (tester) async {
+    final repo = FakeJournalRepository([
+      JournalEntry(
+        id: 'e1',
+        tripId: 'trip-1',
+        summary: 'Arrived in Krabi',
+        loggedAt: DateTime(2026, 7, 20),
+        createdAt: DateTime(2026, 7, 20),
+      ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          journalRepositoryProvider.overrideWithValue(repo),
+          placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              body: TripJournalTab(
+                trip: _trip,
+                renderGlobe: false,
+                renderMap: false,
+              ),
+            ),
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('he')],
+          locale: const Locale('he'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // RTL: "start" is the right edge of the screen. The stats pill uses
+    // PositionedDirectional(start: 0), the add/toggle buttons use
+    // PositionedDirectional(end: 0) — under RTL they must swap physical
+    // sides, the whole point of using Directional positioning here.
+    //
+    // find.byType(MonoText) is ambiguous here (it also matches the "20 JUL"
+    // date badge in the gallery below the chrome). Matching on the stats
+    // text itself doesn't work either — under the `he` locale it's real
+    // Hebrew ("רשומות"), not the English "entries" substring. Instead,
+    // match structurally on the stats pill's own PositionedDirectional
+    // (top: 0, start: 0, no end — the only one of the four
+    // PositionedDirectionals in this tree with exactly that shape; the top
+    // scrim and gallery overlay both set start AND end to span full width).
+    final addButtonX = tester.getTopLeft(find.byIcon(Icons.add)).dx;
+    final statsPositioned = find.byWidgetPredicate(
+      (widget) =>
+          widget is PositionedDirectional &&
+          widget.top == 0 &&
+          widget.start == 0 &&
+          widget.end == null,
+    );
+    final statsMonoX = tester
+        .getTopLeft(
+          find.descendant(
+            of: statsPositioned,
+            matching: find.byType(MonoText),
+          ),
+        )
+        .dx;
+    // Empirically confirmed (see task-4-report.md): under RTL, the
+    // start-positioned stats pill lands at a LARGER dx (physically on the
+    // right) than the end-positioned add button (physically on the left) —
+    // the mirrored-sides swap PositionedDirectional exists to guarantee.
+    expect(statsMonoX, greaterThan(addButtonX));
+  });
 }
