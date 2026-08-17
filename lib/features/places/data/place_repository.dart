@@ -18,6 +18,7 @@ abstract interface class PlaceRepository {
     String? tripId,
     String notes,
     PlaceCategory? category,
+    DateTime? plannedDate,
   });
   Future<void> updatePlace(Place place);
 
@@ -61,6 +62,7 @@ class DriftPlaceRepository implements PlaceRepository {
     String? tripId,
     String notes = '',
     PlaceCategory? category,
+    DateTime? plannedDate,
   }) async {
     final id = _uuid.v4();
     await _dao.insertPlace(
@@ -77,6 +79,7 @@ class DriftPlaceRepository implements PlaceRepository {
         notes: notes.trim(),
         createdAt: _clock(),
         category: category?.index,
+        plannedDate: plannedDate,
       ),
     );
     return id;
@@ -100,6 +103,7 @@ class DriftPlaceRepository implements PlaceRepository {
         category: Value(place.category?.index),
         summary: Value(place.summary),
         summaryFetchedAt: Value(place.summaryFetchedAt),
+        plannedDate: Value(place.plannedDate),
       ),
     );
   }
@@ -143,5 +147,6 @@ class DriftPlaceRepository implements PlaceRepository {
             row.category == null ? null : PlaceCategory.values[row.category!],
         summary: row.summary,
         summaryFetchedAt: row.summaryFetchedAt,
+        plannedDate: row.plannedDate,
       );
 }

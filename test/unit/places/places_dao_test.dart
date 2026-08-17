@@ -141,4 +141,25 @@ void main() {
     final places = await repo.watchForTrip(tripId).first;
     expect(places.map((p) => p.name).toList(), ['Colosseum']);
   });
+
+  test('createPlace can set a plannedDate', () async {
+    final id = await repo.createPlace(
+      name: 'Railay viewpoint',
+      plannedDate: DateTime(2026, 8, 20),
+    );
+    final place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.plannedDate, DateTime(2026, 8, 20));
+  });
+
+  test('updatePlace persists a plannedDate change', () async {
+    final id = await repo.createPlace(name: 'Railay viewpoint');
+    var place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.plannedDate, isNull);
+
+    await repo.updatePlace(
+      place.copyWith(plannedDate: () => DateTime(2026, 8, 21)),
+    );
+    place = (await repo.watchAll().first).singleWhere((p) => p.id == id);
+    expect(place.plannedDate, DateTime(2026, 8, 21));
+  });
 }
