@@ -12,6 +12,8 @@ const _kNotifyCheckIn = 'notifications_check_in_enabled';
 const _kDocExpiryNoticeDays = 'document_expiry_notice_days';
 const _kHomeCurrency = 'home_currency';
 const _kAppLocale = 'app_locale';
+const _kNearbyPlacesEnabled = 'nearby_places_enabled';
+const _kNearbyApiCallCount = 'nearby_api_call_count';
 
 /// Overridden at startup with the real instance (main.dart).
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -243,3 +245,49 @@ final homeCurrencyProvider = NotifierProvider<HomeCurrencyController, String>(
 // under the `itinerary_hidden_anchors` key. That controller is gone; the
 // stale key is left untouched on devices that have one, since deleting
 // it buys nothing and a revived feature would want it back.
+
+/// Master gate for the Near By feature (M5-phase2a §5.10) — off by
+/// default, since this is the one feature in the app that always costs a
+/// real network call and has no offline value. Every nearby-fetch code
+/// path checks this itself (not just the UI that shows/hides the entry
+/// point), so "off" is a real guarantee.
+class NearbyPlacesEnabledController extends Notifier<bool> {
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_kNearbyPlacesEnabled) ??
+      false;
+
+  Future<void> set({required bool enabled}) async {
+    state = enabled;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool(_kNearbyPlacesEnabled, enabled);
+  }
+}
+
+final nearbyPlacesEnabledProvider =
+    NotifierProvider<NearbyPlacesEnabledController, bool>(
+  NearbyPlacesEnabledController.new,
+);
+
+/// Lifetime count of real `searchNearby` HTTP calls this install has made
+/// — incremented once per real fetch, never on a cache hit. No reset
+/// action in v1; shown in Settings so a cost is visible before it's a
+/// surprise, not to budget against.
+class NearbyApiCallCountController extends Notifier<int> {
+  @override
+  int build() =>
+      ref.read(sharedPreferencesProvider).getInt(_kNearbyApiCallCount) ?? 0;
+
+  Future<void> increment() async {
+    state = state + 1;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setInt(_kNearbyApiCallCount, state);
+  }
+}
+
+final nearbyApiCallCountProvider =
+    NotifierProvider<NearbyApiCallCountController, int>(
+  NearbyApiCallCountController.new,
+);
