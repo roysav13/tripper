@@ -130,8 +130,7 @@ class _PlacesScreenBody extends ConsumerWidget {
             IconButton(
               icon: Icon(Icons.travel_explore, color: colors.inkSecondary),
               tooltip: l10n.nearbyEntryTooltip,
-              onPressed: () =>
-                  showNearbyAnchorSheet(context, ref, places: all),
+              onPressed: () => showNearbyAnchorSheet(context, ref, places: all),
             ),
           IconButton(
             icon: Icon(Icons.add, color: colors.accent),

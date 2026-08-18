@@ -36,8 +36,7 @@ const _empty = '{"places": []}';
 
 void main() {
   group('parseSearchNearby', () {
-    test('parses a well-formed response, defaulting missing rating fields',
-        () {
+    test('parses a well-formed response, defaulting missing rating fields', () {
       final results = parseSearchNearby(_wellFormed);
       expect(results, hasLength(2));
       expect(results[0].placeId, 'ChIJraily');
@@ -64,7 +63,7 @@ void main() {
 
     test('a non-map body gives an empty list', () {
       expect(parseSearchNearby('[]'), isEmpty);
-      expect(parseSearchNearby('not json'), throwsFormatException);
+      expect(() => parseSearchNearby('not json'), throwsFormatException);
     });
   });
 }

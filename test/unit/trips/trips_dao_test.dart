@@ -121,9 +121,9 @@ void main() {
     expect((await repo.getTrip(id))!.completionPromptShown, isTrue);
   });
 
-  test('fresh database opens at schema v14 with every table queryable',
+  test('fresh database opens at schema v15 with every table queryable',
       () async {
-    expect(db.schemaVersion, 14);
+    expect(db.schemaVersion, 15);
     for (final table in [
       'trips',
       'trip_destinations',

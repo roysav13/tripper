@@ -31,8 +31,7 @@ class NearbyPlacesScreen extends ConsumerStatefulWidget {
   final String? tripId;
 
   @override
-  ConsumerState<NearbyPlacesScreen> createState() =>
-      _NearbyPlacesScreenState();
+  ConsumerState<NearbyPlacesScreen> createState() => _NearbyPlacesScreenState();
 }
 
 class _NearbyPlacesScreenState extends ConsumerState<NearbyPlacesScreen> {
@@ -159,7 +158,9 @@ class _NearbyResultCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            category == null ? Icons.place_outlined : placeCategoryIcon(category),
+            category == null
+                ? Icons.place_outlined
+                : placeCategoryIcon(category),
             size: 20,
             color: colors.accent,
           ),

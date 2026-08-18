@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +17,15 @@ import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
 class _FakeSummaryFetcher implements PlaceSummaryFetcher {
-  _FakeSummaryFetcher(this._summary, {this.delay = Duration.zero});
+  _FakeSummaryFetcher(this._summary, {this.delay = Duration.zero, this.gate});
   final String? _summary;
   final Duration delay;
+
+  /// When set, `fetchSummary` blocks on this instead of [delay] — lets a
+  /// test hold a fetch open indefinitely (no real-clock race with widget
+  /// pumping) and release it explicitly once it's done asserting the
+  /// mid-fetch state.
+  final Completer<void>? gate;
   var callCount = 0;
 
   @override
@@ -29,7 +37,11 @@ class _FakeSummaryFetcher implements PlaceSummaryFetcher {
     double? lng,
   }) async {
     callCount++;
-    if (delay > Duration.zero) await Future<void>.delayed(delay);
+    if (gate != null) {
+      await gate!.future;
+    } else if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
     return _summary;
   }
 }
@@ -149,18 +161,27 @@ void main() {
     expect(fetcher.callCount, 1);
   });
 
-  testWidgets('adding before the summary resolves falls back to the '
+  testWidgets(
+      'adding before the summary resolves falls back to the '
       'fire-and-forget path', (tester) async {
-    final fetcher = _FakeSummaryFetcher(
-      'A quiet cove.',
-      delay: const Duration(milliseconds: 200),
-    );
+    final gate = Completer<void>();
+    final fetcher = _FakeSummaryFetcher('A quiet cove.', gate: gate);
     await tester.pumpWidget(_app(fetcher: fetcher));
     await tester.tap(find.text('open'));
+    // A first pump starts the sheet-open transition's ticker (its elapsed
+    // time baselines at that frame); a second, longer pump then advances
+    // it to completion. Neither is pumpAndSettle — that loops forever on
+    // the still-spinning loading indicator. The initState fetch stays in
+    // flight throughout — it's blocked on `gate`, not a real-clock delay,
+    // so none of this can race it into resolving early.
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(fetcher.callCount, 1);
 
     await tester.tap(find.text('Add to wishlist'));
-    await tester.pumpAndSettle(const Duration(milliseconds: 300));
+    await tester.pump();
+    gate.complete();
+    await tester.pumpAndSettle();
 
     // The fire-and-forget fallback fetches again rather than awaiting or
     // reusing the still-in-flight initState fetch — an accepted duplicate

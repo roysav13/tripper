@@ -707,7 +707,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nearbyDayPickerPrompt => 'Assign a day';
 
   @override
-  String nearbyDayNumber(int n) => 'Day $n';
+  String nearbyDayNumber(int n) {
+    return 'Day $n';
+  }
 
   @override
   String get journalGlobeLoading => 'Loading globe';

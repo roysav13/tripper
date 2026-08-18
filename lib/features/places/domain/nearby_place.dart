@@ -64,7 +64,9 @@ List<NearbyPlaceResult> filterAndSortNearbyResults(
   required double lng,
 }) {
   final filtered = results
-      .where((r) => r.rating >= _minRating && r.userRatingCount >= _minRatingCount)
+      .where(
+        (r) => r.rating >= _minRating && r.userRatingCount >= _minRatingCount,
+      )
       .toList();
   filtered.sort((a, b) {
     final byRating = b.rating.compareTo(a.rating);

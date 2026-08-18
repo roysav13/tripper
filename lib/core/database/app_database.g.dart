@@ -1732,8 +1732,8 @@ class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}summary']),
       summaryFetchedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}summary_fetched_at']),
-      plannedDate: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}planned_date']),
+      plannedDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}planned_date']),
     );
   }
 
@@ -1936,8 +1936,7 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
         summaryFetchedAt: summaryFetchedAt.present
             ? summaryFetchedAt.value
             : this.summaryFetchedAt,
-        plannedDate:
-            plannedDate.present ? plannedDate.value : this.plannedDate,
+        plannedDate: plannedDate.present ? plannedDate.value : this.plannedDate,
       );
   PlaceRow copyWithCompanion(PlacesCompanion data) {
     return PlaceRow(
@@ -1957,9 +1956,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
       summaryFetchedAt: data.summaryFetchedAt.present
           ? data.summaryFetchedAt.value
           : this.summaryFetchedAt,
-      plannedDate: data.plannedDate.present
-          ? data.plannedDate.value
-          : this.plannedDate,
+      plannedDate:
+          data.plannedDate.present ? data.plannedDate.value : this.plannedDate,
     );
   }
 
@@ -6030,8 +6028,7 @@ class $$PlacesTableOrderingComposer
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get plannedDate => $composableBuilder(
-      column: $table.plannedDate,
-      builder: (column) => ColumnOrderings(column));
+      column: $table.plannedDate, builder: (column) => ColumnOrderings(column));
 
   $$TripsTableOrderingComposer get tripId {
     final $$TripsTableOrderingComposer composer = $composerBuilder(

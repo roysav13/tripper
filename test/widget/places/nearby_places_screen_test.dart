@@ -14,8 +14,10 @@ import 'package:tripper/l10n/app_localizations.dart';
 import '../../helpers/test_preferences.dart';
 
 class _FakeFetcher implements NearbyPlacesFetcher {
-  _FakeFetcher(this.results);
-  _FakeFetcher.failing() : results = const [], _shouldFail = true;
+  _FakeFetcher(this.results) : _shouldFail = false;
+  _FakeFetcher.failing()
+      : results = const [],
+        _shouldFail = true;
 
   List<NearbyPlaceResult> results;
   final bool _shouldFail;

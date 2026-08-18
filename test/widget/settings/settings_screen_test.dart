@@ -82,10 +82,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final toggle = find.widgetWithText(SwitchListTile, 'Nearby places');
+    final toggle = find.widgetWithText(
+      SwitchListTile,
+      'Nearby places',
+      skipOffstage: false,
+    );
     expect(toggle, findsOneWidget);
     expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
 
+    // The switch sits just past the default 600px test viewport;
+    // ensureVisible/scrollUntilVisible both no-op once a widget is merely
+    // present in the ListView's cache extent, so drag the list directly.
+    await tester.drag(find.byType(ListView), const Offset(0, -80));
+    await tester.pumpAndSettle();
     await tester.tap(toggle);
     await tester.pumpAndSettle();
 

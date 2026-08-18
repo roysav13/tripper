@@ -54,13 +54,12 @@ class _NearbyAnchorSheet extends ConsumerWidget {
             onTap: !nearMeAvailable
                 ? null
                 : () {
-                    final available = fix as LocationAvailable;
                     Navigator.of(context).pop();
                     Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute<void>(
                         builder: (_) => NearbyPlacesScreen(
-                          anchorLat: available.lat,
-                          anchorLng: available.lng,
+                          anchorLat: fix.lat,
+                          anchorLng: fix.lng,
                           tripId: tripId,
                         ),
                       ),
@@ -86,7 +85,7 @@ class _NearbyAnchorSheet extends ConsumerWidget {
   }
 
   void _showPlacePicker(BuildContext context) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
       builder: (context) => SafeArea(

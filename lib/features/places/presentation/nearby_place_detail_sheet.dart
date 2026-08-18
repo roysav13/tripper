@@ -100,7 +100,8 @@ class _NearbyPlaceDetailSheetState
 
     Trip? trip;
     if (widget.tripId != null) {
-      for (final t in ref.watch(tripListProvider).valueOrNull ?? const []) {
+      for (final t
+          in ref.watch(tripListProvider).valueOrNull ?? const <Trip>[]) {
         if (t.id == widget.tripId) {
           trip = t;
           break;
@@ -160,7 +161,7 @@ class _NearbyPlaceDetailSheetState
             if (showDayPicker) ...[
               const SizedBox(height: AppSpacing.md),
               _DayPicker(
-                trip: trip!,
+                trip: trip,
                 value: _plannedDate,
                 onChanged: (date) => setState(() => _plannedDate = date),
               ),

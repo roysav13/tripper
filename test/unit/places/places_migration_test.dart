@@ -230,9 +230,8 @@ CREATE TABLE trips (
 
     await db.migration.onUpgrade(Migrator(db), 14, 15);
 
-    final rows = await db
-        .customSelect('SELECT name, planned_date FROM places')
-        .get();
+    final rows =
+        await db.customSelect('SELECT name, planned_date FROM places').get();
     expect(rows.single.read<String>('name'), 'Railay');
     expect(rows.single.read<int?>('planned_date'), isNull);
   });

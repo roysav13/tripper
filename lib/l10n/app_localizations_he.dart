@@ -675,7 +675,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get nearbyAnchorNearMe => 'בקרבתי';
 
   @override
-  String get nearbyAnchorNearMeUnavailable => 'הפעל מיקום כדי להשתמש באפשרות זו';
+  String get nearbyAnchorNearMeUnavailable =>
+      'הפעל מיקום כדי להשתמש באפשרות זו';
 
   @override
   String get nearbyAnchorSavedPlace => 'ליד מקום שמור';
@@ -703,7 +704,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get nearbyDayPickerPrompt => 'שייך ליום';
 
   @override
-  String nearbyDayNumber(int n) => 'יום $n';
+  String nearbyDayNumber(int n) {
+    return 'יום $n';
+  }
 
   @override
   String get journalGlobeLoading => 'טוען את הגלובוס';

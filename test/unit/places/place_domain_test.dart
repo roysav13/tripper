@@ -127,8 +127,7 @@ void main() {
 
     test('copyWith sets and clears plannedDate', () {
       const place = Place(id: 'p1', name: 'Test');
-      final planned =
-          place.copyWith(plannedDate: () => DateTime(2026, 8, 20));
+      final planned = place.copyWith(plannedDate: () => DateTime(2026, 8, 20));
       expect(planned.plannedDate, DateTime(2026, 8, 20));
 
       final cleared = planned.copyWith(plannedDate: () => null);

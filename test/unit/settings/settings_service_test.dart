@@ -110,8 +110,7 @@ void main() {
   });
 
   test('stored nearby places toggle is restored', () async {
-    final container =
-        await containerWith({'nearby_places_enabled': true});
+    final container = await containerWith({'nearby_places_enabled': true});
     expect(container.read(nearbyPlacesEnabledProvider), isTrue);
   });
 
@@ -125,16 +124,13 @@ void main() {
 
     expect(container.read(nearbyApiCallCountProvider), 2);
     expect(
-      container
-          .read(sharedPreferencesProvider)
-          .getInt('nearby_api_call_count'),
+      container.read(sharedPreferencesProvider).getInt('nearby_api_call_count'),
       2,
     );
   });
 
   test('stored nearby API call count is restored', () async {
-    final container =
-        await containerWith({'nearby_api_call_count': 7});
+    final container = await containerWith({'nearby_api_call_count': 7});
     expect(container.read(nearbyApiCallCountProvider), 7);
   });
 }

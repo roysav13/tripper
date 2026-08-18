@@ -52,8 +52,7 @@ void main() {
       expect(cache.lookup(8.0219, 98.8378, now), isNull);
     });
 
-    test('coordinates within the same 3-decimal rounding hit the same key',
-        () {
+    test('coordinates within the same 3-decimal rounding hit the same key', () {
       final cache = NearbyPlacesCache();
       final now = DateTime(2026, 8, 17);
       cache.store(8.01190001, 98.83780001, const [_result], now);

@@ -28,12 +28,13 @@ const _highRated = NearbyPlaceResult(
 
 void main() {
   group('NearbyPlacesService', () {
-    test('a cache miss fetches, caches, filters/sorts, and reports a real fetch',
+    test(
+        'a cache miss fetches, caches, filters/sorts, and reports a real fetch',
         () async {
       final fetcher = _FakeFetcher()..results = const [_highRated];
       final cache = NearbyPlacesCache();
       var realFetchCount = 0;
-      var now = DateTime(2026, 8, 17, 10);
+      final now = DateTime(2026, 8, 17, 10);
       final service = NearbyPlacesService(
         fetcher,
         cache,
