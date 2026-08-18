@@ -264,6 +264,26 @@
   "@placesFilterShowResults": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "placesFilterListsSection": "רשימות",
+  "placesFilterSearchList": "חיפוש רשימות",
+  "placesFilterSearchNoListsResults": "אין רשימות מתאימות",
+  "newListChipLabel": "רשימה חדשה",
+  "newListDialogTitle": "רשימה חדשה",
+  "newListDialogNameLabel": "שם הרשימה",
+  "newListDialogCreate": "צור",
+  "errListNameRequired": "תן שם לרשימה",
+  "renameListMenuItem": "שנה שם רשימה",
+  "renameListDialogTitle": "שינוי שם רשימה",
+  "deleteListMenuItem": "מחק רשימה",
+  "deleteListTitle": "למחוק את הרשימה?",
+  "deleteListBody": "המקומות יישארו במקומם — רק הרשימה עצמה תימחק.",
+  "listDetailEmptyTitle": "אין עדיין מקומות",
+  "listDetailEmptyBody": "הוסף מקומות לרשימה זו ממסך העריכה שלהם.",
+  "listDetailEmptyCta": "עיין במקומות",
+  "listDetailPlaceCount": "{count, plural, one{מקום אחד} other{{count} מקומות}}",
+  "@listDetailPlaceCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "nearbyEntryTooltip": "מצא בקרבת מקום",
   "nearbyAnchorNearMe": "בקרבתי",
   "nearbyAnchorNearMeUnavailable": "הפעל מיקום כדי להשתמש באפשרות זו",

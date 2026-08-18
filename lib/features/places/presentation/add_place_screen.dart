@@ -13,7 +13,9 @@ import '../../trips/presentation/trip_providers.dart';
 import '../data/geocoding_service.dart';
 import '../data/place_summary_service.dart';
 import '../domain/place.dart';
+import 'list_name_dialog.dart';
 import 'map_style.dart';
+import 'place_collection_providers.dart';
 import 'place_providers.dart';
 import 'place_widgets.dart';
 
@@ -97,6 +99,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   final _description = TextEditingController();
   PlaceCategory? _category;
+  final Set<String> _collectionIds = {};
 
   @override
   void initState() {
@@ -312,6 +315,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final trips = (ref.watch(tripListProvider).valueOrNull ?? [])
         .where((t) => !t.archived)
         .toList();
+    final collections = ref.watch(placeCollectionsProvider).valueOrNull ?? [];
     final metaParts = <String>[
       if (_city.isNotEmpty) _city,
       if (_country.isNotEmpty) _country,
@@ -380,6 +384,32 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     () => _category = _category == category ? null : category,
                   ),
                 ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(l10n.placesFilterListsSection),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final collection in collections)
+                FilterChip(
+                  label: Text(collection.name),
+                  selected: _collectionIds.contains(collection.id),
+                  onSelected: (selected) => setState(() {
+                    if (selected) {
+                      _collectionIds.add(collection.id);
+                    } else {
+                      _collectionIds.remove(collection.id);
+                    }
+                  }),
+                ),
+              ActionChip(
+                avatar: const Icon(Icons.add, size: 16),
+                label: Text(l10n.newListChipLabel),
+                onPressed: _createList,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -504,6 +534,20 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     });
   }
 
+  Future<void> _createList() async {
+    final l10n = AppLocalizations.of(context)!;
+    final name = await promptListName(
+      context,
+      title: l10n.newListDialogTitle,
+      confirmLabel: l10n.newListDialogCreate,
+    );
+    if (name == null) return;
+    final id = await ref
+        .read(placeCollectionRepositoryProvider)
+        .createCollection(name: name);
+    if (mounted) setState(() => _collectionIds.add(id));
+  }
+
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
       setState(() => _nameError = true);
@@ -518,6 +562,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     // deliberately keeps running after that (see `unawaited` below).
     final repo = ref.read(placeRepositoryProvider);
     final summaryFetcher = ref.read(placeSummaryFetcherProvider);
+    final collectionRepo = ref.read(placeCollectionRepositoryProvider);
     final id = await repo.createPlace(
       name: name,
       country: _country,
@@ -528,6 +573,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       notes: _description.text,
       category: _category,
     );
+    if (_collectionIds.isNotEmpty) {
+      await collectionRepo.setCollectionsForPlace(id, _collectionIds);
+    }
     // Enhancement, not a gate (CLAUDE.md hard rule 4) — the save flow
     // doesn't wait on this, and any failure just leaves the summary empty.
     unawaited(

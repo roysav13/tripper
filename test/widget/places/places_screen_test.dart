@@ -12,6 +12,7 @@ import 'package:tripper/core/widgets/filtering/active_filter_strip.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
@@ -19,6 +20,7 @@ import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 import '../../helpers/fake_location_service.dart';
+import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
@@ -53,6 +55,9 @@ Widget _app(
       overrides: [
         placeRepositoryProvider
             .overrideWithValue(FakePlaceRepository([...places])),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => _today),
         // The real GeolocatorLocationService talks to the OS on desktop
@@ -169,7 +174,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    await tester.fling(find.byType(ListView), const Offset(0, -5000), 3000);
+    // .first: the page's own vertical ListView — PlaceCollectionsRow's
+    // horizontal chip strip is also a ListView, nested inside it.
+    await tester.fling(
+      find.byType(ListView).first,
+      const Offset(0, -5000),
+      3000,
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -327,6 +338,9 @@ void main() {
       ProviderScope(
         overrides: [
           placeRepositoryProvider.overrideWithValue(repo),
+          placeCollectionRepositoryProvider.overrideWithValue(
+            FakePlaceCollectionRepository([]),
+          ),
           tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
           clockProvider.overrideWithValue(() => _today),
           // PlacesScreen now watches nearbyPlacesEnabledProvider; its real
@@ -715,6 +729,9 @@ void main() {
                 plannedDate: DateTime(2026, 7, 17),
               ),
             ]),
+          ),
+          placeCollectionRepositoryProvider.overrideWithValue(
+            FakePlaceCollectionRepository([]),
           ),
           tripRepositoryProvider.overrideWithValue(FakeTripRepository([trip])),
           clockProvider.overrideWithValue(() => _today),

@@ -71,6 +71,56 @@ void main() {
       final result = applyFilter(places, config.facets, selection);
       expect(result.any((p) => p.id == 'd'), isFalse);
     });
+
+    test(
+        'lists facet is many-to-many: a place in two lists matches either '
+        "list's filter, and an empty selection leaves everything", () {
+      final withLists = buildPlaceFilterSortConfig(
+        l10n,
+        placeCollectionIds: const {
+          'a': {'food', 'tokyo'},
+          'b': {'food'},
+        },
+        collectionNames: const {'food': 'Food', 'tokyo': 'Tokyo day trips'},
+      );
+
+      final byFood = applyFilter(
+        places,
+        withLists.facets,
+        FilterSelection.empty.toggle('lists', 'food'),
+      );
+      expect(byFood.map((p) => p.id), ['a', 'b']);
+
+      final byTokyo = applyFilter(
+        places,
+        withLists.facets,
+        FilterSelection.empty.toggle('lists', 'tokyo'),
+      );
+      expect(byTokyo.map((p) => p.id), ['a']);
+
+      final byNeither = applyFilter(
+        places,
+        withLists.facets,
+        FilterSelection.empty,
+      );
+      expect(byNeither, hasLength(4));
+    });
+
+    test('a place with no list membership never matches a lists filter', () {
+      final withLists = buildPlaceFilterSortConfig(
+        l10n,
+        placeCollectionIds: const {
+          'a': {'food'},
+        },
+        collectionNames: const {'food': 'Food'},
+      );
+      final result = applyFilter(
+        places,
+        withLists.facets,
+        FilterSelection.empty.toggle('lists', 'food'),
+      );
+      expect(result.any((p) => p.id == 'c' || p.id == 'd'), isFalse);
+    });
   });
 
   group('sort options', () {

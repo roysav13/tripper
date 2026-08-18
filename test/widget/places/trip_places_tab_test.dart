@@ -10,6 +10,8 @@ import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/features/places/domain/place.dart';
+import 'package:tripper/features/places/domain/place_collection.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/place_widgets.dart';
 import 'package:tripper/features/places/presentation/trip_places_tab.dart';
@@ -17,6 +19,7 @@ import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 import '../../helpers/fake_location_service.dart';
+import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 
 const _trip = Trip(id: 't1', name: 'Thailand', destinations: ['Krabi']);
@@ -28,10 +31,17 @@ class _FixedNearbyToggle extends NearbyPlacesEnabledController {
   bool build() => _value;
 }
 
-Widget _app(FakePlaceRepository repo, {LocationFix? locationFix}) =>
+Widget _app(
+  FakePlaceRepository repo, {
+  LocationFix? locationFix,
+  FakePlaceCollectionRepository? collectionRepo,
+}) =>
     ProviderScope(
       overrides: [
         placeRepositoryProvider.overrideWithValue(repo),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          collectionRepo ?? FakePlaceCollectionRepository([]),
+        ),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
         // See places_screen_test.dart — the real GeolocatorLocationService
         // hits the OS (win32 Location API on desktop) rather than
@@ -71,6 +81,9 @@ Widget _appWithNearby(
     ProviderScope(
       overrides: [
         placeRepositoryProvider.overrideWithValue(repo),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
         locationServiceProvider.overrideWithValue(
           FakeLocationService(
@@ -383,6 +396,12 @@ void main() {
       ProviderScope(
         overrides: [
           placeRepositoryProvider.overrideWithValue(repo),
+          placeCollectionRepositoryProvider.overrideWithValue(
+            FakePlaceCollectionRepository([]),
+          ),
+          placeCollectionRepositoryProvider.overrideWithValue(
+            FakePlaceCollectionRepository([]),
+          ),
           clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
           locationServiceProvider.overrideWithValue(
             FakeLocationService(
@@ -413,5 +432,48 @@ void main() {
 
     // 15 Jul is day 1, so 17 Jul is day 3.
     expect(find.textContaining('DAY 3'), findsOneWidget);
+  });
+
+  testWidgets(
+      'the lists row renders here too, same as the top-level '
+      'Places screen', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    final collectionRepo = FakePlaceCollectionRepository([
+      PlaceCollection(id: 'c1', name: 'Food', createdAt: DateTime(2026, 1, 1)),
+    ]);
+    await tester.pumpWidget(_app(repo, collectionRepo: collectionRepo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Food'), findsOneWidget);
+    expect(find.text('New list'), findsOneWidget);
+  });
+
+  testWidgets('lists filter narrows this trip\'s visible list', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+      const Place(id: 'b', name: 'Cafe B', tripId: 't1'),
+    ]);
+    final collectionRepo = FakePlaceCollectionRepository(
+      [PlaceCollection(id: 'c1', name: 'Food', createdAt: DateTime(2026, 1))],
+      memberships: {
+        'a': {'c1'},
+      },
+    );
+    await tester.pumpWidget(_app(repo, collectionRepo: collectionRepo));
+    await tester.pumpAndSettle();
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    // "Food" appears both as a facet chip in the sheet and as a row chip
+    // behind it — the sheet's is the topmost/most recently mounted.
+    await tester.tap(find.text('Food').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.text('Cafe B'), findsNothing);
   });
 }

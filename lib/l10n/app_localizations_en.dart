@@ -673,6 +673,67 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get placesFilterListsSection => 'Lists';
+
+  @override
+  String get placesFilterSearchList => 'Search lists';
+
+  @override
+  String get placesFilterSearchNoListsResults => 'No lists match';
+
+  @override
+  String get newListChipLabel => 'New list';
+
+  @override
+  String get newListDialogTitle => 'New list';
+
+  @override
+  String get newListDialogNameLabel => 'List name';
+
+  @override
+  String get newListDialogCreate => 'Create';
+
+  @override
+  String get errListNameRequired => 'Give the list a name';
+
+  @override
+  String get renameListMenuItem => 'Rename list';
+
+  @override
+  String get renameListDialogTitle => 'Rename list';
+
+  @override
+  String get deleteListMenuItem => 'Delete list';
+
+  @override
+  String get deleteListTitle => 'Delete this list?';
+
+  @override
+  String get deleteListBody =>
+      'Places stay right where they are — only the list itself goes away.';
+
+  @override
+  String get listDetailEmptyTitle => 'No places yet';
+
+  @override
+  String get listDetailEmptyBody =>
+      'Add places to this list from their edit screen.';
+
+  @override
+  String get listDetailEmptyCta => 'Browse places';
+
+  @override
+  String listDetailPlaceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places',
+      one: '1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get nearbyEntryTooltip => 'Find nearby';
 
   @override

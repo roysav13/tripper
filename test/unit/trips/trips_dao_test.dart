@@ -121,9 +121,9 @@ void main() {
     expect((await repo.getTrip(id))!.completionPromptShown, isTrue);
   });
 
-  test('fresh database opens at schema v15 with every table queryable',
+  test('fresh database opens at schema v16 with every table queryable',
       () async {
-    expect(db.schemaVersion, 15);
+    expect(db.schemaVersion, 16);
     for (final table in [
       'trips',
       'trip_destinations',
@@ -136,6 +136,8 @@ void main() {
       'itinerary_items',
       'journal_entries', // v10 (Journal feature)
       'journal_photos',
+      'place_collections', // v16 (Locations lists)
+      'place_collection_memberships',
     ]) {
       await db.customSelect('SELECT COUNT(*) FROM $table').getSingle();
     }

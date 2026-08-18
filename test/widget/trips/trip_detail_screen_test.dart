@@ -7,6 +7,7 @@ import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_detail_screen.dart';
@@ -17,6 +18,7 @@ import 'package:tripper/l10n/app_localizations.dart';
 import '../../helpers/fake_document_repository.dart';
 import '../../helpers/fake_expense_repository.dart';
 import '../../helpers/fake_journal_repository.dart';
+import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 import '../../helpers/test_preferences.dart';
@@ -39,6 +41,9 @@ Future<Widget> _app(Trip trip) async => ProviderScope(
         documentRepositoryProvider
             .overrideWithValue(FakeDocumentRepository([])),
         placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
         journalRepositoryProvider.overrideWithValue(FakeJournalRepository([])),
         clockProvider.overrideWithValue(() => _today),

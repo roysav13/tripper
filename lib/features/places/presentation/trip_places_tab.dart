@@ -19,10 +19,13 @@ import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
 import '../domain/place.dart';
+import '../domain/place_collection.dart';
 import '../domain/place_sort.dart';
 import 'add_place_screen.dart';
 import 'nearby_anchor_sheet.dart';
 import 'place_actions_sheet.dart';
+import 'place_collection_providers.dart';
+import 'place_collections_row.dart';
 import 'place_distance_sort_status.dart';
 import 'place_filter_config.dart';
 import 'place_providers.dart';
@@ -43,9 +46,15 @@ class TripPlacesTab extends ConsumerWidget {
     final fix = ref.watch(currentLocationProvider).valueOrNull;
     final currentLocation =
         fix is LocationAvailable ? (lat: fix.lat, lng: fix.lng) : null;
+    final collections = ref.watch(placeCollectionsProvider).valueOrNull ??
+        const <PlaceCollection>[];
+    final membershipsByPlace =
+        ref.watch(placeCollectionMembershipsProvider).valueOrNull ?? const {};
     final config = buildPlaceFilterSortConfig(
       l10n,
       currentLocation: currentLocation,
+      placeCollectionIds: membershipsByPlace,
+      collectionNames: {for (final c in collections) c.id: c.name},
     );
     final scope = 'trip:${trip.id}';
     final itemsProvider = tripPlacesProvider(trip.id);
@@ -64,6 +73,7 @@ class TripPlacesTab extends ConsumerWidget {
         scope: scope,
         itemsProvider: itemsProvider,
         currentLocation: currentLocation,
+        collections: collections,
       ),
     );
   }
@@ -79,6 +89,7 @@ class _TripPlacesTabBody extends ConsumerWidget {
     required this.scope,
     required this.itemsProvider,
     required this.currentLocation,
+    required this.collections,
   });
 
   final Trip trip;
@@ -89,6 +100,7 @@ class _TripPlacesTabBody extends ConsumerWidget {
   final String scope;
   final ProviderListenable<AsyncValue<List<Place>>> itemsProvider;
   final ({double lat, double lng})? currentLocation;
+  final List<PlaceCollection> collections;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -153,6 +165,8 @@ class _TripPlacesTabBody extends ConsumerWidget {
             ],
           ),
         ),
+        PlaceCollectionsRow(collections: collections),
+        const SizedBox(height: AppSpacing.sm),
         if (!sortState.selection.isEmpty) _activeFilterStrip(ref),
         const SizedBox(height: AppSpacing.sm),
         for (final place in visible)

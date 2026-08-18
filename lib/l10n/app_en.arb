@@ -264,6 +264,26 @@
   "@placesFilterShowResults": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "placesFilterListsSection": "Lists",
+  "placesFilterSearchList": "Search lists",
+  "placesFilterSearchNoListsResults": "No lists match",
+  "newListChipLabel": "New list",
+  "newListDialogTitle": "New list",
+  "newListDialogNameLabel": "List name",
+  "newListDialogCreate": "Create",
+  "errListNameRequired": "Give the list a name",
+  "renameListMenuItem": "Rename list",
+  "renameListDialogTitle": "Rename list",
+  "deleteListMenuItem": "Delete list",
+  "deleteListTitle": "Delete this list?",
+  "deleteListBody": "Places stay right where they are — only the list itself goes away.",
+  "listDetailEmptyTitle": "No places yet",
+  "listDetailEmptyBody": "Add places to this list from their edit screen.",
+  "listDetailEmptyCta": "Browse places",
+  "listDetailPlaceCount": "{count, plural, one{1 place} other{{count} places}}",
+  "@listDetailPlaceCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "nearbyEntryTooltip": "Find nearby",
   "nearbyAnchorNearMe": "Near me",
   "nearbyAnchorNearMeUnavailable": "Turn on location to use this",

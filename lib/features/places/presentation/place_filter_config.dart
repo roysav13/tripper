@@ -19,9 +19,17 @@ import 'place_widgets.dart';
 /// [lng] parameters. When null, every place is valueless for the
 /// Distance option (via `hasValue`) and the list keeps its prior order —
 /// the graceful-degradation path required by CLAUDE.md hard rule 4.
+///
+/// [placeCollectionIds] (placeId -> the set of user-made list ids that
+/// place belongs to) and [collectionNames] (list id -> current name) drive
+/// the many-to-many "lists" facet — supplied fresh by the caller for the
+/// same reason as [currentLocation] rather than read from global state
+/// here.
 FilterSortConfig<Place, PlaceSortField> buildPlaceFilterSortConfig(
   AppLocalizations l10n, {
   ({double lat, double lng})? currentLocation,
+  Map<String, Set<String>> placeCollectionIds = const {},
+  Map<String, String> collectionNames = const {},
 }) {
   return FilterSortConfig<Place, PlaceSortField>(
     facets: [
@@ -52,6 +60,18 @@ FilterSortConfig<Place, PlaceSortField> buildPlaceFilterSortConfig(
           final country = place.country.trim();
           if (country.isEmpty) return const {};
           return {FacetValue(id: place.country, label: place.country)};
+        },
+      ),
+      Facet<Place>(
+        id: 'lists',
+        label: l10n.placesFilterListsSection,
+        presentation: FacetPresentation.checklist,
+        searchHint: l10n.placesFilterSearchList,
+        noResultsLabel: l10n.placesFilterSearchNoListsResults,
+        valuesOf: (place) => {
+          for (final id in placeCollectionIds[place.id] ?? const <String>{})
+            if (collectionNames[id] case final name?)
+              FacetValue(id: id, label: name),
         },
       ),
     ],

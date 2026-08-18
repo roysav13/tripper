@@ -32,7 +32,7 @@ import 'trip_providers.dart';
 const _tabCount = 4;
 const _expensesTabIndex = 2;
 
-const _coverHeight = 220.0;
+const _coverHeight = 160.0;
 const _tabBarOverlap = 28.0;
 
 class TripDetailScreen extends ConsumerWidget {

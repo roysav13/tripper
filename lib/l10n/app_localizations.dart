@@ -1280,6 +1280,108 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Show 1 place} other{Show {count} places}}'**
   String placesFilterShowResults(int count);
 
+  /// No description provided for @placesFilterListsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get placesFilterListsSection;
+
+  /// No description provided for @placesFilterSearchList.
+  ///
+  /// In en, this message translates to:
+  /// **'Search lists'**
+  String get placesFilterSearchList;
+
+  /// No description provided for @placesFilterSearchNoListsResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No lists match'**
+  String get placesFilterSearchNoListsResults;
+
+  /// No description provided for @newListChipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New list'**
+  String get newListChipLabel;
+
+  /// No description provided for @newListDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New list'**
+  String get newListDialogTitle;
+
+  /// No description provided for @newListDialogNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'List name'**
+  String get newListDialogNameLabel;
+
+  /// No description provided for @newListDialogCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get newListDialogCreate;
+
+  /// No description provided for @errListNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the list a name'**
+  String get errListNameRequired;
+
+  /// No description provided for @renameListMenuItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename list'**
+  String get renameListMenuItem;
+
+  /// No description provided for @renameListDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename list'**
+  String get renameListDialogTitle;
+
+  /// No description provided for @deleteListMenuItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete list'**
+  String get deleteListMenuItem;
+
+  /// No description provided for @deleteListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this list?'**
+  String get deleteListTitle;
+
+  /// No description provided for @deleteListBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Places stay right where they are — only the list itself goes away.'**
+  String get deleteListBody;
+
+  /// No description provided for @listDetailEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No places yet'**
+  String get listDetailEmptyTitle;
+
+  /// No description provided for @listDetailEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add places to this list from their edit screen.'**
+  String get listDetailEmptyBody;
+
+  /// No description provided for @listDetailEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse places'**
+  String get listDetailEmptyCta;
+
+  /// No description provided for @listDetailPlaceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 place} other{{count} places}}'**
+  String listDetailPlaceCount(int count);
+
   /// No description provided for @nearbyEntryTooltip.
   ///
   /// In en, this message translates to:

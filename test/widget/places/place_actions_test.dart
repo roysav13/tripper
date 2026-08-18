@@ -6,11 +6,14 @@ import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/domain/place.dart';
+import 'package:tripper/features/places/domain/place_collection.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
@@ -21,9 +24,16 @@ class _FixedNearbyToggle extends NearbyPlacesEnabledController {
   bool build() => _value;
 }
 
-Widget _app(FakePlaceRepository repo) => ProviderScope(
+Widget _app(
+  FakePlaceRepository repo, {
+  FakePlaceCollectionRepository? collectionRepo,
+}) =>
+    ProviderScope(
       overrides: [
         placeRepositoryProvider.overrideWithValue(repo),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          collectionRepo ?? FakePlaceCollectionRepository([]),
+        ),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
         // PlacesScreen now watches nearbyPlacesEnabledProvider; its real
@@ -53,6 +63,16 @@ const _place = Place(
   city: 'Krabi',
 );
 
+/// The edit form's Lists section makes the sheet taller than the default
+/// 800x600 test surface, pushing Save out of the hit-testable viewport —
+/// grow the surface instead of fighting scroll-position pixel geometry.
+void _growViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   testWidgets('tapping a row opens actions; delete removes after confirm',
       (tester) async {
@@ -75,6 +95,7 @@ void main() {
   });
 
   testWidgets('edit sheet renames the place', (tester) async {
+    _growViewport(tester);
     final repo = FakePlaceRepository([_place]);
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
@@ -97,6 +118,7 @@ void main() {
   });
 
   testWidgets('editing sets a category and a description', (tester) async {
+    _growViewport(tester);
     final repo = FakePlaceRepository([_place]);
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
@@ -165,5 +187,71 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Open in Google Maps'), findsNothing);
+  });
+
+  testWidgets(
+      'editing assigns a place to a list created inline from the edit form',
+      (tester) async {
+    _growViewport(tester);
+    final repo = FakePlaceRepository([_place]);
+    final collectionRepo = FakePlaceCollectionRepository([]);
+    await tester.pumpWidget(_app(repo, collectionRepo: collectionRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    // The Places-tab collections row underneath the sheet has its own
+    // "New list" chip — .last is the topmost one, in this edit form.
+    await tester.tap(find.text('New list').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Tokyo day trips');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final collections = await collectionRepo.watchAll().first;
+    expect(collections.single.name, 'Tokyo day trips');
+    final memberships = await collectionRepo.watchMembershipsByPlace().first;
+    expect(memberships['p1'], {collections.single.id});
+  });
+
+  testWidgets(
+      'a place already in a list shows that list pre-selected when editing, '
+      'and deselecting it clears the membership on save', (tester) async {
+    _growViewport(tester);
+    final repo = FakePlaceRepository([_place]);
+    final collectionRepo = FakePlaceCollectionRepository(
+      [PlaceCollection(id: 'c1', name: 'Food', createdAt: DateTime(2026, 1))],
+      memberships: {
+        'p1': {'c1'},
+      },
+    );
+    await tester.pumpWidget(_app(repo, collectionRepo: collectionRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Railay viewpoint'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Food'))
+          .selected,
+      isTrue,
+    );
+
+    // Deselect it, then save.
+    await tester.tap(find.widgetWithText(FilterChip, 'Food'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final memberships = await collectionRepo.watchMembershipsByPlace().first;
+    expect(memberships['p1'] ?? const <String>{}, isEmpty);
   });
 }

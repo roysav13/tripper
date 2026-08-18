@@ -5,6 +5,8 @@ import '../../features/expenses/data/expenses_dao.dart';
 import '../../features/itinerary/data/itinerary_tables.dart';
 import '../../features/journal/data/journal_dao.dart';
 import '../../features/journal/data/journal_tables.dart';
+import '../../features/places/data/place_collection_tables.dart';
+import '../../features/places/data/place_collections_dao.dart';
 import '../../features/places/data/place_tables.dart';
 import '../../features/places/data/places_dao.dart';
 import '../../features/trips/data/trip_tables.dart';
@@ -33,6 +35,9 @@ part 'app_database.g.dart';
 ///         location summary, fetched automatically on save)
 ///   v15 — Places.plannedDate (Near By day-tag — see
 ///         docs/superpowers/specs/2026-08-17-near-by-places-design.md)
+///   v16 — PlaceCollections + PlaceCollectionMemberships (Locations lists:
+///         user-made place groupings, many-to-many, independent of
+///         PlaceCategory and of trips)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -51,15 +56,24 @@ part 'app_database.g.dart';
     ItineraryItems,
     JournalEntries,
     JournalPhotos,
+    PlaceCollections,
+    PlaceCollectionMemberships,
   ],
-  daos: [TripsDao, DocumentsDao, PlacesDao, ExpensesDao, JournalDao],
+  daos: [
+    TripsDao,
+    DocumentsDao,
+    PlacesDao,
+    ExpensesDao,
+    JournalDao,
+    PlaceCollectionsDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Executor is injected so tests can pass NativeDatabase.memory().
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -122,6 +136,10 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(journalPhotos);
           } else if (from < 11) {
             await m.addColumn(journalEntries, journalEntries.placeId);
+          }
+          if (from < 16) {
+            await m.createTable(placeCollections);
+            await m.createTable(placeCollectionMemberships);
           }
         },
         beforeOpen: (details) async {

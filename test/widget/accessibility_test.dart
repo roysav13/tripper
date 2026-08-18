@@ -9,6 +9,7 @@ import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
 import 'package:tripper/features/places/domain/place.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
 import 'package:tripper/features/trips/presentation/trip_card.dart';
@@ -19,6 +20,7 @@ import 'package:tripper/features/vault/presentation/document_providers.dart';
 import '../helpers/fake_document_repository.dart';
 import '../helpers/fake_expense_repository.dart';
 import '../helpers/fake_location_service.dart';
+import '../helpers/fake_place_collection_repository.dart';
 import '../helpers/fake_place_repository.dart';
 import '../helpers/fake_trip_repository.dart';
 import '../helpers/test_preferences.dart';
@@ -84,6 +86,10 @@ Future<Widget> _populatedApp({
         // Without this the M5.5b conversion wiring reaches the real Drift
         // database (via expensesDao), opening a second AppDatabase.
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
+        // PlacesScreen now watches the Locations lists providers.
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
         // Without this the real GeolocatorLocationService reaches the OS
         // (win32 Location API on desktop) when the places filter sheet's
         // Distance option is rendered.

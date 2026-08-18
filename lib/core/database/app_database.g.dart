@@ -1766,8 +1766,8 @@ class PlaceRow extends DataClass implements Insertable<PlaceRow> {
   /// or a place the user hasn't categorized yet).
   final int? category;
 
-  /// Google-sourced summary, fetched once on save. Null = not fetched yet
-  /// or nothing came back — [summaryFetchedAt] tells the two apart.
+  /// Wikipedia-sourced summary, fetched once on save. Null = not fetched
+  /// yet or nothing came back — [summaryFetchedAt] tells the two apart.
   final String? summary;
   final DateTime? summaryFetchedAt;
 
@@ -4093,6 +4093,453 @@ class JournalPhotosCompanion extends UpdateCompanion<JournalPhotoRow> {
   }
 }
 
+class $PlaceCollectionsTable extends PlaceCollections
+    with TableInfo<$PlaceCollectionsTable, PlaceCollectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlaceCollectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 80),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'place_collections';
+  @override
+  VerificationContext validateIntegrity(Insertable<PlaceCollectionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PlaceCollectionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlaceCollectionRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $PlaceCollectionsTable createAlias(String alias) {
+    return $PlaceCollectionsTable(attachedDatabase, alias);
+  }
+}
+
+class PlaceCollectionRow extends DataClass
+    implements Insertable<PlaceCollectionRow> {
+  final String id;
+  final String name;
+  final DateTime createdAt;
+  const PlaceCollectionRow(
+      {required this.id, required this.name, required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  PlaceCollectionsCompanion toCompanion(bool nullToAbsent) {
+    return PlaceCollectionsCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory PlaceCollectionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlaceCollectionRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  PlaceCollectionRow copyWith(
+          {String? id, String? name, DateTime? createdAt}) =>
+      PlaceCollectionRow(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  PlaceCollectionRow copyWithCompanion(PlaceCollectionsCompanion data) {
+    return PlaceCollectionRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlaceCollectionRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlaceCollectionRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt);
+}
+
+class PlaceCollectionsCompanion extends UpdateCompanion<PlaceCollectionRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const PlaceCollectionsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PlaceCollectionsCompanion.insert({
+    required String id,
+    required String name,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        createdAt = Value(createdAt);
+  static Insertable<PlaceCollectionRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PlaceCollectionsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? name,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return PlaceCollectionsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlaceCollectionsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PlaceCollectionMembershipsTable extends PlaceCollectionMemberships
+    with
+        TableInfo<$PlaceCollectionMembershipsTable,
+            PlaceCollectionMembershipRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlaceCollectionMembershipsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _collectionIdMeta =
+      const VerificationMeta('collectionId');
+  @override
+  late final GeneratedColumn<String> collectionId = GeneratedColumn<String>(
+      'collection_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES place_collections (id) ON DELETE CASCADE'));
+  static const VerificationMeta _placeIdMeta =
+      const VerificationMeta('placeId');
+  @override
+  late final GeneratedColumn<String> placeId = GeneratedColumn<String>(
+      'place_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES places (id) ON DELETE CASCADE'));
+  @override
+  List<GeneratedColumn> get $columns => [collectionId, placeId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'place_collection_memberships';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<PlaceCollectionMembershipRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('collection_id')) {
+      context.handle(
+          _collectionIdMeta,
+          collectionId.isAcceptableOrUnknown(
+              data['collection_id']!, _collectionIdMeta));
+    } else if (isInserting) {
+      context.missing(_collectionIdMeta);
+    }
+    if (data.containsKey('place_id')) {
+      context.handle(_placeIdMeta,
+          placeId.isAcceptableOrUnknown(data['place_id']!, _placeIdMeta));
+    } else if (isInserting) {
+      context.missing(_placeIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {collectionId, placeId};
+  @override
+  PlaceCollectionMembershipRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlaceCollectionMembershipRow(
+      collectionId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}collection_id'])!,
+      placeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}place_id'])!,
+    );
+  }
+
+  @override
+  $PlaceCollectionMembershipsTable createAlias(String alias) {
+    return $PlaceCollectionMembershipsTable(attachedDatabase, alias);
+  }
+}
+
+class PlaceCollectionMembershipRow extends DataClass
+    implements Insertable<PlaceCollectionMembershipRow> {
+  final String collectionId;
+  final String placeId;
+  const PlaceCollectionMembershipRow(
+      {required this.collectionId, required this.placeId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['collection_id'] = Variable<String>(collectionId);
+    map['place_id'] = Variable<String>(placeId);
+    return map;
+  }
+
+  PlaceCollectionMembershipsCompanion toCompanion(bool nullToAbsent) {
+    return PlaceCollectionMembershipsCompanion(
+      collectionId: Value(collectionId),
+      placeId: Value(placeId),
+    );
+  }
+
+  factory PlaceCollectionMembershipRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlaceCollectionMembershipRow(
+      collectionId: serializer.fromJson<String>(json['collectionId']),
+      placeId: serializer.fromJson<String>(json['placeId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'collectionId': serializer.toJson<String>(collectionId),
+      'placeId': serializer.toJson<String>(placeId),
+    };
+  }
+
+  PlaceCollectionMembershipRow copyWith(
+          {String? collectionId, String? placeId}) =>
+      PlaceCollectionMembershipRow(
+        collectionId: collectionId ?? this.collectionId,
+        placeId: placeId ?? this.placeId,
+      );
+  PlaceCollectionMembershipRow copyWithCompanion(
+      PlaceCollectionMembershipsCompanion data) {
+    return PlaceCollectionMembershipRow(
+      collectionId: data.collectionId.present
+          ? data.collectionId.value
+          : this.collectionId,
+      placeId: data.placeId.present ? data.placeId.value : this.placeId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlaceCollectionMembershipRow(')
+          ..write('collectionId: $collectionId, ')
+          ..write('placeId: $placeId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(collectionId, placeId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlaceCollectionMembershipRow &&
+          other.collectionId == this.collectionId &&
+          other.placeId == this.placeId);
+}
+
+class PlaceCollectionMembershipsCompanion
+    extends UpdateCompanion<PlaceCollectionMembershipRow> {
+  final Value<String> collectionId;
+  final Value<String> placeId;
+  final Value<int> rowid;
+  const PlaceCollectionMembershipsCompanion({
+    this.collectionId = const Value.absent(),
+    this.placeId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PlaceCollectionMembershipsCompanion.insert({
+    required String collectionId,
+    required String placeId,
+    this.rowid = const Value.absent(),
+  })  : collectionId = Value(collectionId),
+        placeId = Value(placeId);
+  static Insertable<PlaceCollectionMembershipRow> custom({
+    Expression<String>? collectionId,
+    Expression<String>? placeId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (collectionId != null) 'collection_id': collectionId,
+      if (placeId != null) 'place_id': placeId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PlaceCollectionMembershipsCompanion copyWith(
+      {Value<String>? collectionId,
+      Value<String>? placeId,
+      Value<int>? rowid}) {
+    return PlaceCollectionMembershipsCompanion(
+      collectionId: collectionId ?? this.collectionId,
+      placeId: placeId ?? this.placeId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (collectionId.present) {
+      map['collection_id'] = Variable<String>(collectionId.value);
+    }
+    if (placeId.present) {
+      map['place_id'] = Variable<String>(placeId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlaceCollectionMembershipsCompanion(')
+          ..write('collectionId: $collectionId, ')
+          ..write('placeId: $placeId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4106,11 +4553,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ItineraryItemsTable itineraryItems = $ItineraryItemsTable(this);
   late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
   late final $JournalPhotosTable journalPhotos = $JournalPhotosTable(this);
+  late final $PlaceCollectionsTable placeCollections =
+      $PlaceCollectionsTable(this);
+  late final $PlaceCollectionMembershipsTable placeCollectionMemberships =
+      $PlaceCollectionMembershipsTable(this);
   late final TripsDao tripsDao = TripsDao(this as AppDatabase);
   late final DocumentsDao documentsDao = DocumentsDao(this as AppDatabase);
   late final PlacesDao placesDao = PlacesDao(this as AppDatabase);
   late final ExpensesDao expensesDao = ExpensesDao(this as AppDatabase);
   late final JournalDao journalDao = JournalDao(this as AppDatabase);
+  late final PlaceCollectionsDao placeCollectionsDao =
+      PlaceCollectionsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4124,7 +4577,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         expenses,
         itineraryItems,
         journalEntries,
-        journalPhotos
+        journalPhotos,
+        placeCollections,
+        placeCollectionMemberships
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -4197,6 +4652,22 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('journal_photos', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('place_collections',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('place_collection_memberships',
+                  kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('places',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('place_collection_memberships',
+                  kind: UpdateKind.delete),
             ],
           ),
         ],
@@ -5861,6 +6332,24 @@ final class $$PlacesTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$PlaceCollectionMembershipsTable,
+      List<PlaceCollectionMembershipRow>> _placeCollectionMembershipsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.placeCollectionMemberships,
+          aliasName: 'places__id__place_collection_memberships__place_id');
+
+  $$PlaceCollectionMembershipsTableProcessedTableManager
+      get placeCollectionMembershipsRefs {
+    final manager = $$PlaceCollectionMembershipsTableTableManager(
+            $_db, $_db.placeCollectionMemberships)
+        .filter((f) => f.placeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult
+        .readTableOrNull(_placeCollectionMembershipsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$PlacesTableFilterComposer
@@ -5974,6 +6463,30 @@ class $$PlacesTableFilterComposer
               $removeJoinBuilderFromRootComposer:
                   $removeJoinBuilderFromRootComposer,
             ));
+    return f(composer);
+  }
+
+  Expression<bool> placeCollectionMembershipsRefs(
+      Expression<bool> Function(
+              $$PlaceCollectionMembershipsTableFilterComposer f)
+          f) {
+    final $$PlaceCollectionMembershipsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.placeCollectionMemberships,
+            getReferencedColumn: (t) => t.placeId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$PlaceCollectionMembershipsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.placeCollectionMemberships,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
     return f(composer);
   }
 }
@@ -6163,6 +6676,30 @@ class $$PlacesTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> placeCollectionMembershipsRefs<T extends Object>(
+      Expression<T> Function(
+              $$PlaceCollectionMembershipsTableAnnotationComposer a)
+          f) {
+    final $$PlaceCollectionMembershipsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.placeCollectionMemberships,
+            getReferencedColumn: (t) => t.placeId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$PlaceCollectionMembershipsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.placeCollectionMemberships,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$PlacesTableTableManager extends RootTableManager<
@@ -6177,7 +6714,10 @@ class $$PlacesTableTableManager extends RootTableManager<
     (PlaceRow, $$PlacesTableReferences),
     PlaceRow,
     PrefetchHooks Function(
-        {bool tripId, bool itineraryItemsRefs, bool journalEntriesRefs})> {
+        {bool tripId,
+        bool itineraryItemsRefs,
+        bool journalEntriesRefs,
+        bool placeCollectionMembershipsRefs})> {
   $$PlacesTableTableManager(_$AppDatabase db, $PlacesTable table)
       : super(TableManagerState(
           db: db,
@@ -6267,12 +6807,15 @@ class $$PlacesTableTableManager extends RootTableManager<
           prefetchHooksCallback: (
               {tripId = false,
               itineraryItemsRefs = false,
-              journalEntriesRefs = false}) {
+              journalEntriesRefs = false,
+              placeCollectionMembershipsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (itineraryItemsRefs) db.itineraryItems,
-                if (journalEntriesRefs) db.journalEntries
+                if (journalEntriesRefs) db.journalEntries,
+                if (placeCollectionMembershipsRefs)
+                  db.placeCollectionMemberships
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -6326,6 +6869,19 @@ class $$PlacesTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.placeId == item.id),
+                        typedResults: items),
+                  if (placeCollectionMembershipsRefs)
+                    await $_getPrefetchedData<PlaceRow, $PlacesTable,
+                            PlaceCollectionMembershipRow>(
+                        currentTable: table,
+                        referencedTable: $$PlacesTableReferences
+                            ._placeCollectionMembershipsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$PlacesTableReferences(db, table, p0)
+                                .placeCollectionMembershipsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.placeId == item.id),
                         typedResults: items)
                 ];
               },
@@ -6346,7 +6902,10 @@ typedef $$PlacesTableProcessedTableManager = ProcessedTableManager<
     (PlaceRow, $$PlacesTableReferences),
     PlaceRow,
     PrefetchHooks Function(
-        {bool tripId, bool itineraryItemsRefs, bool journalEntriesRefs})>;
+        {bool tripId,
+        bool itineraryItemsRefs,
+        bool journalEntriesRefs,
+        bool placeCollectionMembershipsRefs})>;
 typedef $$ExpensesTableCreateCompanionBuilder = ExpensesCompanion Function({
   required String id,
   required String tripId,
@@ -7871,6 +8430,570 @@ typedef $$JournalPhotosTableProcessedTableManager = ProcessedTableManager<
     (JournalPhotoRow, $$JournalPhotosTableReferences),
     JournalPhotoRow,
     PrefetchHooks Function({bool entryId})>;
+typedef $$PlaceCollectionsTableCreateCompanionBuilder
+    = PlaceCollectionsCompanion Function({
+  required String id,
+  required String name,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$PlaceCollectionsTableUpdateCompanionBuilder
+    = PlaceCollectionsCompanion Function({
+  Value<String> id,
+  Value<String> name,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+final class $$PlaceCollectionsTableReferences extends BaseReferences<
+    _$AppDatabase, $PlaceCollectionsTable, PlaceCollectionRow> {
+  $$PlaceCollectionsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PlaceCollectionMembershipsTable,
+      List<PlaceCollectionMembershipRow>> _placeCollectionMembershipsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.placeCollectionMemberships,
+          aliasName:
+              'place_collections__id__place_collection_memberships__collection_id');
+
+  $$PlaceCollectionMembershipsTableProcessedTableManager
+      get placeCollectionMembershipsRefs {
+    final manager = $$PlaceCollectionMembershipsTableTableManager(
+            $_db, $_db.placeCollectionMemberships)
+        .filter(
+            (f) => f.collectionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult
+        .readTableOrNull(_placeCollectionMembershipsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$PlaceCollectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionsTable> {
+  $$PlaceCollectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> placeCollectionMembershipsRefs(
+      Expression<bool> Function(
+              $$PlaceCollectionMembershipsTableFilterComposer f)
+          f) {
+    final $$PlaceCollectionMembershipsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.placeCollectionMemberships,
+            getReferencedColumn: (t) => t.collectionId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$PlaceCollectionMembershipsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.placeCollectionMemberships,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$PlaceCollectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionsTable> {
+  $$PlaceCollectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$PlaceCollectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionsTable> {
+  $$PlaceCollectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> placeCollectionMembershipsRefs<T extends Object>(
+      Expression<T> Function(
+              $$PlaceCollectionMembershipsTableAnnotationComposer a)
+          f) {
+    final $$PlaceCollectionMembershipsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.placeCollectionMemberships,
+            getReferencedColumn: (t) => t.collectionId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$PlaceCollectionMembershipsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.placeCollectionMemberships,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$PlaceCollectionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PlaceCollectionsTable,
+    PlaceCollectionRow,
+    $$PlaceCollectionsTableFilterComposer,
+    $$PlaceCollectionsTableOrderingComposer,
+    $$PlaceCollectionsTableAnnotationComposer,
+    $$PlaceCollectionsTableCreateCompanionBuilder,
+    $$PlaceCollectionsTableUpdateCompanionBuilder,
+    (PlaceCollectionRow, $$PlaceCollectionsTableReferences),
+    PlaceCollectionRow,
+    PrefetchHooks Function({bool placeCollectionMembershipsRefs})> {
+  $$PlaceCollectionsTableTableManager(
+      _$AppDatabase db, $PlaceCollectionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlaceCollectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlaceCollectionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlaceCollectionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PlaceCollectionsCompanion(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PlaceCollectionsCompanion.insert(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$PlaceCollectionsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({placeCollectionMembershipsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (placeCollectionMembershipsRefs)
+                  db.placeCollectionMemberships
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (placeCollectionMembershipsRefs)
+                    await $_getPrefetchedData<
+                            PlaceCollectionRow,
+                            $PlaceCollectionsTable,
+                            PlaceCollectionMembershipRow>(
+                        currentTable: table,
+                        referencedTable: $$PlaceCollectionsTableReferences
+                            ._placeCollectionMembershipsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$PlaceCollectionsTableReferences(db, table, p0)
+                                .placeCollectionMembershipsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.collectionId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$PlaceCollectionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $PlaceCollectionsTable,
+    PlaceCollectionRow,
+    $$PlaceCollectionsTableFilterComposer,
+    $$PlaceCollectionsTableOrderingComposer,
+    $$PlaceCollectionsTableAnnotationComposer,
+    $$PlaceCollectionsTableCreateCompanionBuilder,
+    $$PlaceCollectionsTableUpdateCompanionBuilder,
+    (PlaceCollectionRow, $$PlaceCollectionsTableReferences),
+    PlaceCollectionRow,
+    PrefetchHooks Function({bool placeCollectionMembershipsRefs})>;
+typedef $$PlaceCollectionMembershipsTableCreateCompanionBuilder
+    = PlaceCollectionMembershipsCompanion Function({
+  required String collectionId,
+  required String placeId,
+  Value<int> rowid,
+});
+typedef $$PlaceCollectionMembershipsTableUpdateCompanionBuilder
+    = PlaceCollectionMembershipsCompanion Function({
+  Value<String> collectionId,
+  Value<String> placeId,
+  Value<int> rowid,
+});
+
+final class $$PlaceCollectionMembershipsTableReferences extends BaseReferences<
+    _$AppDatabase,
+    $PlaceCollectionMembershipsTable,
+    PlaceCollectionMembershipRow> {
+  $$PlaceCollectionMembershipsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $PlaceCollectionsTable _collectionIdTable(_$AppDatabase db) =>
+      db.placeCollections.createAlias(
+          'place_collection_memberships__collection_id__place_collections__id');
+
+  $$PlaceCollectionsTableProcessedTableManager get collectionId {
+    final $_column = $_itemColumn<String>('collection_id')!;
+
+    final manager =
+        $$PlaceCollectionsTableTableManager($_db, $_db.placeCollections)
+            .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_collectionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $PlacesTable _placeIdTable(_$AppDatabase db) => db.places
+      .createAlias('place_collection_memberships__place_id__places__id');
+
+  $$PlacesTableProcessedTableManager get placeId {
+    final $_column = $_itemColumn<String>('place_id')!;
+
+    final manager = $$PlacesTableTableManager($_db, $_db.places)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_placeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$PlaceCollectionMembershipsTableFilterComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionMembershipsTable> {
+  $$PlaceCollectionMembershipsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$PlaceCollectionsTableFilterComposer get collectionId {
+    final $$PlaceCollectionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.collectionId,
+        referencedTable: $db.placeCollections,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlaceCollectionsTableFilterComposer(
+              $db: $db,
+              $table: $db.placeCollections,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$PlacesTableFilterComposer get placeId {
+    final $$PlacesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableFilterComposer(
+              $db: $db,
+              $table: $db.places,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlaceCollectionMembershipsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionMembershipsTable> {
+  $$PlaceCollectionMembershipsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$PlaceCollectionsTableOrderingComposer get collectionId {
+    final $$PlaceCollectionsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.collectionId,
+        referencedTable: $db.placeCollections,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlaceCollectionsTableOrderingComposer(
+              $db: $db,
+              $table: $db.placeCollections,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$PlacesTableOrderingComposer get placeId {
+    final $$PlacesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableOrderingComposer(
+              $db: $db,
+              $table: $db.places,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlaceCollectionMembershipsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlaceCollectionMembershipsTable> {
+  $$PlaceCollectionMembershipsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$PlaceCollectionsTableAnnotationComposer get collectionId {
+    final $$PlaceCollectionsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.collectionId,
+        referencedTable: $db.placeCollections,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlaceCollectionsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.placeCollections,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$PlacesTableAnnotationComposer get placeId {
+    final $$PlacesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.placeId,
+        referencedTable: $db.places,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PlacesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.places,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PlaceCollectionMembershipsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PlaceCollectionMembershipsTable,
+    PlaceCollectionMembershipRow,
+    $$PlaceCollectionMembershipsTableFilterComposer,
+    $$PlaceCollectionMembershipsTableOrderingComposer,
+    $$PlaceCollectionMembershipsTableAnnotationComposer,
+    $$PlaceCollectionMembershipsTableCreateCompanionBuilder,
+    $$PlaceCollectionMembershipsTableUpdateCompanionBuilder,
+    (PlaceCollectionMembershipRow, $$PlaceCollectionMembershipsTableReferences),
+    PlaceCollectionMembershipRow,
+    PrefetchHooks Function({bool collectionId, bool placeId})> {
+  $$PlaceCollectionMembershipsTableTableManager(
+      _$AppDatabase db, $PlaceCollectionMembershipsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlaceCollectionMembershipsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlaceCollectionMembershipsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlaceCollectionMembershipsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> collectionId = const Value.absent(),
+            Value<String> placeId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PlaceCollectionMembershipsCompanion(
+            collectionId: collectionId,
+            placeId: placeId,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String collectionId,
+            required String placeId,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PlaceCollectionMembershipsCompanion.insert(
+            collectionId: collectionId,
+            placeId: placeId,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$PlaceCollectionMembershipsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({collectionId = false, placeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (collectionId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.collectionId,
+                    referencedTable: $$PlaceCollectionMembershipsTableReferences
+                        ._collectionIdTable(db),
+                    referencedColumn:
+                        $$PlaceCollectionMembershipsTableReferences
+                            ._collectionIdTable(db)
+                            .id,
+                  ) as T;
+                }
+                if (placeId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.placeId,
+                    referencedTable: $$PlaceCollectionMembershipsTableReferences
+                        ._placeIdTable(db),
+                    referencedColumn:
+                        $$PlaceCollectionMembershipsTableReferences
+                            ._placeIdTable(db)
+                            .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$PlaceCollectionMembershipsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $PlaceCollectionMembershipsTable,
+        PlaceCollectionMembershipRow,
+        $$PlaceCollectionMembershipsTableFilterComposer,
+        $$PlaceCollectionMembershipsTableOrderingComposer,
+        $$PlaceCollectionMembershipsTableAnnotationComposer,
+        $$PlaceCollectionMembershipsTableCreateCompanionBuilder,
+        $$PlaceCollectionMembershipsTableUpdateCompanionBuilder,
+        (
+          PlaceCollectionMembershipRow,
+          $$PlaceCollectionMembershipsTableReferences
+        ),
+        PlaceCollectionMembershipRow,
+        PrefetchHooks Function({bool collectionId, bool placeId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7893,4 +9016,10 @@ class $AppDatabaseManager {
       $$JournalEntriesTableTableManager(_db, _db.journalEntries);
   $$JournalPhotosTableTableManager get journalPhotos =>
       $$JournalPhotosTableTableManager(_db, _db.journalPhotos);
+  $$PlaceCollectionsTableTableManager get placeCollections =>
+      $$PlaceCollectionsTableTableManager(_db, _db.placeCollections);
+  $$PlaceCollectionMembershipsTableTableManager
+      get placeCollectionMemberships =>
+          $$PlaceCollectionMembershipsTableTableManager(
+              _db, _db.placeCollectionMemberships);
 }

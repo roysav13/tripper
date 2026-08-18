@@ -669,6 +669,65 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get placesFilterListsSection => 'רשימות';
+
+  @override
+  String get placesFilterSearchList => 'חיפוש רשימות';
+
+  @override
+  String get placesFilterSearchNoListsResults => 'אין רשימות מתאימות';
+
+  @override
+  String get newListChipLabel => 'רשימה חדשה';
+
+  @override
+  String get newListDialogTitle => 'רשימה חדשה';
+
+  @override
+  String get newListDialogNameLabel => 'שם הרשימה';
+
+  @override
+  String get newListDialogCreate => 'צור';
+
+  @override
+  String get errListNameRequired => 'תן שם לרשימה';
+
+  @override
+  String get renameListMenuItem => 'שנה שם רשימה';
+
+  @override
+  String get renameListDialogTitle => 'שינוי שם רשימה';
+
+  @override
+  String get deleteListMenuItem => 'מחק רשימה';
+
+  @override
+  String get deleteListTitle => 'למחוק את הרשימה?';
+
+  @override
+  String get deleteListBody => 'המקומות יישארו במקומם — רק הרשימה עצמה תימחק.';
+
+  @override
+  String get listDetailEmptyTitle => 'אין עדיין מקומות';
+
+  @override
+  String get listDetailEmptyBody => 'הוסף מקומות לרשימה זו ממסך העריכה שלהם.';
+
+  @override
+  String get listDetailEmptyCta => 'עיין במקומות';
+
+  @override
+  String listDetailPlaceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count מקומות',
+      one: 'מקום אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get nearbyEntryTooltip => 'מצא בקרבת מקום';
 
   @override

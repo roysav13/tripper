@@ -5,12 +5,14 @@ import 'package:tripper/app.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/features/vault/presentation/document_providers.dart';
 
 import 'helpers/fake_document_repository.dart';
 import 'helpers/fake_expense_repository.dart';
+import 'helpers/fake_place_collection_repository.dart';
 import 'helpers/fake_place_repository.dart';
 import 'helpers/fake_trip_repository.dart';
 import 'helpers/test_preferences.dart';
@@ -23,6 +25,9 @@ Future<Widget> _app() async => ProviderScope(
         documentRepositoryProvider
             .overrideWithValue(FakeDocumentRepository([])),
         placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
         // Without this the M5.5b conversion wiring reaches the real Drift
         // database (via expensesDao), opening a second AppDatabase.
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
@@ -92,6 +97,9 @@ void main() {
           documentRepositoryProvider
               .overrideWithValue(FakeDocumentRepository([])),
           placeRepositoryProvider.overrideWithValue(FakePlaceRepository([])),
+          placeCollectionRepositoryProvider.overrideWithValue(
+            FakePlaceCollectionRepository([]),
+          ),
           clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
           launchRedirectDoneProvider.overrideWith((ref) => true),
           biometricAuthenticatorProvider.overrideWithValue((_) async => false),

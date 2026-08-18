@@ -7,11 +7,14 @@ import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/data/geocoding_service.dart';
 import 'package:tripper/features/places/data/place_summary_service.dart';
 import 'package:tripper/features/places/domain/place.dart';
+import 'package:tripper/features/places/domain/place_collection.dart';
 import 'package:tripper/features/places/presentation/add_place_screen.dart';
+import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/presentation/trip_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
+import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
@@ -75,11 +78,15 @@ Widget _app(
   FakeGeocoder geocoder,
   FakePlaceRepository repo, {
   PlaceSummaryFetcher? summaryFetcher,
+  FakePlaceCollectionRepository? collectionRepo,
 }) =>
     ProviderScope(
       overrides: [
         geocoderProvider.overrideWithValue(geocoder),
         placeRepositoryProvider.overrideWithValue(repo),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          collectionRepo ?? FakePlaceCollectionRepository([]),
+        ),
         tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
         clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
         // Always overridden, never left at the real default — unlike the
@@ -242,5 +249,61 @@ void main() {
     final saved = (await repo.watchAll().first).single;
     expect(saved.summary, 'A quiet limestone cove.');
     expect(saved.summaryFetchedAt, isNotNull);
+  });
+
+  testWidgets(
+      'assigning an existing list while creating a place persists '
+      'the membership', (tester) async {
+    final repo = FakePlaceRepository([]);
+    final collectionRepo = FakePlaceCollectionRepository([
+      PlaceCollection(id: 'c1', name: 'Food', createdAt: DateTime(2026, 1, 1)),
+    ]);
+    await tester.pumpWidget(
+      _app(FakeGeocoder([_railay]), repo, collectionRepo: collectionRepo),
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'railay');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Railay Beach'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Food'));
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = (await repo.watchAll().first).single;
+    final memberships = await collectionRepo.watchMembershipsByPlace().first;
+    expect(memberships[saved.id], {'c1'});
+  });
+
+  testWidgets(
+      'creating a new list inline while adding a place persists '
+      'both the list and the membership', (tester) async {
+    final repo = FakePlaceRepository([]);
+    final collectionRepo = FakePlaceCollectionRepository([]);
+    await tester.pumpWidget(
+      _app(FakeGeocoder([_railay]), repo, collectionRepo: collectionRepo),
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'railay');
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Railay Beach'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('New list'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Tokyo day trips');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final collections = await collectionRepo.watchAll().first;
+    expect(collections.single.name, 'Tokyo day trips');
+    final saved = (await repo.watchAll().first).single;
+    final memberships = await collectionRepo.watchMembershipsByPlace().first;
+    expect(memberships[saved.id], {collections.single.id});
   });
 }

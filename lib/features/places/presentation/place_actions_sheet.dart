@@ -9,6 +9,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/presentation/trip_providers.dart';
 import '../domain/place.dart';
+import 'list_name_dialog.dart';
+import 'place_collection_providers.dart';
 import 'place_providers.dart';
 import 'place_visit_actions.dart';
 import 'place_widgets.dart';
@@ -162,6 +164,13 @@ class _PlaceActions extends ConsumerWidget {
   }
 
   void _showEditSheet(BuildContext context, WidgetRef ref, Place place) {
+    // Resolved before the sheet opens (not inside its initState) — same
+    // "before the await" reasoning as elsewhere in this file: a live
+    // Set<String> initializer keeps _EditPlaceFormState's initState
+    // synchronous, exactly like _category seeding from widget.place.
+    final initialCollectionIds =
+        ref.read(placeCollectionMembershipsProvider).valueOrNull?[place.id] ??
+            const <String>{};
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -170,16 +179,25 @@ class _PlaceActions extends ConsumerWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: _EditPlaceForm(place: place),
+        child: _EditPlaceForm(
+          place: place,
+          initialCollectionIds: initialCollectionIds,
+        ),
       ),
     );
   }
 }
 
 class _EditPlaceForm extends ConsumerStatefulWidget {
-  const _EditPlaceForm({required this.place});
+  const _EditPlaceForm({
+    required this.place,
+    required this.initialCollectionIds,
+  });
 
   final Place place;
+
+  /// Resolved by the caller before this sheet opens — see _showEditSheet.
+  final Set<String> initialCollectionIds;
 
   @override
   ConsumerState<_EditPlaceForm> createState() => _EditPlaceFormState();
@@ -192,6 +210,7 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
   final _description = TextEditingController();
   String? _tripId;
   PlaceCategory? _category;
+  late Set<String> _collectionIds;
   bool _nameError = false;
   bool _saving = false;
 
@@ -204,6 +223,7 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
     _tripId = widget.place.tripId;
     _description.text = widget.place.notes;
     _category = widget.place.category;
+    _collectionIds = {...widget.initialCollectionIds};
   }
 
   @override
@@ -221,6 +241,7 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
     final trips = (ref.watch(tripListProvider).valueOrNull ?? [])
         .where((t) => !t.archived)
         .toList();
+    final collections = ref.watch(placeCollectionsProvider).valueOrNull ?? [];
 
     return ListView(
       shrinkWrap: true,
@@ -276,6 +297,32 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
+        Text(l10n.placesFilterListsSection),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (final collection in collections)
+              FilterChip(
+                label: Text(collection.name),
+                selected: _collectionIds.contains(collection.id),
+                onSelected: (selected) => setState(() {
+                  if (selected) {
+                    _collectionIds.add(collection.id);
+                  } else {
+                    _collectionIds.remove(collection.id);
+                  }
+                }),
+              ),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 16),
+              label: Text(l10n.newListChipLabel),
+              onPressed: () => _createList(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
         TextField(
           controller: _description,
           maxLines: 3,
@@ -314,12 +361,29 @@ class _EditPlaceFormState extends ConsumerState<_EditPlaceForm> {
     );
   }
 
+  Future<void> _createList(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final name = await promptListName(
+      context,
+      title: l10n.newListDialogTitle,
+      confirmLabel: l10n.newListDialogCreate,
+    );
+    if (name == null) return;
+    final id = await ref
+        .read(placeCollectionRepositoryProvider)
+        .createCollection(name: name);
+    if (mounted) setState(() => _collectionIds.add(id));
+  }
+
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
       setState(() => _nameError = true);
       return;
     }
     setState(() => _saving = true);
+    await ref
+        .read(placeCollectionRepositoryProvider)
+        .setCollectionsForPlace(widget.place.id, _collectionIds);
     await ref.read(placeRepositoryProvider).updatePlace(
           widget.place.copyWith(
             name: _name.text,
