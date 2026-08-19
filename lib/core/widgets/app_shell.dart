@@ -42,15 +42,14 @@ class AppShell extends ConsumerWidget {
       if (result == null) return;
 
       // For now, only handle place shares (list shares are handled in later tasks).
-      final placeShare = result as MapsPlaceShare?;
-      if (placeShare == null) return;
+      if (result is! MapsPlaceShare) return;
 
       // Fill in whatever the link didn't carry (city/country, or coords).
       final prefill = await enrichSharedPlace(
         geocoder: ref.read(geocoderProvider),
-        name: placeShare.link.name,
-        lat: placeShare.link.lat,
-        lng: placeShare.link.lng,
+        name: result.link.name,
+        lat: result.link.lat,
+        lng: result.link.lng,
       );
       if (!context.mounted) return;
       navigationShell.goBranch(2);
@@ -61,7 +60,7 @@ class AppShell extends ConsumerWidget {
         initialLng: prefill.lng,
         initialCountry: prefill.country,
         initialCity: prefill.city,
-        initialNotes: prefill.lat == null ? placeShare.link.url : '',
+        initialNotes: prefill.lat == null ? result.link.url : '',
       );
     });
     return Scaffold(
