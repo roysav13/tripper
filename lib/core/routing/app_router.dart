@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,8 +11,13 @@ import '../../features/trips/presentation/trip_list_screen.dart';
 import '../../features/vault/presentation/vault_screen.dart';
 import '../widgets/app_shell.dart';
 
+/// Lets code with no BuildContext of its own (`WebViewMapsListScraper`)
+/// push a route on the app's real navigator.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/trips',
     routes: [
       // Full-screen, above the tab shell.
