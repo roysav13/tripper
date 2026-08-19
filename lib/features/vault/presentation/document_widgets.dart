@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
+import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
 
@@ -42,6 +43,54 @@ String documentMetaLine(AppLocalizations l10n, Document doc) {
     if (!doc.hasFile) l10n.manualRecord,
   ];
   return parts.join(' · ');
+}
+
+/// A category section's collapsible header: the category label, a count
+/// of the documents in it, and an expand/collapse chevron. Tapping
+/// anywhere on the header toggles [expanded]. Mirrors
+/// [ExpenseGroupHeader]'s interaction so the two collapsible-list
+/// patterns in the app stay consistent.
+class DocumentCategoryHeader extends StatelessWidget {
+  const DocumentCategoryHeader({
+    super.key,
+    required this.category,
+    required this.count,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final DocumentCategory category;
+  final int count;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        // Minimum 48px tap target (WCAG 2.5.5 / Android a11y guidance) —
+        // the header's own content is only ~34px tall.
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Center(
+          child: Row(
+            children: [
+              Expanded(child: SectionLabel(categoryLabel(l10n, category))),
+              MonoText(l10n.vaultCategoryCount(count), muted: true),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                expanded ? Icons.expand_less : Icons.expand_more,
+                size: 18,
+                color: colors.inkMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// One document = one card (matches the trips list), used in the vault
@@ -132,6 +181,84 @@ class DocumentRowTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Documents grouped into per-category sections, each collapsible via
+/// its [DocumentCategoryHeader]. Shared by the top-level Vault screen and
+/// a trip's Documents tab so both document lists collapse the same way
+/// once a long trip's documents pile up. Category order follows
+/// [DocumentCategory.values]; order within a category follows
+/// [documents] as passed in, so callers control sort order upstream.
+/// Collapse state is in-memory only (per widget instance) and starts
+/// with every non-empty category expanded.
+class CategoryGroupedDocuments extends StatefulWidget {
+  const CategoryGroupedDocuments({
+    super.key,
+    required this.documents,
+    required this.warningFor,
+    required this.onTap,
+  });
+
+  final List<Document> documents;
+  final bool Function(Document doc) warningFor;
+  final void Function(Document doc) onTap;
+
+  @override
+  State<CategoryGroupedDocuments> createState() =>
+      _CategoryGroupedDocumentsState();
+}
+
+class _CategoryGroupedDocumentsState extends State<CategoryGroupedDocuments> {
+  final Set<DocumentCategory> _collapsed = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[];
+    for (final category in DocumentCategory.values) {
+      final docs = [
+        for (final d in widget.documents)
+          if (d.category == category) d,
+      ];
+      if (docs.isEmpty) continue;
+      final isCollapsed = _collapsed.contains(category);
+      children.add(
+        Padding(
+          padding: const EdgeInsetsDirectional.only(top: AppSpacing.md),
+          child: DocumentCategoryHeader(
+            category: category,
+            count: docs.length,
+            expanded: !isCollapsed,
+            onTap: () => setState(() {
+              if (isCollapsed) {
+                _collapsed.remove(category);
+              } else {
+                _collapsed.add(category);
+              }
+            }),
+          ),
+        ),
+      );
+      if (!isCollapsed) {
+        for (final doc in docs) {
+          children.add(
+            Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+              child: DocumentRowTile(
+                doc: doc,
+                warning: widget.warningFor(doc),
+                onTap: () => widget.onTap(doc),
+              ),
+            ),
+          );
+        }
+      }
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 }

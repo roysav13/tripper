@@ -198,7 +198,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get expensesEmptyCta => 'הוסף הוצאה';
 
   @override
-  String get expensesTotal => 'סך הכול';
+  String get expensesTotal => 'סך ההוצאות';
 
   @override
   String expensesConvertedTotal(String amount, String currency) {
@@ -226,6 +226,18 @@ class AppLocalizationsHe extends AppLocalizations {
   String expensesRatesAsOf(String date) {
     return 'שערים מתאריך $date';
   }
+
+  @override
+  String get expensesTodayLabel => 'היום';
+
+  @override
+  String get expensesNoSpendToday => 'עדיין אין הוצאות';
+
+  @override
+  String get expensesFilterAll => 'הכול';
+
+  @override
+  String get expensesFilterEmpty => 'אין הוצאות שתואמות לסינון הזה.';
 
   @override
   String expenseGroupWeekOf(String date) {
@@ -315,6 +327,17 @@ class AppLocalizationsHe extends AppLocalizations {
       locale: localeName,
       other: 'הצג $count מסמכים',
       one: 'הצג מסמך אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String vaultCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count מסמכים',
+      one: 'מסמך אחד',
     );
     return '$_temp0';
   }
@@ -561,13 +584,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String get filterClearAll => 'נקה סינון';
 
   @override
-  String get filterSortButtonTooltip => 'מיון וסינון';
+  String get filterClearAction => 'נקה';
 
   @override
-  String get filterSortSheetTitle => 'מיון וסינון';
+  String get filterButtonTooltip => 'מסננים';
 
   @override
-  String get filterSortSortSection => 'מיון';
+  String get filterSheetTitle => 'מסננים';
+
+  @override
+  String get sortButtonTooltip => 'מיון';
+
+  @override
+  String get sortSheetTitle => 'מיין לפי';
 
   @override
   String get sortAToZ => 'א–ת';

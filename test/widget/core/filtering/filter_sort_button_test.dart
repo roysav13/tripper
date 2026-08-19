@@ -17,8 +17,8 @@ Widget _app(Widget child) => MaterialApp(
       supportedLocales: const [Locale('en')],
     );
 
-Finder _badgeFinder() => find.descendant(
-      of: find.byType(FilterSortButton),
+Finder _badgeFinder(Type buttonType) => find.descendant(
+      of: find.byType(buttonType),
       matching: find.byWidgetPredicate(
         (widget) =>
             widget is DecoratedBox &&
@@ -28,26 +28,37 @@ Finder _badgeFinder() => find.descendant(
     );
 
 void main() {
-  testWidgets('no badge when nothing is active', (tester) async {
-    await tester.pumpWidget(
-      _app(FilterSortButton(active: false, onPressed: () {})),
-    );
-    expect(_badgeFinder(), findsNothing);
+  group('FilterButton', () {
+    testWidgets('no badge when nothing is active', (tester) async {
+      await tester.pumpWidget(
+        _app(FilterButton(active: false, onPressed: () {})),
+      );
+      expect(_badgeFinder(FilterButton), findsNothing);
+    });
+
+    testWidgets('shows a badge when active', (tester) async {
+      await tester.pumpWidget(
+        _app(FilterButton(active: true, onPressed: () {})),
+      );
+      expect(_badgeFinder(FilterButton), findsOneWidget);
+    });
+
+    testWidgets('tapping the button invokes onPressed', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        _app(FilterButton(active: false, onPressed: () => tapped = true)),
+      );
+      await tester.tap(find.byIcon(Icons.tune));
+      expect(tapped, isTrue);
+    });
   });
 
-  testWidgets('shows a badge when active', (tester) async {
-    await tester.pumpWidget(
-      _app(FilterSortButton(active: true, onPressed: () {})),
-    );
-    expect(_badgeFinder(), findsOneWidget);
-  });
-
-  testWidgets('tapping the button invokes onPressed', (tester) async {
-    var tapped = false;
-    await tester.pumpWidget(
-      _app(FilterSortButton(active: false, onPressed: () => tapped = true)),
-    );
-    await tester.tap(find.byIcon(Icons.tune));
-    expect(tapped, isTrue);
+  group('SortButton', () {
+    testWidgets('tapping the button invokes onPressed', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(_app(SortButton(onPressed: () => tapped = true)));
+      await tester.tap(find.byIcon(Icons.swap_vert));
+      expect(tapped, isTrue);
+    });
   });
 }

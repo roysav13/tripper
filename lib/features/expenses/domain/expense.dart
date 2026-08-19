@@ -215,6 +215,57 @@ HomeTotal homeTotal(List<Expense> expenses, String homeCurrency) {
   return (amountMinor: sum, pendingCount: pending, ratesAt: oldestRate);
 }
 
+/// A single headline figure for a set of expenses — what the Spend tab's
+/// hero card leads with. The same three-way rule the old summary card
+/// used inline, now reusable for both the trip-wide total and the
+/// "today" stat: the one currency's total when there's only one, the
+/// home-currency combined total when the set mixes currencies and a home
+/// currency is set, or nothing (callers fall back to [perCurrency]) when
+/// it mixes currencies with conversion off. [amountMinor]/[currency] are
+/// null exactly in that last, ambiguous case — never a fabricated sum.
+typedef HeadlineTotal = ({
+  int? amountMinor,
+  String? currency,
+  bool isHomeConversion,
+  int pendingCount,
+  DateTime? ratesAt,
+  List<CurrencyAmount> perCurrency,
+});
+
+HeadlineTotal headlineTotal(List<Expense> expenses, String homeCurrency) {
+  final perCurrency = totalsByCurrency(expenses);
+  if (perCurrency.length == 1) {
+    final only = perCurrency.first;
+    return (
+      amountMinor: only.amountMinor,
+      currency: only.currency,
+      isHomeConversion: false,
+      pendingCount: 0,
+      ratesAt: null,
+      perCurrency: perCurrency,
+    );
+  }
+  if (perCurrency.length > 1 && homeCurrency.isNotEmpty) {
+    final home = homeTotal(expenses, homeCurrency);
+    return (
+      amountMinor: home.amountMinor,
+      currency: homeCurrency,
+      isHomeConversion: true,
+      pendingCount: home.pendingCount,
+      ratesAt: home.ratesAt,
+      perCurrency: perCurrency,
+    );
+  }
+  return (
+    amountMinor: null,
+    currency: null,
+    isHomeConversion: false,
+    pendingCount: 0,
+    ratesAt: null,
+    perCurrency: perCurrency,
+  );
+}
+
 /// Expenses still needing conversion into [homeCurrency] — the backfill
 /// work list.
 List<Expense> needingConversion(List<Expense> expenses, String homeCurrency) =>

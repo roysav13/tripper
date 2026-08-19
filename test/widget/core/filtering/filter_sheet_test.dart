@@ -8,7 +8,7 @@ import 'package:tripper/core/filtering/filter_sort_controller.dart';
 import 'package:tripper/core/filtering/sort_option.dart';
 import 'package:tripper/core/filtering/sort_spec.dart';
 import 'package:tripper/core/theme/app_theme.dart';
-import 'package:tripper/core/widgets/filtering/filter_sort_sheet.dart';
+import 'package:tripper/core/widgets/filtering/filter_sheet.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 enum _Field { name }
@@ -65,20 +65,24 @@ final _config = FilterSortConfig<_Item, _Field>(
   resultLabel: (count) => 'Show $count items',
 );
 
-Future<void> _openSheet(WidgetTester tester, List<_Item> items) async {
-  final container = ProviderContainer();
-  addTearDown(container.dispose);
-  container.read(_itemsProvider.notifier).state = AsyncValue.data(items);
+Future<void> _openSheet(
+  WidgetTester tester,
+  List<_Item> items, {
+  ProviderContainer? container,
+}) async {
+  final c = container ?? ProviderContainer();
+  addTearDown(c.dispose);
+  c.read(_itemsProvider.notifier).state = AsyncValue.data(items);
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
-      container: container,
+      container: c,
       child: MaterialApp(
         theme: AppTheme.light(),
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => showFilterSortSheet<_Item, _Field>(
+              onPressed: () => showFilterSheet<_Item, _Field>(
                 context,
                 itemsProvider: _itemsProvider,
                 controllerFamily: _controllerFamily,
@@ -104,7 +108,7 @@ Future<void> _openSheet(WidgetTester tester, List<_Item> items) async {
 }
 
 void main() {
-  testWidgets('renders a chip facet, a checklist facet, and the sort section',
+  testWidgets('renders a chip facet and a checklist facet, but no sort UI',
       (tester) async {
     await _openSheet(tester, [
       const _Item('a', category: 'Hotel', country: 'Japan'),
@@ -115,7 +119,7 @@ void main() {
     expect(find.text('Restaurant'), findsOneWidget);
     expect(find.text('Japan'), findsOneWidget);
     expect(find.text('Thailand'), findsOneWidget);
-    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('Name'), findsNothing);
   });
 
   testWidgets('tapping a chip facet value applies live and updates the count',
@@ -134,56 +138,38 @@ void main() {
   testWidgets('Clear is disabled until a filter is selected', (tester) async {
     await _openSheet(tester, [const _Item('a', category: 'Hotel')]);
 
-    final clearButton = tester
-        .widget<TextButton>(find.widgetWithText(TextButton, 'Clear filters'));
+    final clearButton =
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Clear'));
     expect(clearButton.onPressed, isNull);
 
     await tester.tap(find.text('Hotel'));
     await tester.pumpAndSettle();
 
-    final afterButton = tester
-        .widget<TextButton>(find.widgetWithText(TextButton, 'Clear filters'));
+    final afterButton =
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Clear'));
     expect(afterButton.onPressed, isNotNull);
+  });
+
+  testWidgets('the close button dismisses the sheet', (tester) async {
+    await _openSheet(tester, [const _Item('a', category: 'Hotel')]);
+    expect(find.text('Filters'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filters'), findsNothing);
   });
 
   testWidgets('the sheet updates live when its items provider changes',
       (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    container.read(_itemsProvider.notifier).state =
-        const AsyncValue.data([_Item('a', category: 'Hotel')]);
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () => showFilterSortSheet<_Item, _Field>(
-                  context,
-                  itemsProvider: _itemsProvider,
-                  controllerFamily: _controllerFamily,
-                  scope: 'scope-a',
-                  config: _config,
-                ),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('en')],
-        ),
-      ),
+    await _openSheet(
+      tester,
+      const [_Item('a', category: 'Hotel')],
+      container: container,
     );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
     expect(find.text('Hotel'), findsOneWidget);
 
     container.read(_itemsProvider.notifier).state =
@@ -192,49 +178,5 @@ void main() {
 
     expect(find.text('Hotel'), findsNothing);
     expect(find.text('Restaurant'), findsOneWidget);
-  });
-
-  testWidgets('sortSubtitleBuilder renders under the field it targets',
-      (tester) async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    container.read(_itemsProvider.notifier).state =
-        const AsyncValue.data([_Item('a', category: 'Hotel')]);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () => showFilterSortSheet<_Item, _Field>(
-                  context,
-                  itemsProvider: _itemsProvider,
-                  controllerFamily: _controllerFamily,
-                  scope: 'scope-a',
-                  config: _config,
-                  sortSubtitleBuilder: (context, ref, field) =>
-                      field == _Field.name ? const Text('Fetching…') : null,
-                ),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('en')],
-        ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Fetching…'), findsOneWidget);
   });
 }

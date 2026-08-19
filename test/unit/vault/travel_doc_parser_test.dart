@@ -173,6 +173,47 @@ Check-in: 13/08/2026
       expect(fields.isEmpty, isTrue);
       expect(fields.looksLikeFlight, isFalse);
     });
+
+    test(
+        'stay confirmation: property name is read off the document '
+        'heading, not the confirmation number', () {
+      const text = '''
+Hotel Paradiso
+Booking confirmation
+Confirmation number: 84739218
+Check-in: 13/08/2026
+''';
+      expect(parseTravelDoc(text, now: now).stayName, 'Hotel Paradiso');
+    });
+
+    test('stay confirmation: explicit "Property:" label', () {
+      const text = 'Property: The Grand Villa\nConfirmation: 55219';
+      expect(parseTravelDoc(text, now: now).stayName, 'The Grand Villa');
+    });
+
+    test('stay confirmation: "reservation at <name>" phrasing', () {
+      const text = 'Your reservation at Ocean Resort is confirmed\n'
+          'Booking ref: A1B2C3';
+      expect(parseTravelDoc(text, now: now).stayName, 'Ocean Resort');
+    });
+
+    test('stay name is cut before a trailing address on the same line', () {
+      const text = 'Hotel Paradiso, 12 Rue de Rivoli, Paris\n'
+          'Booking ref: A1B2C3';
+      expect(parseTravelDoc(text, now: now).stayName, 'Hotel Paradiso');
+    });
+
+    test(
+        'a line that merely mentions "hotel" in boilerplate is not '
+        'mistaken for a property name', () {
+      const text = 'Hotel booking confirmation\nConfirmation: 55219';
+      expect(parseTravelDoc(text, now: now).stayName, isNull);
+    });
+
+    test('plain prose yields no stay name either', () {
+      const text = 'Shopping list\nMilk\nEggs\nBread';
+      expect(parseTravelDoc(text, now: now).stayName, isNull);
+    });
   });
 
   group('computeTravelPrefill', () {
@@ -239,6 +280,70 @@ Check-in: 13/08/2026
       expect(prefill.detailA, 'X4B7QZ'); // bookingRef slot
       expect(prefill.departureTime, isNull); // flight-only field
       expect(prefill.title, isNull);
+    });
+
+    test(
+        'stay doc on an untouched form: title fills from the property '
+        'name, not the confirmation number', () {
+      final stayFields = parseTravelDoc(
+        'Hotel Paradiso\nBooking confirmation\n'
+        'Confirmation number: 84739218',
+        now: now,
+      );
+      final prefill = computeTravelPrefill(
+        fields: stayFields,
+        currentCategory: DocumentCategory.stay,
+        currentTitle: '',
+        autoTitleFromFile: 'confirmation_84739218',
+        currentExpiry: null,
+        currentDeparture: null,
+        currentDetailA: '',
+        currentDetailB: '',
+        l10n: l10n,
+      );
+      expect(prefill.title, 'Hotel Paradiso');
+      expect(prefill.detailA, '84739218');
+    });
+
+    test('a typed stay title is never clobbered by the property name', () {
+      final stayFields = parseTravelDoc(
+        'Hotel Paradiso\nConfirmation number: 84739218',
+        now: now,
+      );
+      final prefill = computeTravelPrefill(
+        fields: stayFields,
+        currentCategory: DocumentCategory.stay,
+        currentTitle: 'Anniversary trip',
+        autoTitleFromFile: 'scan',
+        currentExpiry: null,
+        currentDeparture: null,
+        currentDetailA: '',
+        currentDetailB: '',
+        l10n: l10n,
+      );
+      expect(prefill.title, isNull);
+    });
+
+    test(
+        'stay doc with no extractable property name leaves the title '
+        'alone rather than falling back to the confirmation number', () {
+      final hotelFields = parseTravelDoc(
+        'Booking confirmation\nConfirmation number: 84739218',
+        now: now,
+      );
+      final prefill = computeTravelPrefill(
+        fields: hotelFields,
+        currentCategory: DocumentCategory.stay,
+        currentTitle: '',
+        autoTitleFromFile: 'confirmation_84739218',
+        currentExpiry: null,
+        currentDeparture: null,
+        currentDetailA: '',
+        currentDetailB: '',
+        l10n: l10n,
+      );
+      expect(prefill.title, isNull);
+      expect(prefill.detailA, '84739218');
     });
 
     test('non-flight doc without signals never auto-switches category', () {

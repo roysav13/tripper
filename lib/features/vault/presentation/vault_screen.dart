@@ -11,9 +11,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/filtering/active_filter_strip.dart';
+import '../../../core/widgets/filtering/filter_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_button.dart';
-import '../../../core/widgets/filtering/filter_sort_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_view.dart';
+import '../../../core/widgets/filtering/sort_sheet.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
@@ -108,17 +109,6 @@ class _VaultScreenBody extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.tabVault),
         actions: [
-          if (all.isNotEmpty)
-            FilterSortButton(
-              active: !sortState.selection.isEmpty,
-              onPressed: () => showFilterSortSheet<Document, DocumentSortField>(
-                context,
-                itemsProvider: vaultDocumentsProvider,
-                controllerFamily: documentFilterSortProvider,
-                scope: _scope,
-                config: config,
-              ),
-            ),
           IconButton(
             icon: Icon(Icons.add, color: colors.accent),
             tooltip: l10n.vaultEmptyCta,
@@ -129,6 +119,30 @@ class _VaultScreenBody extends ConsumerWidget {
       body: _body(context, ref, l10n, asyncDocs, pinned, today),
     );
   }
+
+  Widget _filterSortRow(BuildContext context) => Row(
+        children: [
+          FilterButton(
+            active: !sortState.selection.isEmpty,
+            onPressed: () => showFilterSheet<Document, DocumentSortField>(
+              context,
+              itemsProvider: vaultDocumentsProvider,
+              controllerFamily: documentFilterSortProvider,
+              scope: _scope,
+              config: config,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          SortButton(
+            onPressed: () => showSortSheet<Document, DocumentSortField>(
+              context,
+              controllerFamily: documentFilterSortProvider,
+              scope: _scope,
+              config: config,
+            ),
+          ),
+        ],
+      );
 
   Widget _body(
     BuildContext context,
@@ -160,6 +174,8 @@ class _VaultScreenBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
+        _filterSortRow(context),
+        const SizedBox(height: AppSpacing.lg),
         if (pinned.isNotEmpty) ...[
           SectionLabel(l10n.vaultPinnedSection),
           const SizedBox(height: AppSpacing.sm),
@@ -197,19 +213,13 @@ class _VaultScreenBody extends ConsumerWidget {
         // Grouped by category, one card per document (trips-list
         // style, per user feedback). Sort order (from the filter/sort
         // sheet) determines the order of documents within each
-        // section — the sections themselves stay fixed.
-        for (final category in DocumentCategory.values)
-          ..._categorySection(
-            context,
-            ref,
-            l10n,
-            category,
-            [
-              for (final d in visible)
-                if (d.category == category) d,
-            ],
-            today,
-          ),
+        // section — the sections themselves stay fixed. Each section
+        // collapses independently once a long trip piles up documents.
+        CategoryGroupedDocuments(
+          documents: visible,
+          warningFor: (doc) => ExpiryChecker.isExpired(doc, today),
+          onTap: (doc) => showDocumentActionsSheet(context, ref, doc),
+        ),
       ],
     );
   }
@@ -233,38 +243,5 @@ class _VaultScreenBody extends ConsumerWidget {
       onRemove: notifier.removeValue,
       onClearAll: notifier.clearFilters,
     );
-  }
-
-  List<Widget> _categorySection(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-    DocumentCategory category,
-    List<Document> docs,
-    DateTime today,
-  ) {
-    if (docs.isEmpty) return const [];
-    return [
-      Padding(
-        padding: const EdgeInsetsDirectional.only(
-          top: AppSpacing.md,
-          bottom: AppSpacing.sm,
-        ),
-        child: SectionLabel(categoryLabel(l10n, category)),
-      ),
-      for (final doc in docs)
-        Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-          child: DocumentRowTile(
-            doc: doc,
-            // Red border = actually expired only (2026-07-23) — showing it
-            // for "expiring soon" too made every near-term document look
-            // like an error. The notice-window concept still exists for
-            // the M5.2 expiry notification, just not for this border.
-            warning: ExpiryChecker.isExpired(doc, today),
-            onTap: () => showDocumentActionsSheet(context, ref, doc),
-          ),
-        ),
-    ];
   }
 }

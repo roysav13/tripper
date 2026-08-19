@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/filtering/facet.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/facet_chip_wrap.dart';
+import 'package:tripper/core/widgets/pill_chip.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -36,7 +37,7 @@ void main() {
     );
     expect(find.text('Hotel'), findsOneWidget);
     expect(find.text('Restaurant'), findsOneWidget);
-    expect(find.byType(FilterChip), findsNWidgets(2));
+    expect(find.byType(PillChip), findsNWidgets(2));
   });
 
   testWidgets('selected chips reflect the selected set', (tester) async {
@@ -49,12 +50,12 @@ void main() {
         ),
       ),
     );
-    final hotelChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'Hotel'),
+    final hotelChip = tester.widget<PillChip>(
+      find.widgetWithText(PillChip, 'Hotel'),
     );
     expect(hotelChip.selected, isTrue);
-    final restaurantChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'Restaurant'),
+    final restaurantChip = tester.widget<PillChip>(
+      find.widgetWithText(PillChip, 'Restaurant'),
     );
     expect(restaurantChip.selected, isFalse);
   });

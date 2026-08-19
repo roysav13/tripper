@@ -186,4 +186,80 @@ void main() {
       expect(tapped, isTrue);
     });
   });
+
+  group('CategoryGroupedDocuments', () {
+    List<Document> groupedDocs() => [
+          Document(
+            id: 'p1',
+            title: 'Passport',
+            category: DocumentCategory.passportId,
+            createdAt: _today,
+          ),
+          Document(
+            id: 'f1',
+            title: 'Flight to BKK',
+            category: DocumentCategory.flight,
+            createdAt: _today,
+          ),
+          Document(
+            id: 'f2',
+            title: 'Flight home',
+            category: DocumentCategory.flight,
+            createdAt: _today,
+          ),
+        ];
+
+    Widget grouped() => CategoryGroupedDocuments(
+          documents: groupedDocs(),
+          warningFor: (_) => false,
+          onTap: (_) {},
+        );
+
+    testWidgets('all categories start expanded, each with a document count',
+        (tester) async {
+      await tester.pumpWidget(_app(grouped()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('PASSPORT / ID'), findsOneWidget);
+      expect(find.text('FLIGHT'), findsOneWidget);
+      expect(find.text('Passport'), findsOneWidget);
+      expect(find.text('Flight to BKK'), findsOneWidget);
+      expect(find.text('Flight home'), findsOneWidget);
+      expect(find.text('1 DOCUMENT'), findsOneWidget);
+      expect(find.text('2 DOCUMENTS'), findsOneWidget);
+      expect(find.byIcon(Icons.expand_less), findsNWidgets(2));
+    });
+
+    testWidgets('tapping a category header collapses just that category',
+        (tester) async {
+      await tester.pumpWidget(_app(grouped()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('FLIGHT'));
+      await tester.pumpAndSettle();
+
+      // The tapped category's documents are hidden...
+      expect(find.text('Flight to BKK'), findsNothing);
+      expect(find.text('Flight home'), findsNothing);
+      // ...but the other category is untouched.
+      expect(find.text('Passport'), findsOneWidget);
+      expect(find.byIcon(Icons.expand_more), findsOneWidget);
+      expect(find.byIcon(Icons.expand_less), findsOneWidget);
+
+      // Tapping again re-expands it.
+      await tester.tap(find.text('FLIGHT'));
+      await tester.pumpAndSettle();
+      expect(find.text('Flight to BKK'), findsOneWidget);
+      expect(find.text('Flight home'), findsOneWidget);
+    });
+
+    testWidgets('a category with no documents renders no section',
+        (tester) async {
+      await tester.pumpWidget(_app(grouped()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('STAY'), findsNothing);
+      expect(find.text('INSURANCE'), findsNothing);
+    });
+  });
 }

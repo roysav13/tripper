@@ -12,9 +12,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/filtering/active_filter_strip.dart';
+import '../../../core/widgets/filtering/filter_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_button.dart';
-import '../../../core/widgets/filtering/filter_sort_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_view.dart';
+import '../../../core/widgets/filtering/sort_sheet.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
@@ -31,12 +32,17 @@ import 'place_filter_config.dart';
 import 'place_providers.dart';
 import 'place_visit_actions.dart';
 import 'place_widgets.dart';
+import 'places_map_view.dart';
 
 /// Places tab inside a trip's detail screen (fills the M1 shell).
 class TripPlacesTab extends ConsumerWidget {
-  const TripPlacesTab({super.key, required this.trip});
+  const TripPlacesTab({super.key, required this.trip, this.renderMap = true});
 
   final Trip trip;
+
+  /// False in widget tests: Google Maps needs a platform view, same seam
+  /// as `PlacesMapView`'s own `renderMap` and `TripJournalTab`'s.
+  final bool renderMap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,6 +80,7 @@ class TripPlacesTab extends ConsumerWidget {
         itemsProvider: itemsProvider,
         currentLocation: currentLocation,
         collections: collections,
+        renderMap: renderMap,
       ),
     );
   }
@@ -90,6 +97,7 @@ class _TripPlacesTabBody extends ConsumerWidget {
     required this.itemsProvider,
     required this.currentLocation,
     required this.collections,
+    required this.renderMap,
   });
 
   final Trip trip;
@@ -101,12 +109,14 @@ class _TripPlacesTabBody extends ConsumerWidget {
   final ProviderListenable<AsyncValue<List<Place>>> itemsProvider;
   final ({double lat, double lng})? currentLocation;
   final List<PlaceCollection> collections;
+  final bool renderMap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final asyncPlaces = ref.watch(itemsProvider);
     final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
+    final mapMode = ref.watch(tripPlacesMapModeProvider(trip.id));
 
     if (asyncPlaces.hasError) {
       return ErrorState(
@@ -125,46 +135,120 @@ class _TripPlacesTabBody extends ConsumerWidget {
 
     final visitedCount = all.where((p) => p.isVisited).length;
 
+    final header = Padding(
+      padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          Expanded(
+            child: SectionLabel(
+              l10n.tripPlacesProgress(visitedCount, all.length),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              mapMode ? Icons.view_list_outlined : Icons.map_outlined,
+            ),
+            tooltip: mapMode ? l10n.listViewToggle : l10n.mapViewToggle,
+            onPressed: () => ref
+                .read(tripPlacesMapModeProvider(trip.id).notifier)
+                .state = !mapMode,
+          ),
+          if (nearbyEnabled)
+            IconButton(
+              icon: const Icon(Icons.travel_explore),
+              tooltip: l10n.nearbyEntryTooltip,
+              onPressed: () => showNearbyAnchorSheet(
+                context,
+                ref,
+                places: all,
+                tripId: trip.id,
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final filterSortRow = Row(
+      children: [
+        FilterButton(
+          active: !sortState.selection.isEmpty,
+          onPressed: () => showFilterSheet<Place, PlaceSortField>(
+            context,
+            itemsProvider: itemsProvider,
+            controllerFamily: placeFilterSortProvider,
+            scope: scope,
+            config: config,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        SortButton(
+          onPressed: () => showSortSheet<Place, PlaceSortField>(
+            context,
+            controllerFamily: placeFilterSortProvider,
+            scope: scope,
+            config: config,
+            sortSubtitleBuilder: (context, ref, field) =>
+                field == PlaceSortField.distance
+                    ? const PlaceDistanceSortStatus()
+                    : null,
+          ),
+        ),
+      ],
+    );
+
+    if (mapMode) {
+      // Same filtering + lists options as list mode above — the map is
+      // just a different rendering of `visible`, not a separate surface
+      // with its own state.
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: AppSpacing.lg,
+              end: AppSpacing.lg,
+              top: AppSpacing.lg,
+            ),
+            child: header,
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpacing.lg,
+            ),
+            child: filterSortRow,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpacing.lg,
+            ),
+            child: PlaceCollectionsRow(collections: collections),
+          ),
+          if (!sortState.selection.isEmpty)
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
+              child: _activeFilterStrip(ref),
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          Expanded(
+            child: PlacesMapView(
+              places: visible,
+              renderMap: renderMap,
+              onPlaceTap: (place) => showPlaceActionsSheet(context, ref, place),
+            ),
+          ),
+        ],
+      );
+    }
+
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
-        Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-          child: Row(
-            children: [
-              Expanded(
-                child: SectionLabel(
-                  l10n.tripPlacesProgress(visitedCount, all.length),
-                ),
-              ),
-              if (nearbyEnabled)
-                IconButton(
-                  icon: const Icon(Icons.travel_explore),
-                  tooltip: l10n.nearbyEntryTooltip,
-                  onPressed: () => showNearbyAnchorSheet(
-                    context,
-                    ref,
-                    places: all,
-                    tripId: trip.id,
-                  ),
-                ),
-              FilterSortButton(
-                active: !sortState.selection.isEmpty,
-                onPressed: () => showFilterSortSheet<Place, PlaceSortField>(
-                  context,
-                  itemsProvider: itemsProvider,
-                  controllerFamily: placeFilterSortProvider,
-                  scope: scope,
-                  config: config,
-                  sortSubtitleBuilder: (context, ref, field) =>
-                      field == PlaceSortField.distance
-                          ? const PlaceDistanceSortStatus()
-                          : null,
-                ),
-              ),
-            ],
-          ),
-        ),
+        header,
+        filterSortRow,
+        const SizedBox(height: AppSpacing.sm),
         PlaceCollectionsRow(collections: collections),
         const SizedBox(height: AppSpacing.sm),
         if (!sortState.selection.isEmpty) _activeFilterStrip(ref),

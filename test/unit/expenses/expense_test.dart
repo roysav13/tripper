@@ -318,4 +318,58 @@ void main() {
       );
     });
   });
+
+  group('headlineTotal (Spend tab hero figure)', () {
+    test('no expenses: nothing to headline', () {
+      final result = headlineTotal(const [], 'ILS');
+      expect(result.amountMinor, isNull);
+      expect(result.currency, isNull);
+      expect(result.perCurrency, isEmpty);
+    });
+
+    test('a single currency is the headline as-is, home currency or not', () {
+      final result = headlineTotal(
+        [
+          _expense(id: 'a', amountMinor: 1000, currency: 'ILS'),
+          _expense(id: 'b', amountMinor: 500, currency: 'ILS'),
+        ],
+        '',
+      );
+      expect(result.amountMinor, 1500);
+      expect(result.currency, 'ILS');
+      expect(result.isHomeConversion, isFalse);
+    });
+
+    test(
+        'mixed currencies with a home currency set: the combined home '
+        'total headlines, with pending count carried through', () {
+      final result = headlineTotal(
+        [
+          _expense(id: 'a', amountMinor: 10000, currency: 'ILS'),
+          _expense(id: 'b', amountMinor: 2700, currency: 'USD'), // pending
+        ],
+        'ILS',
+      );
+      expect(result.amountMinor, 10000);
+      expect(result.currency, 'ILS');
+      expect(result.isHomeConversion, isTrue);
+      expect(result.pendingCount, 1);
+    });
+
+    test(
+        'mixed currencies with no home currency set: no single figure — '
+        'callers fall back to perCurrency (reported bug: ILS + USD were '
+        'added together)', () {
+      final result = headlineTotal(
+        [
+          _expense(id: 'a', amountMinor: 10000, currency: 'ILS'),
+          _expense(id: 'b', amountMinor: 5000, currency: 'USD'),
+        ],
+        '',
+      );
+      expect(result.amountMinor, isNull);
+      expect(result.currency, isNull);
+      expect(result.perCurrency, hasLength(2));
+    });
+  });
 }

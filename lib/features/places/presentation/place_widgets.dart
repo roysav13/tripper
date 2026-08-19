@@ -7,6 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
+import '../../../core/widgets/pill_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/place.dart';
 
@@ -96,9 +97,11 @@ class _PlaceRowCardState extends State<PlaceRowCard> {
     final place = widget.place;
     final visited = place.isVisited;
 
-    final metaParts = <String>[
+    final locationParts = <String>[
       if (place.city.isNotEmpty) place.city,
       if (place.country.isNotEmpty) place.country,
+    ];
+    final metaParts = <String>[
       if (widget.distanceKm case final km?) formatPlaceDistance(l10n, km),
       if (widget.dayNumber case final day?) l10n.nearbyDayNumber(day),
       if (visited && place.visitedAt != null)
@@ -135,14 +138,38 @@ class _PlaceRowCardState extends State<PlaceRowCard> {
                   place.name,
                   style: AppTextStyles.body.copyWith(
                     color: visited ? colors.inkSecondary : colors.inkPrimary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (locationParts.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 12,
+                        color: colors.inkMuted,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(
+                        child: MonoText(locationParts.join(', '), muted: true),
+                      ),
+                    ],
+                  ),
+                ],
                 if (metaParts.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
                   MonoText(metaParts.join(' · '), muted: true),
+                ],
+                if (place.category != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  PillChip(
+                    label: placeCategoryLabel(l10n, place.category!),
+                    icon: placeCategoryIcon(place.category!),
+                  ),
                 ],
                 if (place.hasSummary) ...[
                   const SizedBox(height: AppSpacing.xs),

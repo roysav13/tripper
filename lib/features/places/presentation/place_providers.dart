@@ -49,6 +49,14 @@ final selectedPlaceIdProvider = StateProvider<String?>((ref) => null);
 /// flips this to true from anywhere a place row appears.
 final placesMapModeProvider = StateProvider<bool>((ref) => false);
 
+/// List <-> map toggle on a trip's own Places tab — one per trip, and
+/// independent of [placesMapModeProvider] (the aggregate Places tab's
+/// toggle), same "independent surfaces keep independent selections"
+/// reasoning as [placeFilterSortProvider]'s scope. Toggling map mode while
+/// looking at one trip must not silently flip the aggregate tab too.
+final tripPlacesMapModeProvider =
+    StateProvider.family<bool, String>((ref, tripId) => false);
+
 /// One filter+sort state per scope (`'places'` for the app-wide tab,
 /// `'trip:<id>'` for a trip's tab) — independent surfaces keep independent
 /// selections without either screen writing its own notifier.

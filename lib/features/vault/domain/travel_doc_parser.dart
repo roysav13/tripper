@@ -1,6 +1,7 @@
 /// Freeform travel-document field extraction (M5.4 extension): flight
-/// numbers, booking/confirmation codes, departure date+time, expiry
-/// dates — for boarding passes, e-tickets, hotel confirmations, visas.
+/// numbers, booking/confirmation codes, stay/property names, departure
+/// date+time, expiry dates — for boarding passes, e-tickets, hotel
+/// confirmations, visas.
 ///
 /// Runs on whatever text OCR produced when no passport MRZ was found.
 /// Unlike the MRZ there are no check digits here, so everything is
@@ -20,6 +21,7 @@ class TravelDocFields {
   const TravelDocFields({
     this.flightNumber,
     this.confirmationCode,
+    this.stayName,
     this.departureTime,
     this.expiryDate,
     this.flightSignals = 0,
@@ -27,6 +29,11 @@ class TravelDocFields {
 
   final String? flightNumber;
   final String? confirmationCode;
+
+  /// The property/hotel name, for stay documents — so the saved title can
+  /// read "Hotel Paradiso" instead of the booking's confirmation number
+  /// (which is what the source file/email is usually named).
+  final String? stayName;
 
   /// Only set when BOTH a date and a clock time were found near a
   /// departure keyword — a date-only "departure" would schedule the
@@ -42,6 +49,7 @@ class TravelDocFields {
   bool get isEmpty =>
       flightNumber == null &&
       confirmationCode == null &&
+      stayName == null &&
       departureTime == null &&
       expiryDate == null;
 
@@ -89,6 +97,64 @@ const _weakPnrKeywords = [
   'ORDER',
 ];
 
+/// Explicit labels for the property name on a stay confirmation.
+const _stayLabelKeywords = ['HOTEL', 'PROPERTY', 'RESORT', 'ACCOMMODATION'];
+
+/// `"Your reservation at <name>"` style phrasing, common in booking emails.
+const _stayPhraseKeywords = [
+  'RESERVATION AT',
+  'STAYING AT',
+  'BOOKED AT',
+  'CONFIRMED AT',
+  'CHECK-IN AT',
+  'STAY AT',
+];
+
+/// Property-type words that hint a bare line (no label) names the hotel
+/// itself — the common case where the property name is the document's
+/// own heading, e.g. "Hotel Paradiso" printed above "Booking confirmation".
+const _stayNameHints = {
+  'HOTEL',
+  'RESORT',
+  'INN',
+  'SUITES',
+  'LODGE',
+  'HOSTEL',
+  'MOTEL',
+  'B&B',
+  'GUESTHOUSE',
+  'GUEST HOUSE',
+  'APARTMENTS',
+  'VILLA',
+};
+
+/// Generic words that, alongside a property-type hint word, still don't
+/// add up to a name — "Hotel booking confirmation" is a heading about the
+/// document, not the property, even though it contains "Hotel".
+const _stayGenericWords = {
+  'BOOKING',
+  'RESERVATION',
+  'CONFIRMATION',
+  'CONFIRMED',
+  'DETAILS',
+  'VOUCHER',
+  'RECEIPT',
+  'YOUR',
+  'IS',
+};
+
+/// A line is boilerplate (not a property name) when every word on it is
+/// either a property-type hint (HOTEL, RESORT…) or one of the generic
+/// booking words above — i.e. there's no actual proper noun left.
+bool _isStayBoilerplateLine(String line) {
+  final words =
+      line.split(RegExp(r'[\s,.:;!]+')).where((w) => w.isNotEmpty).toList();
+  if (words.isEmpty) return true;
+  return words.every(
+    (w) => _stayNameHints.contains(w) || _stayGenericWords.contains(w),
+  );
+}
+
 /// Words that match the PNR token shape but are page furniture.
 const _pnrStopwords = {
   'NUMBER', 'BOOKING', 'FLIGHT', 'REFERENCE', 'CONFIRMATION', 'RESERVATION',
@@ -107,11 +173,15 @@ final _timeRe = RegExp(r'\b(\d{1,2}):(\d{2})\s*(AM|PM)?');
 /// letter-digit codes (U2, 9W) are out of scope for v1 — documented
 /// limitation rather than a looser, false-positive-prone pattern.
 TravelDocFields parseTravelDoc(String ocrText, {required DateTime now}) {
-  final lines = ocrText
+  final rawLines = ocrText
       .split(RegExp(r'[\r\n]+'))
-      .map((l) => l.trim().toUpperCase())
+      .map((l) => l.trim())
       .where((l) => l.isNotEmpty)
       .toList();
+  // Same split/filter as rawLines, so indices line up — used for
+  // case-insensitive keyword matching while rawLines preserves the
+  // original casing for anything extracted as display text (stay name).
+  final lines = rawLines.map((l) => l.toUpperCase()).toList();
 
   final signals = <String>{};
   for (final line in lines) {
@@ -123,6 +193,7 @@ TravelDocFields parseTravelDoc(String ocrText, {required DateTime now}) {
   return TravelDocFields(
     flightNumber: _findFlightNumber(lines),
     confirmationCode: _findConfirmationCode(lines),
+    stayName: _findStayName(rawLines, lines),
     departureTime: _findDeparture(lines, now),
     expiryDate: _findExpiry(lines, now),
     flightSignals: signals.length,
@@ -214,6 +285,76 @@ String? _findConfirmationCode(List<String> lines) {
       }
     }
   }
+  return null;
+}
+
+/// Trailing address/date noise to cut off a captured name candidate — stay
+/// confirmations often run the property name straight into an address or
+/// date on the same line ("Hotel Paradiso, 12 Rue de Rivoli, Paris").
+final _stayNameTerminatorRe = RegExp(
+  r'[,(]|\s-\s|\bON\b|\bFROM\b|\bIS\b|\bWAS\b|\bHAS\b|\bCONFIRMED\b|'
+  r'\bCHECK[- ]?IN\b|\bCHECK[- ]?OUT\b',
+);
+
+String? _cleanStayCandidate(String candidate) {
+  var name = candidate.trim();
+  final upper = name.toUpperCase();
+  final term = _stayNameTerminatorRe.firstMatch(upper);
+  if (term != null) name = name.substring(0, term.start).trim();
+  name = name.replaceAll(RegExp(r'^[:\-–—\s]+|[:\-–—\s]+$'), '');
+  if (name.isEmpty || name.length > 60) return null;
+  if (RegExp(r'^\d').hasMatch(name)) return null; // looks like an address
+  return name;
+}
+
+/// Extracts the property name from a stay (hotel) confirmation, so the
+/// saved title can read e.g. "Hotel Paradiso" instead of the file's own
+/// name — which for a downloaded/forwarded confirmation is usually the
+/// booking's confirmation number. [rawLines] and [lines] (its uppercased,
+/// same-length counterpart) come from the same split, so an index/offset
+/// found via [lines] slices the matching original-case text out of
+/// [rawLines] — keywords are matched case-insensitively but the returned
+/// name keeps its original casing.
+String? _findStayName(List<String> rawLines, List<String> lines) {
+  // Explicit label at the start of a line: "Hotel: Paradiso Suites".
+  for (var i = 0; i < lines.length; i++) {
+    for (final label in _stayLabelKeywords) {
+      if (!lines[i].startsWith(label)) continue;
+      final sep =
+          RegExp(r'^\s*[:\-]\s*').firstMatch(lines[i].substring(label.length));
+      if (sep == null) continue; // e.g. "HOTEL POLICY" — not a label line
+      final candidate = _cleanStayCandidate(
+        rawLines[i].substring(label.length + sep.end),
+      );
+      if (candidate != null) return candidate;
+    }
+  }
+
+  // Phrase mid-line: "Your reservation at Hotel Paradiso is confirmed".
+  for (var i = 0; i < lines.length; i++) {
+    for (final phrase in _stayPhraseKeywords) {
+      final idx = lines[i].indexOf(phrase);
+      if (idx < 0) continue;
+      final candidate = _cleanStayCandidate(
+        rawLines[i].substring(idx + phrase.length),
+      );
+      if (candidate != null) return candidate;
+    }
+  }
+
+  // No label at all: the property name is often the document's own
+  // heading — a short early line naming a property type (HOTEL, RESORT…)
+  // that isn't generic boilerplate ("Booking confirmation").
+  for (var i = 0; i < lines.length && i < 3; i++) {
+    if (_isStayBoilerplateLine(lines[i])) continue;
+    final hasHint = _stayNameHints.any(
+      (hint) => RegExp('\\b${RegExp.escape(hint)}\\b').hasMatch(lines[i]),
+    );
+    if (!hasHint) continue;
+    final candidate = _cleanStayCandidate(rawLines[i]);
+    if (candidate != null) return candidate;
+  }
+
   return null;
 }
 
@@ -443,13 +584,21 @@ TravelPrefill computeTravelPrefill({
       break;
   }
 
+  // Semantic titles, not the confirmation code the source file/email is
+  // usually named after: the flight designator for a flight, the property
+  // name for a stay.
+  final title = titleUntouched
+      ? switch (effective) {
+          DocumentCategory.flight when fields.flightNumber != null =>
+            l10n.docTitleFlight(fields.flightNumber!),
+          DocumentCategory.stay when fields.stayName != null => fields.stayName,
+          _ => null,
+        }
+      : null;
+
   return TravelPrefill(
     category: autoCategory,
-    title: titleUntouched &&
-            effective == DocumentCategory.flight &&
-            fields.flightNumber != null
-        ? l10n.docTitleFlight(fields.flightNumber!)
-        : null,
+    title: title,
     expiry: currentExpiry == null ? fields.expiryDate : null,
     departureTime:
         effective == DocumentCategory.flight && currentDeparture == null

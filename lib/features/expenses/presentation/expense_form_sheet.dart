@@ -7,6 +7,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/pill_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/currencies.dart';
 import '../domain/expense.dart';
@@ -172,23 +173,18 @@ class _ExpenseFormState extends ConsumerState<_ExpenseForm> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (final c in ExpenseCategory.values)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
-                  child: ChoiceChip(
-                    avatar: Icon(expenseCategoryIcon(c), size: 16),
-                    label: Text(expenseCategoryLabel(l10n, c)),
-                    selected: _category == c,
-                    onSelected: (_) => setState(() => _category = c),
-                  ),
-                ),
-            ],
-          ),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (final c in ExpenseCategory.values)
+              PillChip(
+                label: expenseCategoryLabel(l10n, c),
+                icon: expenseCategoryIcon(c),
+                selected: _category == c,
+                onTap: () => setState(() => _category = c),
+              ),
+          ],
         ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(

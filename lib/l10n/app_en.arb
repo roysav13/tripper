@@ -75,7 +75,7 @@
   "expensesEmptyTitle": "Track what this trip costs",
   "expensesEmptyBody": "Add what you spend as you go — the total and a category breakdown build up here.",
   "expensesEmptyCta": "Add an expense",
-  "expensesTotal": "Total",
+  "expensesTotal": "Total spent",
   "expensesConvertedTotal": "≈ {amount} {currency}",
   "@expensesConvertedTotal": {
     "placeholders": {
@@ -92,6 +92,10 @@
   "@expensesRatesAsOf": {
     "placeholders": { "date": { "type": "String" } }
   },
+  "expensesTodayLabel": "Today",
+  "expensesNoSpendToday": "No spend yet",
+  "expensesFilterAll": "All",
+  "expensesFilterEmpty": "No expenses match this filter.",
   "expenseGroupWeekOf": "Week of {date}",
   "@expenseGroupWeekOf": {
     "placeholders": { "date": { "type": "String" } }
@@ -123,6 +127,12 @@
   "vaultFilterCategorySection": "Category",
   "vaultFilterShowResults": "{count, plural, one{Show 1 document} other{Show {count} documents}}",
   "@vaultFilterShowResults": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "vaultCategoryCount": "{count, plural, one{1 document} other{{count} documents}}",
+  "@vaultCategoryCount": {
     "placeholders": {
       "count": { "type": "int" }
     }
@@ -220,9 +230,11 @@
   "mapViewToggle": "Map view",
   "listViewToggle": "List view",
   "filterClearAll": "Clear filters",
-  "filterSortButtonTooltip": "Sort & filter",
-  "filterSortSheetTitle": "Sort & filter",
-  "filterSortSortSection": "Sort",
+  "filterClearAction": "Clear",
+  "filterButtonTooltip": "Filters",
+  "filterSheetTitle": "Filters",
+  "sortButtonTooltip": "Sort",
+  "sortSheetTitle": "Sort by",
   "sortAToZ": "A–Z",
   "sortZToA": "Z–A",
   "sortOldestFirst": "Oldest first",

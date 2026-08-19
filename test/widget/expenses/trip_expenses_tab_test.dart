@@ -72,8 +72,7 @@ void main() {
     expect(find.byType(FloatingActionButton), findsNothing);
   });
 
-  testWidgets('total and category breakdown render with exact amounts',
-      (tester) async {
+  testWidgets('the hero card totals every expense, exactly', (tester) async {
     final repo = FakeExpenseRepository([
       _expense(id: 'a', amountMinor: 1250, category: ExpenseCategory.food),
       _expense(id: 'b', amountMinor: 30000, category: ExpenseCategory.stay),
@@ -86,10 +85,49 @@ void main() {
     // Also appears in the (single) group's own header, which mirrors the
     // page total for this single-group fixture.
     expect(find.text('320.00 ILS'), findsWidgets);
-    // Breakdown: stay 300.00 first, then food 20.00 (bare numbers —
-    // single-currency trip, so the code would be noise).
-    expect(find.text('300.00'), findsWidgets);
-    expect(find.text('20.00'), findsOneWidget);
+  });
+
+  testWidgets(
+      'the hero card shows no spend today when nothing landed on the '
+      'clock-provided date', (tester) async {
+    final repo = FakeExpenseRepository([
+      _expense(id: 'a', amountMinor: 1250), // dated Aug 2, not "today"
+      _expense(id: 'b', amountMinor: 750),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No spend yet'), findsOneWidget);
+  });
+
+  testWidgets("the hero card's today figure sums only today's expenses",
+      (tester) async {
+    final repo = FakeExpenseRepository([
+      _expense(id: 'old', amountMinor: 1000), // Aug 2
+      Expense(
+        id: 'today1',
+        tripId: 't1',
+        amountMinor: 450,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: _today,
+      ),
+      Expense(
+        id: 'today2',
+        tripId: 't1',
+        amountMinor: 100,
+        currency: 'ILS',
+        category: ExpenseCategory.food,
+        date: _today,
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    // Also matches today's own group header, which totals the same two
+    // expenses — an expected duplicate, same reasoning as the grouping
+    // tests below.
+    expect(find.text('5.50 ILS'), findsNWidgets(2)); // today: 4.50 + 1.00
   });
 
   testWidgets(
@@ -247,7 +285,11 @@ void main() {
     ]);
     await tester.pumpWidget(await _app(repo));
     await tester.pumpAndSettle();
-    await tester.fling(find.byType(ListView), const Offset(0, -2000), 1000);
+    await tester.fling(
+      find.byType(CustomScrollView),
+      const Offset(0, -2000),
+      1000,
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -508,5 +550,80 @@ void main() {
     // that didn't exist in any previous build. It must render expanded
     // immediately: no tap on any group header.
     expect(find.text('NewToday'), findsOneWidget);
+  });
+
+  testWidgets(
+      'selecting a category pill narrows the list and its group total to '
+      'that category', (tester) async {
+    final repo = FakeExpenseRepository([
+      _expense(
+        id: 'a',
+        amountMinor: 1250,
+        category: ExpenseCategory.food,
+        notes: 'Coffee',
+      ),
+      _expense(
+        id: 'b',
+        amountMinor: 30000,
+        category: ExpenseCategory.stay,
+        notes: 'Hotel',
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Coffee'), findsOneWidget);
+    expect(find.text('Hotel'), findsOneWidget);
+    // Unfiltered ("All"), the group header totals both.
+    // 12.50 + 300.00 = 312.50.
+    expect(find.text('312.50 ILS'), findsWidgets);
+
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Coffee'), findsNothing);
+    expect(find.text('Hotel'), findsOneWidget);
+    // The group header now totals only the visible category — matches
+    // both the header and the (single) remaining row.
+    expect(find.text('300.00 ILS'), findsNWidgets(2));
+    // The hero stays trip-wide regardless of the filter.
+    expect(find.text('312.50 ILS'), findsOneWidget);
+  });
+
+  testWidgets('tapping the selected pill again clears back to "All"',
+      (tester) async {
+    final repo = FakeExpenseRepository([
+      _expense(id: 'a', category: ExpenseCategory.food, notes: 'Coffee'),
+      _expense(id: 'b', category: ExpenseCategory.stay, notes: 'Hotel'),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coffee'), findsNothing);
+
+    await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coffee'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a category filter with no matches shows an inline message instead '
+      'of the full-page empty state', (tester) async {
+    final repo = FakeExpenseRepository([
+      _expense(id: 'a', category: ExpenseCategory.food, notes: 'Coffee'),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Shopping'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No expenses match this filter.'), findsOneWidget);
+    // The full designed empty state (with its own CTA) is for a trip with
+    // zero expenses altogether, not a filter that happens to match none.
+    expect(find.text('Track what this trip costs'), findsNothing);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 }

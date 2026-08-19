@@ -455,7 +455,7 @@ abstract class AppLocalizations {
   /// No description provided for @expensesTotal.
   ///
   /// In en, this message translates to:
-  /// **'Total'**
+  /// **'Total spent'**
   String get expensesTotal;
 
   /// No description provided for @expensesConvertedTotal.
@@ -481,6 +481,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rates from {date}'**
   String expensesRatesAsOf(String date);
+
+  /// No description provided for @expensesTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get expensesTodayLabel;
+
+  /// No description provided for @expensesNoSpendToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No spend yet'**
+  String get expensesNoSpendToday;
+
+  /// No description provided for @expensesFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get expensesFilterAll;
+
+  /// No description provided for @expensesFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses match this filter.'**
+  String get expensesFilterEmpty;
 
   /// No description provided for @expenseGroupWeekOf.
   ///
@@ -643,6 +667,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{Show 1 document} other{Show {count} documents}}'**
   String vaultFilterShowResults(int count);
+
+  /// No description provided for @vaultCategoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 document} other{{count} documents}}'**
+  String vaultCategoryCount(int count);
 
   /// No description provided for @catPassport.
   ///
@@ -1094,23 +1124,35 @@ abstract class AppLocalizations {
   /// **'Clear filters'**
   String get filterClearAll;
 
-  /// No description provided for @filterSortButtonTooltip.
+  /// No description provided for @filterClearAction.
   ///
   /// In en, this message translates to:
-  /// **'Sort & filter'**
-  String get filterSortButtonTooltip;
+  /// **'Clear'**
+  String get filterClearAction;
 
-  /// No description provided for @filterSortSheetTitle.
+  /// No description provided for @filterButtonTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Sort & filter'**
-  String get filterSortSheetTitle;
+  /// **'Filters'**
+  String get filterButtonTooltip;
 
-  /// No description provided for @filterSortSortSection.
+  /// No description provided for @filterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filterSheetTitle;
+
+  /// No description provided for @sortButtonTooltip.
   ///
   /// In en, this message translates to:
   /// **'Sort'**
-  String get filterSortSortSection;
+  String get sortButtonTooltip;
+
+  /// No description provided for @sortSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortSheetTitle;
 
   /// No description provided for @sortAToZ.
   ///

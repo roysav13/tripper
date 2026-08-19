@@ -74,15 +74,11 @@ class TripDocumentsTab extends ConsumerWidget {
               ),
             ),
           ),
-        for (final doc in docs)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
-            child: DocumentRowTile(
-              doc: doc,
-              warning: ExpiryChecker.isRiskyForTrip(doc, trip),
-              onTap: () => showDocumentActionsSheet(context, ref, doc),
-            ),
-          ),
+        CategoryGroupedDocuments(
+          documents: docs,
+          warningFor: (doc) => ExpiryChecker.isRiskyForTrip(doc, trip),
+          onTap: (doc) => showDocumentActionsSheet(context, ref, doc),
+        ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
           icon: const Icon(Icons.add, size: 16),

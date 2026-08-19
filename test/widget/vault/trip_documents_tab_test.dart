@@ -68,4 +68,35 @@ void main() {
 
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('documents group by category, collapsible per section',
+      (tester) async {
+    final repo = FakeDocumentRepository([
+      Document(
+        id: 'd1',
+        title: 'Passport',
+        category: DocumentCategory.passportId,
+        createdAt: DateTime(2026, 7, 19),
+        tripIds: const ['t1'],
+      ),
+      Document(
+        id: 'd2',
+        title: 'Flight to BKK',
+        category: DocumentCategory.flight,
+        createdAt: DateTime(2026, 7, 19),
+        tripIds: const ['t1'],
+      ),
+    ]);
+    await tester.pumpWidget(await _app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PASSPORT / ID'), findsOneWidget);
+    expect(find.text('FLIGHT'), findsOneWidget);
+
+    await tester.tap(find.text('FLIGHT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Flight to BKK'), findsNothing);
+    expect(find.text('Passport'), findsOneWidget);
+  });
 }

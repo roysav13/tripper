@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../filtering/facet.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../auto_direction_text.dart';
 import '../mono_text.dart';
+import '../pill_chip.dart';
 
-/// An unbounded facet's values as a searchable single-column checklist —
+/// An unbounded facet's values as a searchable [Wrap] of [PillChip]s —
 /// suits a large, dynamic set (countries, user-made lists) that would
-/// otherwise degrade into an unpredictable wall of chips. Generalized from
-/// the original Places filter sheet's country checklist. The search box
-/// only appears once [values] exceeds [searchThreshold].
+/// otherwise degrade into an unpredictable wall of text rows. Same chip
+/// widget [FacetChipWrap] uses, so every facet in the sheet reads as one
+/// consistent control. The search box only appears once [values] exceeds
+/// [searchThreshold].
 class FacetChecklist extends StatefulWidget {
   const FacetChecklist({
     super.key,
@@ -45,7 +44,6 @@ class _FacetChecklistState extends State<FacetChecklist> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final query = _search.text.trim().toLowerCase();
     final visible = query.isEmpty
         ? widget.values
@@ -77,33 +75,23 @@ class _FacetChecklistState extends State<FacetChecklist> {
             child: MonoText(widget.noResultsLabel, muted: true),
           )
         else
-          for (final value in visible)
-            InkWell(
-              onTap: () {
-                final next = widget.selected.contains(value.id)
-                    ? widget.selected.where((id) => id != value.id).toSet()
-                    : {...widget.selected, value.id};
-                widget.onChanged(next);
-              },
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  vertical: AppSpacing.sm,
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final value in visible)
+                PillChip(
+                  label: value.label,
+                  selected: widget.selected.contains(value.id),
+                  onTap: () {
+                    final next = widget.selected.contains(value.id)
+                        ? widget.selected.where((id) => id != value.id).toSet()
+                        : {...widget.selected, value.id};
+                    widget.onChanged(next);
+                  },
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AutoDirectionText(
-                        value.label,
-                        style: AppTextStyles.body
-                            .copyWith(color: colors.inkPrimary),
-                      ),
-                    ),
-                    if (widget.selected.contains(value.id))
-                      Icon(Icons.check, color: colors.accent, size: 20),
-                  ],
-                ),
-              ),
-            ),
+            ],
+          ),
       ],
     );
   }

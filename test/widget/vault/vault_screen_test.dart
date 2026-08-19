@@ -220,7 +220,7 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Oldest doc')).dy),
     );
 
-    await tester.tap(find.byIcon(Icons.tune));
+    await tester.tap(find.byIcon(Icons.swap_vert));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Relevant date'));
     await tester.pumpAndSettle();
@@ -268,6 +268,44 @@ void main() {
 
     // Tapping the "Stay" pill in the active-filter strip removes it.
     await tester.tap(find.text('Stay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A passport'), findsOneWidget);
+    expect(find.text('A hotel booking'), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping a category header collapses its documents, and tapping '
+      'it again restores them', (tester) async {
+    await tester.pumpWidget(
+      await _app([
+        Document(
+          id: 'p',
+          title: 'A passport',
+          category: DocumentCategory.passportId,
+          createdAt: _today,
+        ),
+        Document(
+          id: 's',
+          title: 'A hotel booking',
+          category: DocumentCategory.stay,
+          createdAt: _today,
+        ),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('A passport'), findsOneWidget);
+    expect(find.text('A hotel booking'), findsOneWidget);
+
+    await tester.tap(find.text('PASSPORT / ID'));
+    await tester.pumpAndSettle();
+
+    // Collapsed category's document is hidden; the other is untouched.
+    expect(find.text('A passport'), findsNothing);
+    expect(find.text('A hotel booking'), findsOneWidget);
+
+    await tester.tap(find.text('PASSPORT / ID'));
     await tester.pumpAndSettle();
 
     expect(find.text('A passport'), findsOneWidget);

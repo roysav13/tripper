@@ -95,6 +95,19 @@ class _FixedNearbyToggle extends NearbyPlacesEnabledController {
   bool build() => _value;
 }
 
+/// A place row's own category tag can now render the same label as a
+/// category facet chip in the open filter sheet (e.g. both say "Hotel") —
+/// these two finders disambiguate which one a test actually means to hit.
+Finder _inSheet(String text) => find.descendant(
+      of: find.byType(GlassChrome),
+      matching: find.text(text),
+    );
+
+Finder _inStrip(String text) => find.descendant(
+      of: find.byType(ActiveFilterStrip),
+      matching: find.text(text),
+    );
+
 void main() {
   testWidgets('empty state invites the first place', (tester) async {
     await tester.pumpWidget(_app(const []));
@@ -219,7 +232,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hotel A'), findsOneWidget);
@@ -227,9 +240,9 @@ void main() {
   });
 
   testWidgets(
-      'filter/sort button is still shown (for Sort) even when no place has '
-      'a category or country to filter by, but the sheet shows no facet '
-      'sections', (tester) async {
+      'filter and sort buttons are still shown even when no place has a '
+      'category or country to filter by, but the filter sheet shows no '
+      'facet sections', (tester) async {
     await tester.pumpWidget(
       _app([
         const Place(id: 'a', name: 'Hotel A'),
@@ -239,14 +252,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.tune), findsOneWidget);
+    expect(find.byIcon(Icons.swap_vert), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
 
-    expect(find.text('SORT & FILTER'), findsOneWidget);
-    expect(find.text('SORT'), findsOneWidget);
+    expect(find.text('Clear'), findsOneWidget);
     expect(find.text('CATEGORY'), findsNothing);
     expect(find.text('COUNTRY'), findsNothing);
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.swap_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sort by'), findsOneWidget);
+    expect(find.text('Recommended'), findsOneWidget);
   });
 
   testWidgets(
@@ -265,7 +287,7 @@ void main() {
     await tester.pumpAndSettle();
 
     Finder badgeFinder() => find.descendant(
-          of: find.byType(FilterSortButton),
+          of: find.byType(FilterButton),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is DecoratedBox &&
@@ -282,7 +304,7 @@ void main() {
     // Still no badge while the sheet is open but nothing picked.
     expect(badgeFinder(), findsNothing);
 
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
 
     // Selecting a category surfaces the badge on the underlying button.
@@ -299,7 +321,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.tune));
+    await tester.tap(find.byIcon(Icons.swap_vert));
     await tester.pumpAndSettle();
 
     expect(find.text('Distance'), findsOneWidget);
@@ -368,7 +390,7 @@ void main() {
     // Filter down to Hotel — Cafe B drops out of the list.
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsNothing);
@@ -443,7 +465,7 @@ void main() {
     // Hotel + Japan: no place is both, so the combination matches nothing.
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Japan'));
     await tester.pumpAndSettle();
@@ -484,9 +506,10 @@ void main() {
     expect(tester.takeException(), isNull);
     // Confirm the sheet actually opened before locating its scroll view —
     // makes the intent explicit instead of relying on a positional `.last`
-    // find to happen to land on the right widget. SectionLabel renders its
-    // text upper-cased, so the sheet's title reads "SORT & FILTER".
-    expect(find.text('SORT & FILTER'), findsOneWidget);
+    // find to happen to land on the right widget. "Clear" (the sheet
+    // header's clear-filters button) is unambiguous, unlike "Filters" —
+    // that text now also labels the FilterButton pill underneath the sheet.
+    expect(find.text('Clear'), findsOneWidget);
 
     await tester.fling(
       find.descendant(
@@ -530,7 +553,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Thailand'));
     await tester.pumpAndSettle();
@@ -539,17 +562,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ActiveFilterStrip), findsOneWidget);
-    expect(find.text('Hotel'), findsOneWidget);
+    // Hotel A (the only match) also carries its own "Hotel" category tag
+    // now, so scope to the strip specifically rather than a page-wide text
+    // search.
+    expect(_inStrip('Hotel'), findsOneWidget);
     expect(find.text('Thailand'), findsOneWidget);
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Restaurant B'), findsNothing);
     expect(find.text('Hotel C'), findsNothing);
 
     // Tapping the "Hotel" pill removes just that filter.
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inStrip('Hotel'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hotel'), findsNothing);
+    // The strip's own "Hotel" pill is gone — Hotel A's row still carries
+    // its own "Hotel" category tag, which is a separate, expected source
+    // of that text now that the filter is cleared.
+    expect(_inStrip('Hotel'), findsNothing);
     expect(find.text('Thailand'), findsOneWidget);
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Restaurant B'), findsOneWidget);
@@ -579,7 +608,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Thailand'));
     await tester.pumpAndSettle();
@@ -635,7 +664,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'zzz');
     await tester.pumpAndSettle();
 
-    // MonoText renders uppercase, like the sheet's "FILTERS" title above.
+    // MonoText renders uppercase.
     expect(find.text('NO COUNTRIES MATCH'), findsOneWidget);
   });
 
@@ -675,7 +704,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Show 2 places'), findsOneWidget);
 
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     expect(find.text('Show 1 place'), findsOneWidget);
 

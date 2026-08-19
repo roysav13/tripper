@@ -13,9 +13,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/filtering/active_filter_strip.dart';
+import '../../../core/widgets/filtering/filter_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_button.dart';
-import '../../../core/widgets/filtering/filter_sort_sheet.dart';
 import '../../../core/widgets/filtering/filter_sort_view.dart';
+import '../../../core/widgets/filtering/sort_sheet.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../trips/domain/trip.dart';
@@ -123,21 +124,6 @@ class _PlacesScreenBody extends ConsumerWidget {
               onPressed: () =>
                   ref.read(placesMapModeProvider.notifier).state = !mapMode,
             ),
-          if (all.isNotEmpty)
-            FilterSortButton(
-              active: !sortState.selection.isEmpty,
-              onPressed: () => showFilterSortSheet<Place, PlaceSortField>(
-                context,
-                itemsProvider: placeListProvider,
-                controllerFamily: placeFilterSortProvider,
-                scope: _scope,
-                config: config,
-                sortSubtitleBuilder: (context, ref, field) =>
-                    field == PlaceSortField.distance
-                        ? const PlaceDistanceSortStatus()
-                        : null,
-              ),
-            ),
           if (nearbyEnabled)
             IconButton(
               icon: Icon(Icons.travel_explore, color: colors.inkSecondary),
@@ -201,11 +187,16 @@ class _PlacesScreenBody extends ConsumerWidget {
     if (mapMode) {
       return Column(
         children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
+            child: _filterSortRow(context, ref),
+          ),
           if (!sortState.selection.isEmpty)
             Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
+              padding: const EdgeInsetsDirectional.only(
+                start: AppSpacing.lg,
+                end: AppSpacing.lg,
+                bottom: AppSpacing.sm,
               ),
               child: _activeFilterStrip(ref),
             ),
@@ -224,6 +215,8 @@ class _PlacesScreenBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
+        _filterSortRow(context, ref),
+        const SizedBox(height: AppSpacing.md),
         PlaceCollectionsRow(collections: collections),
         const SizedBox(height: AppSpacing.md),
         if (!sortState.selection.isEmpty) ...[
@@ -260,6 +253,34 @@ class _PlacesScreenBody extends ConsumerWidget {
       ],
     );
   }
+
+  Widget _filterSortRow(BuildContext context, WidgetRef ref) => Row(
+        children: [
+          FilterButton(
+            active: !sortState.selection.isEmpty,
+            onPressed: () => showFilterSheet<Place, PlaceSortField>(
+              context,
+              itemsProvider: placeListProvider,
+              controllerFamily: placeFilterSortProvider,
+              scope: _scope,
+              config: config,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          SortButton(
+            onPressed: () => showSortSheet<Place, PlaceSortField>(
+              context,
+              controllerFamily: placeFilterSortProvider,
+              scope: _scope,
+              config: config,
+              sortSubtitleBuilder: (context, ref, field) =>
+                  field == PlaceSortField.distance
+                      ? const PlaceDistanceSortStatus()
+                      : null,
+            ),
+          ),
+        ],
+      );
 
   Widget _activeFilterStrip(WidgetRef ref) {
     final active = <ActiveFilterEntry>[];

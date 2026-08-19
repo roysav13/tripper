@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../filtering/facet.dart';
 import '../../theme/app_spacing.dart';
+import '../pill_chip.dart';
 
-/// A bounded facet's values as a `Wrap` of Material [FilterChip]s — suits
-/// a small, fixed set (e.g. 12 place categories). Generalized from the
-/// original Places filter sheet's inline category chip grid.
+/// A bounded facet's values as a `Wrap` of [PillChip]s — suits a small,
+/// fixed set (e.g. 12 place categories). Same chip widget as
+/// [FacetChecklist] uses for its own values, so every facet in the sheet
+/// reads as one consistent control regardless of presentation.
 class FacetChipWrap extends StatelessWidget {
   const FacetChipWrap({
     super.key,
@@ -27,14 +29,11 @@ class FacetChipWrap extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: [
         for (final value in values)
-          FilterChip(
-            avatar: () {
-              final icon = iconOf?.call(value.id);
-              return icon == null ? null : Icon(icon, size: 16);
-            }(),
-            label: Text(value.label),
+          PillChip(
+            label: value.label,
+            icon: iconOf?.call(value.id),
             selected: selected.contains(value.id),
-            onSelected: (next) => onToggle(value.id, next),
+            onTap: () => onToggle(value.id, !selected.contains(value.id)),
           ),
       ],
     );

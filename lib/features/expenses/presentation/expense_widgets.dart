@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
+import '../../../core/widgets/pill_chip.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/currencies.dart';
@@ -33,172 +34,198 @@ String expenseCategoryLabel(AppLocalizations l10n, ExpenseCategory category) =>
       ExpenseCategory.other => l10n.catOther,
     };
 
-/// Running totals + per-category breakdown. Numerals are mono per the
-/// design system's "data reads authoritative" rule.
-///
-/// Totals are listed **per currency** — a mixed-currency trip shows one
-/// line each rather than a single meaningless sum (no conversion rates
-/// in v1, and inventing one would be worse than showing both).
-class ExpenseSummaryCard extends StatelessWidget {
-  const ExpenseSummaryCard({
+String _formatAmount(int amountMinor, String currency) =>
+    '${formatMinor(amountMinor, digits: minorDigitsFor(currency))} $currency';
+
+/// One line per currency, joined — the fallback view whenever a set of
+/// expenses can't collapse into one honest figure (mixed currencies, no
+/// home currency set). Shared by the hero card and each group header so
+/// they degrade the same way.
+String joinCurrencyAmounts(List<CurrencyAmount> amounts) =>
+    amounts.map((a) => _formatAmount(a.amountMinor, a.currency)).join(' · ');
+
+/// The Spend tab's hero: the trip-wide total, today's spend, and a
+/// running transaction count — the figures a long trip needs visible at
+/// all times to stay oriented, as opposed to the per-category breakdown
+/// (available on request, via the filter row below this card). A solid
+/// [PaperCard]-style surface that follows the active theme like every
+/// other card — light in light mode, dark in dark mode.
+class SpendHeroCard extends StatelessWidget {
+  const SpendHeroCard({
     super.key,
-    required this.totals,
-    required this.breakdown,
-    this.home,
-    this.homeCurrency = '',
-    this.showConversionOffHint = false,
+    required this.headline,
+    required this.todayHeadline,
   });
 
-  final List<CurrencyAmount> totals;
-  final List<CategoryTotals> breakdown;
-
-  /// Combined home-currency figure for mixed-currency trips; null when
-  /// conversion is off or the trip uses one currency anyway.
-  final HomeTotal? home;
-  final String homeCurrency;
-
-  /// True when this trip mixes currencies but no home currency is set —
-  /// without this the feature is invisible and the absence of a combined
-  /// total looks like a bug rather than an unset preference.
-  final bool showConversionOffHint;
+  final HeadlineTotal headline;
+  final HeadlineTotal todayHeadline;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
     return PaperCard(
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                l10n.expensesTotal,
-                style: AppTextStyles.sectionLabel.copyWith(
-                  color: colors.inkSecondary,
-                ),
+          SectionLabel(l10n.expensesTotal, color: colors.inkMuted),
+          const SizedBox(height: AppSpacing.xs),
+          _HeadlineFigure(headline: headline, colors: colors, l10n: l10n),
+          const SizedBox(height: AppSpacing.sm),
+          SectionLabel(l10n.expensesTodayLabel, color: colors.inkMuted),
+          const SizedBox(height: 2),
+          _TodayFigure(headline: todayHeadline, colors: colors),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeadlineFigure extends StatelessWidget {
+  const _HeadlineFigure({
+    required this.headline,
+    required this.colors,
+    required this.l10n,
+  });
+
+  final HeadlineTotal headline;
+  final AppColors colors;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final amountMinor = headline.amountMinor;
+    final currency = headline.currency;
+    if (amountMinor == null || currency == null) {
+      // Mixed currencies, conversion off: stack each currency's own total
+      // — the honest answer instead of a fabricated single figure (v1 has
+      // no conversion rates without a home currency set).
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final total in headline.perCurrency)
+            Text(
+              _formatAmount(total.amountMinor, total.currency),
+              style: AppTextStyles.mono.copyWith(
+                fontSize: AppTypeScale.title,
+                fontWeight: FontWeight.w500,
+                color: colors.inkPrimary,
               ),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    for (final total in totals)
-                      Text(
-                        '${formatMinor(total.amountMinor, digits: minorDigitsFor(total.currency))} ${total.currency}',
-                        style: AppTextStyles.mono.copyWith(
-                          fontSize: AppTypeScale.title,
-                          color: colors.inkPrimary,
-                        ),
-                      ),
-                  ],
-                ),
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            l10n.expensesConversionOffHint,
+            style: AppTextStyles.mono.copyWith(color: colors.inkMuted),
+          ),
+        ],
+      );
+    }
+    // One combined string, not split spans — "≈" has to stay glued to the
+    // figure it qualifies, and every other total in this feature (row,
+    // group header) is one string too, so the hero reads the same way.
+    final amountText =
+        '${headline.isHomeConversion ? '≈ ' : ''}${_formatAmount(amountMinor, currency)}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          amountText,
+          style: AppTextStyles.mono.copyWith(
+            fontSize: 26,
+            fontWeight: FontWeight.w500,
+            color: colors.inkPrimary,
+          ),
+        ),
+        if (headline.pendingCount > 0)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
+            child: Text(
+              l10n.expensesConversionPending(headline.pendingCount),
+              style: AppTextStyles.mono.copyWith(color: colors.inkMuted),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _TodayFigure extends StatelessWidget {
+  const _TodayFigure({required this.headline, required this.colors});
+
+  final HeadlineTotal headline;
+  final AppColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final amountMinor = headline.amountMinor;
+    final currency = headline.currency;
+    final String text;
+    if (amountMinor != null && currency != null) {
+      text =
+          '${headline.isHomeConversion ? '≈ ' : ''}${_formatAmount(amountMinor, currency)}';
+    } else if (headline.perCurrency.isNotEmpty) {
+      text = joinCurrencyAmounts(headline.perCurrency);
+    } else {
+      text = l10n.expensesNoSpendToday;
+    }
+    return Text(
+      text,
+      style: AppTextStyles.mono.copyWith(
+        fontSize: AppTypeScale.body,
+        fontWeight: FontWeight.w500,
+        color: colors.inkPrimary,
+      ),
+    );
+  }
+}
+
+/// Single-select category filter for the Spend tab's list, plus an "All"
+/// entry. Same [PillChip] language as the Places and Vault filter sheets
+/// use for their own facet values — one chip control across the app.
+class ExpenseCategoryFilterRow extends StatelessWidget {
+  const ExpenseCategoryFilterRow({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final ExpenseCategory? selected;
+  final ValueChanged<ExpenseCategory?> onSelect;
+
+  /// Fixed so a pinned sliver header (see [TripExpensesTab]) can reserve
+  /// an exact extent for this row.
+  static const height = 40.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SizedBox(
+      height: height,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            PillChip(
+              label: l10n.expensesFilterAll,
+              selected: selected == null,
+              onTap: () => onSelect(null),
+            ),
+            for (final category in ExpenseCategory.values) ...[
+              const SizedBox(width: AppSpacing.sm),
+              PillChip(
+                label: expenseCategoryLabel(l10n, category),
+                icon: expenseCategoryIcon(category),
+                selected: selected == category,
+                onTap: () => onSelect(selected == category ? null : category),
               ),
             ],
-          ),
-          if (home != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // "≈" is doing real work: this figure depends on a rate
-                  // fetched at some past moment, so it must never look as
-                  // exact as the per-currency lines above it.
-                  Text(
-                    l10n.expensesConvertedTotal(
-                      formatMinor(
-                        home!.amountMinor,
-                        digits: minorDigitsFor(homeCurrency),
-                      ),
-                      homeCurrency,
-                    ),
-                    style: AppTextStyles.mono.copyWith(
-                      color: colors.inkSecondary,
-                    ),
-                  ),
-                  if (home!.pendingCount > 0)
-                    Text(
-                      l10n.expensesConversionPending(home!.pendingCount),
-                      style: AppTextStyles.mono.copyWith(
-                        color: colors.inkMuted,
-                      ),
-                    ),
-                  if (home!.ratesAt != null)
-                    Text(
-                      l10n.expensesRatesAsOf(
-                        DateFormat('dd MMM yyyy', l10n.localeName)
-                            .format(home!.ratesAt!),
-                      ),
-                      style: AppTextStyles.mono.copyWith(
-                        color: colors.inkMuted,
-                      ),
-                    ),
-                ],
-              ),
-            ),
           ],
-          if (showConversionOffHint) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                l10n.expensesConversionOffHint,
-                textAlign: TextAlign.end,
-                style: AppTextStyles.mono.copyWith(color: colors.inkMuted),
-              ),
-            ),
-          ],
-          if (breakdown.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            for (final row in breakdown)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(top: 2),
-                      child: Icon(
-                        expenseCategoryIcon(row.category),
-                        size: 14,
-                        color: colors.inkSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        expenseCategoryLabel(l10n, row.category),
-                        style: AppTextStyles.body.copyWith(
-                          color: colors.inkSecondary,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        for (final amount in row.amounts)
-                          MonoText(
-                            // Single-currency trips keep the bare number;
-                            // mixed ones need the code to disambiguate.
-                            totals.length > 1
-                                ? '${formatMinor(amount.amountMinor, digits: minorDigitsFor(amount.currency))} '
-                                    '${amount.currency}'
-                                : formatMinor(
-                                    amount.amountMinor,
-                                    digits: minorDigitsFor(amount.currency),
-                                  ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -229,10 +256,19 @@ class ExpenseRowCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Icon(
-            expenseCategoryIcon(expense.category),
-            size: 20,
-            color: colors.inkSecondary,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.accent.withValues(alpha: 0.12),
+            ),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpacing.sm),
+              child: Icon(
+                expenseCategoryIcon(expense.category),
+                size: 18,
+                color: colors.accent,
+              ),
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -264,8 +300,7 @@ class ExpenseRowCard extends StatelessWidget {
                 // Always shows the code: a trip can mix currencies, and
                 // a bare number would be ambiguous on exactly the rows
                 // where it matters most.
-                '${formatMinor(expense.amountMinor, digits: minorDigitsFor(expense.currency))} '
-                '${expense.currency}',
+                _formatAmount(expense.amountMinor, expense.currency),
                 style: AppTextStyles.mono.copyWith(
                   fontSize: AppTypeScale.body,
                   color: colors.inkPrimary,
@@ -278,8 +313,7 @@ class ExpenseRowCard extends StatelessWidget {
               if (expense.isConverted &&
                   expense.convertedCurrency != expense.currency)
                 MonoText(
-                  '≈ ${formatMinor(expense.convertedAmountMinor!, digits: minorDigitsFor(expense.convertedCurrency!))} '
-                  '${expense.convertedCurrency}',
+                  '≈ ${_formatAmount(expense.convertedAmountMinor!, expense.convertedCurrency!)}',
                   muted: true,
                 ),
             ],
@@ -366,14 +400,8 @@ class ExpenseGroupHeader extends StatelessWidget {
   String _totalText(ExpenseGroup group) {
     final home = group.homeCurrencyTotal;
     if (home != null) {
-      return '≈ ${formatMinor(home.amountMinor, digits: minorDigitsFor(group.homeCurrency))} '
-          '${group.homeCurrency}';
+      return '≈ ${_formatAmount(home.amountMinor, group.homeCurrency)}';
     }
-    return group.perCurrencyTotals
-        .map(
-          (t) =>
-              '${formatMinor(t.amountMinor, digits: minorDigitsFor(t.currency))} ${t.currency}',
-        )
-        .join(' · ');
+    return joinCurrencyAmounts(group.perCurrencyTotals);
   }
 }

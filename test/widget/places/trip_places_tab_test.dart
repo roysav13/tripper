@@ -9,6 +9,7 @@ import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
+import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/domain/place_collection.dart';
 import 'package:tripper/features/places/presentation/place_collection_providers.dart';
@@ -63,7 +64,9 @@ Widget _app(
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
-        home: Scaffold(body: TripPlacesTab(trip: _trip)),
+        // renderMap: false — Google Maps needs a platform view widget
+        // tests can't create, same seam as PlacesMapView's own.
+        home: Scaffold(body: TripPlacesTab(trip: _trip, renderMap: false)),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -95,7 +98,7 @@ Widget _appWithNearby(
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
-        home: Scaffold(body: TripPlacesTab(trip: _trip)),
+        home: Scaffold(body: TripPlacesTab(trip: _trip, renderMap: false)),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -106,10 +109,18 @@ Widget _appWithNearby(
       ),
     );
 
+/// A place row's own category tag can now render the same label as a
+/// category facet chip in the open filter sheet (e.g. both say "Hotel") —
+/// this finder disambiguates the sheet's copy from the row's.
+Finder _inSheet(String text) => find.descendant(
+      of: find.byType(GlassChrome),
+      matching: find.text(text),
+    );
+
 void main() {
   testWidgets(
-      'filter/sort button is shown (for Sort) even when no place in this '
-      'trip has a category or country to filter by', (tester) async {
+      'filter and sort buttons are shown even when no place in this trip '
+      'has a category or country to filter by', (tester) async {
     final repo = FakePlaceRepository([
       const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
       const Place(id: 'b', name: 'Cafe B', tripId: 't1'),
@@ -118,6 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.tune), findsOneWidget);
+    expect(find.byIcon(Icons.swap_vert), findsOneWidget);
   });
 
   testWidgets(
@@ -141,7 +153,7 @@ void main() {
     await tester.pumpAndSettle();
 
     Finder badgeFinder() => find.descendant(
-          of: find.byType(FilterSortButton),
+          of: find.byType(FilterButton),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is DecoratedBox &&
@@ -156,7 +168,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(badgeFinder(), findsNothing);
 
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
 
     expect(badgeFinder(), findsOneWidget);
@@ -171,7 +183,7 @@ void main() {
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.tune));
+    await tester.tap(find.byIcon(Icons.swap_vert));
     await tester.pumpAndSettle();
 
     expect(find.text('Distance'), findsOneWidget);
@@ -227,7 +239,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hotel A'), findsOneWidget);
@@ -257,7 +269,7 @@ void main() {
     // Filter down to Hotel — Cafe B drops out of the list.
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hotel'));
+    await tester.tap(_inSheet('Hotel'));
     await tester.pumpAndSettle();
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsNothing);
@@ -417,7 +429,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
-          home: Scaffold(body: TripPlacesTab(trip: trip)),
+          home: Scaffold(body: TripPlacesTab(trip: trip, renderMap: false)),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -475,5 +487,128 @@ void main() {
 
     expect(find.text('Hotel A'), findsOneWidget);
     expect(find.text('Cafe B'), findsNothing);
+  });
+
+  testWidgets('map/list toggle switches this trip\'s tab into map mode',
+      (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Railay',
+        tripId: 't1',
+        lat: 8.0119,
+        lng: 98.8378,
+      ),
+    ]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Railay'), findsOneWidget);
+    expect(find.byIcon(Icons.map_outlined), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.map_outlined));
+    await tester.pumpAndSettle();
+
+    // List rows are gone; the map's (renderMap: false) pin fallback shows
+    // instead, and the toggle now offers to go back to list view.
+    expect(find.text('Railay'), findsNothing);
+    expect(find.byIcon(Icons.place), findsOneWidget);
+    expect(find.byIcon(Icons.view_list_outlined), findsOneWidget);
+    expect(find.byTooltip('List view'), findsOneWidget);
+  });
+
+  testWidgets(
+      'map mode still offers filtering and lists — same options as list '
+      'mode, not a separate surface', (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(
+        id: 'a',
+        name: 'Hotel A',
+        tripId: 't1',
+        category: PlaceCategory.hotel,
+        lat: 8.0,
+        lng: 98.8,
+      ),
+      const Place(
+        id: 'b',
+        name: 'Cafe B',
+        tripId: 't1',
+        category: PlaceCategory.coffeeShop,
+        lat: 8.1,
+        lng: 98.9,
+      ),
+    ]);
+    final collectionRepo = FakePlaceCollectionRepository([
+      PlaceCollection(id: 'c1', name: 'Food', createdAt: DateTime(2026, 1, 1)),
+    ]);
+    await tester.pumpWidget(_app(repo, collectionRepo: collectionRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.map_outlined));
+    await tester.pumpAndSettle();
+
+    // Lists row and the filter/sort entry point both survive the switch
+    // to map mode.
+    expect(find.text('Food'), findsOneWidget);
+    expect(find.byIcon(Icons.tune), findsOneWidget);
+    expect(find.byIcon(Icons.place), findsNWidgets(2));
+
+    // Filtering down to Hotel narrows the map's pins too.
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await tester.tap(_inSheet('Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.place), findsOneWidget);
+  });
+
+  testWidgets(
+      "the aggregate Places tab's map toggle is independent of this trip's",
+      (tester) async {
+    final repo = FakePlaceRepository([
+      const Place(id: 'a', name: 'Hotel A', tripId: 't1'),
+    ]);
+    final container = ProviderContainer(
+      overrides: [
+        placeRepositoryProvider.overrideWithValue(repo),
+        placeCollectionRepositoryProvider.overrideWithValue(
+          FakePlaceCollectionRepository([]),
+        ),
+        clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+        locationServiceProvider.overrideWithValue(
+          FakeLocationService(
+            const LocationUnavailable(LocationUnavailableReason.error),
+          ),
+        ),
+        nearbyPlacesEnabledProvider
+            .overrideWith(() => _FixedNearbyToggle(false)),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // Flip the aggregate Places tab's own toggle on directly via its
+    // provider — this trip's tab must not come up in map mode as a result.
+    container.read(placesMapModeProvider.notifier).state = true;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(body: TripPlacesTab(trip: _trip, renderMap: false)),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hotel A'), findsOneWidget);
+    expect(find.byIcon(Icons.map_outlined), findsOneWidget);
   });
 }

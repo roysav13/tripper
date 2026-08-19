@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/filtering/facet.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/facet_checklist.dart';
+import 'package:tripper/core/widgets/pill_chip.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -99,7 +100,7 @@ void main() {
     expect(find.text('NO COUNTRIES MATCH'), findsOneWidget);
   });
 
-  testWidgets('tapping a row toggles selection and shows a check',
+  testWidgets('tapping a row toggles selection and reflects it on the chip',
       (tester) async {
     Set<String> selected = {};
     await tester.pumpWidget(
@@ -115,9 +116,15 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.check), findsNothing);
+    expect(
+      tester.widget<PillChip>(find.widgetWithText(PillChip, 'Japan')).selected,
+      isFalse,
+    );
     await tester.tap(find.text('Japan'));
     await tester.pump();
-    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(
+      tester.widget<PillChip>(find.widgetWithText(PillChip, 'Japan')).selected,
+      isTrue,
+    );
   });
 }

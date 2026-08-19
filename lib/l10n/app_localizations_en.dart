@@ -201,7 +201,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesEmptyCta => 'Add an expense';
 
   @override
-  String get expensesTotal => 'Total';
+  String get expensesTotal => 'Total spent';
 
   @override
   String expensesConvertedTotal(String amount, String currency) {
@@ -227,6 +227,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String expensesRatesAsOf(String date) {
     return 'Rates from $date';
   }
+
+  @override
+  String get expensesTodayLabel => 'Today';
+
+  @override
+  String get expensesNoSpendToday => 'No spend yet';
+
+  @override
+  String get expensesFilterAll => 'All';
+
+  @override
+  String get expensesFilterEmpty => 'No expenses match this filter.';
 
   @override
   String expenseGroupWeekOf(String date) {
@@ -318,6 +330,17 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: 'Show $count documents',
       one: 'Show 1 document',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String vaultCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count documents',
+      one: '1 document',
     );
     return '$_temp0';
   }
@@ -565,13 +588,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterClearAll => 'Clear filters';
 
   @override
-  String get filterSortButtonTooltip => 'Sort & filter';
+  String get filterClearAction => 'Clear';
 
   @override
-  String get filterSortSheetTitle => 'Sort & filter';
+  String get filterButtonTooltip => 'Filters';
 
   @override
-  String get filterSortSortSection => 'Sort';
+  String get filterSheetTitle => 'Filters';
+
+  @override
+  String get sortButtonTooltip => 'Sort';
+
+  @override
+  String get sortSheetTitle => 'Sort by';
 
   @override
   String get sortAToZ => 'A–Z';

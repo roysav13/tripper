@@ -217,6 +217,12 @@ void main() {
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byIcon(Icons.swap_vert));
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
     await tester.tap(tabs.at(2)); // Expenses
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -244,6 +250,12 @@ void main() {
     await expectLater(tester, meetsGuideline(textContrastGuideline));
 
     await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.swap_vert));
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(textContrastGuideline));
     await tester.tapAt(const Offset(10, 10));
@@ -324,6 +336,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     // Dismiss via the modal barrier, away from the sheet's own content.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    // Same for the (solid, non-glass) sort sheet.
+    await tester.tap(find.byIcon(Icons.swap_vert));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 

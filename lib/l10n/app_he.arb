@@ -75,7 +75,7 @@
   "expensesEmptyTitle": "עקוב אחרי העלות של הטיול",
   "expensesEmptyBody": "הוסף את ההוצאות שלך תוך כדי הטיול — הסכום הכולל ופילוח לפי קטגוריות יצטברו כאן.",
   "expensesEmptyCta": "הוסף הוצאה",
-  "expensesTotal": "סך הכול",
+  "expensesTotal": "סך ההוצאות",
   "expensesConvertedTotal": "≈ {amount} {currency}",
   "@expensesConvertedTotal": {
     "placeholders": {
@@ -92,6 +92,10 @@
   "@expensesRatesAsOf": {
     "placeholders": { "date": { "type": "String" } }
   },
+  "expensesTodayLabel": "היום",
+  "expensesNoSpendToday": "עדיין אין הוצאות",
+  "expensesFilterAll": "הכול",
+  "expensesFilterEmpty": "אין הוצאות שתואמות לסינון הזה.",
   "expenseGroupWeekOf": "שבוע {date}",
   "@expenseGroupWeekOf": {
     "placeholders": { "date": { "type": "String" } }
@@ -123,6 +127,12 @@
   "vaultFilterCategorySection": "קטגוריה",
   "vaultFilterShowResults": "{count, plural, one{הצג מסמך אחד} other{הצג {count} מסמכים}}",
   "@vaultFilterShowResults": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "vaultCategoryCount": "{count, plural, one{מסמך אחד} other{{count} מסמכים}}",
+  "@vaultCategoryCount": {
     "placeholders": {
       "count": { "type": "int" }
     }
@@ -220,9 +230,11 @@
   "mapViewToggle": "תצוגת מפה",
   "listViewToggle": "תצוגת רשימה",
   "filterClearAll": "נקה סינון",
-  "filterSortButtonTooltip": "מיון וסינון",
-  "filterSortSheetTitle": "מיון וסינון",
-  "filterSortSortSection": "מיון",
+  "filterClearAction": "נקה",
+  "filterButtonTooltip": "מסננים",
+  "filterSheetTitle": "מסננים",
+  "sortButtonTooltip": "מיון",
+  "sortSheetTitle": "מיין לפי",
   "sortAToZ": "א–ת",
   "sortZToA": "ת–א",
   "sortOldestFirst": "הישן ביותר",

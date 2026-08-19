@@ -39,32 +39,39 @@ final allExpensesProvider = StreamProvider<List<Expense>>(
 ///
 /// [totals] is per-currency and never summed across currencies (a trip
 /// can legitimately mix ILS and USD, and v1 has no conversion rates);
-/// [mainCurrency] is just what the add-expense form pre-fills.
+/// [mainCurrency] is just what the add-expense form pre-fills. [headline]
+/// and [todayHeadline] feed the Spend tab's hero card; "today" is scoped
+/// via [clockProvider] here (not `DateTime.now()` in the domain layer).
 final tripExpenseSummaryProvider = Provider.family<
     ({
       List<CurrencyAmount> totals,
       String? mainCurrency,
       List<CategoryTotals> breakdown,
-      HomeTotal? home,
       String homeCurrency,
+      HeadlineTotal headline,
+      HeadlineTotal todayHeadline,
     }),
     String>((ref, tripId) {
   final expenses =
       ref.watch(tripExpensesProvider(tripId)).valueOrNull ?? const <Expense>[];
   final homeCurrency = ref.watch(homeCurrencyProvider);
+  final now = ref.watch(clockProvider)();
+  final todaysExpenses = [
+    for (final e in expenses)
+      if (_isSameDay(e.date, now)) e,
+  ];
   return (
     totals: totalsByCurrency(expenses),
     mainCurrency: tripCurrency(expenses),
     breakdown: categoryBreakdown(expenses),
-    // Only meaningful once a home currency is set AND the trip actually
-    // mixes currencies — otherwise the per-currency total already is
-    // the answer and a second identical line is noise.
-    home: homeCurrency.isEmpty || !usesMultipleCurrencies(expenses)
-        ? null
-        : homeTotal(expenses, homeCurrency),
     homeCurrency: homeCurrency,
+    headline: headlineTotal(expenses, homeCurrency),
+    todayHeadline: headlineTotal(todaysExpenses, homeCurrency),
   );
 });
+
+bool _isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
 
 /// Keeps stored conversions up to date: backfills on startup, whenever
 /// expenses change (a new one arrives unconverted), and re-derives them
