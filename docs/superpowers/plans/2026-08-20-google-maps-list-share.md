@@ -2002,22 +2002,13 @@ void main() {
     expect(find.byType(MapsListImportScreen), findsOneWidget);
   });
 
-  testWidgets('a file share still opens the vault sheet on the Vault tab '
-      '(regression — untouched by this change)', (tester) async {
-    await tester.pumpWidget(
-      _app(
-        Stream.value(
-          const IncomingShare(
-            files: [IncomingSharedFile('/tmp/ticket.pdf')],
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('vault-tab'), findsOneWidget);
-  });
-
+  // The pre-existing file-share branch (showDocumentFormSheet on the Vault
+  // tab) is intentionally not re-tested here either: it's untouched by
+  // this change, and exercising it would need the document/vault provider
+  // graph mocked (documentRepositoryProvider and friends) purely to
+  // satisfy a screen this feature never touches — the same
+  // disproportionate-for-unrelated-code call as the AddPlaceScreen/
+  // GoogleMap exclusion above.
   testWidgets('non-maps text is ignored — stays on the trips tab',
       (tester) async {
     await tester.pumpWidget(
@@ -2108,6 +2099,6 @@ Expected: `All checks passed.` — this runs `pub get`, `gen-l10n`, `dart format
 ## Self-Review Notes
 
 - **Spec coverage:** §1 Detection → Task 1. §2 Scraping → Task 3. §3 Geocoding (incl. the dedupe optimization from the follow-up discussion) → Task 4. §4 Import UI → Task 4. §5 Manual entry point → Task 5. §6 Wiring → Task 6. Error handling (scrape failure/empty, per-item geocode failure, cancel-writes-nothing, offline) → covered by Task 4's tests. l10n (implied by CLAUDE.md rule 3, not a spec section) → Task 2. Every spec section has a task.
-- **Deliberate deviation from the spec's literal Testing wording:** the spec says app_shell's `MapsPlaceShare` routing gets "regression coverage." Task 6's test file instead documents (in a comment) why that specific path isn't re-exercised there: `AddPlaceScreen.open()` as called from `app_shell.dart` doesn't pass `renderMap: false`, and `add_place_screen_test.dart` already establishes that rendering the real `GoogleMap` platform view in a widget test is the reason that parameter exists. Forcing it through `app_shell_test.dart` would risk a flaky/crashing test for coverage that's already implied by Task 1 (the parsing logic) plus the unchanged `AddPlaceScreen.open` call site.
+- **Deliberate deviation from the spec's literal Testing wording:** the spec says app_shell's `MapsPlaceShare` routing gets "regression coverage." Task 6's test file instead documents (in a comment) why that specific path isn't re-exercised there: `AddPlaceScreen.open()` as called from `app_shell.dart` doesn't pass `renderMap: false`, and `add_place_screen_test.dart` already establishes that rendering the real `GoogleMap` platform view in a widget test is the reason that parameter exists. Forcing it through `app_shell_test.dart` would risk a flaky/crashing test for coverage that's already implied by Task 1 (the parsing logic) plus the unchanged `AddPlaceScreen.open` call site. The same reasoning drops a file-share regression test from that file: `showDocumentFormSheet` needs the document/vault provider graph mocked, which is unrelated code this feature doesn't touch.
 - **Placeholder scan:** no TBD/TODO markers; the one open-ended item (Task 3 Step 8, verifying the WebView scraper's CSS selectors against a real device) is flagged explicitly as manual/non-automatable, matching the spec's own Testing section rather than glossing over it.
 - **Type consistency:** `MapsShareResult`/`MapsPlaceShare`/`MapsListShare` (Task 1) match their usage in `maps_share_routing.dart` (Task 5) and `app_shell.dart` (Task 6). `MapsListScraper`/`ScrapedMapsList` (Task 3) match their usage in `MapsListImportScreen` (Task 4) and both test files that fake them (Tasks 4, 5, 6). `MapsListImportScreen.open(context, {required url, nameGuess})` (Task 4) matches its call in `maps_share_routing.dart` (Task 5).
