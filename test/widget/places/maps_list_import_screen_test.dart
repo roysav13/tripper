@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,13 +20,21 @@ import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
 class _FakeScraper implements MapsListScraper {
-  _FakeScraper(this.result);
+  _FakeScraper(this.result, {this.gate});
   final ScrapedMapsList? result;
+
+  /// When set, `scrape` blocks on this instead of returning [result]
+  /// immediately -- lets a test hold a scrape open indefinitely (no
+  /// real-clock race with widget pumping) to assert the in-flight
+  /// "scraping" state. Same pattern as
+  /// nearby_place_detail_sheet_test.dart's Completer-gated fake.
+  final Completer<ScrapedMapsList?>? gate;
   int callCount = 0;
 
   @override
   Future<ScrapedMapsList?> scrape(String listUrl) async {
     callCount++;
+    if (gate != null) return gate!.future;
     return result;
   }
 }
@@ -74,6 +84,13 @@ Widget _app({
   List<Trip> trips = const [],
   String url = 'https://www.google.com/maps/@/data=!3m1!4b1!4m3!11m2!2sX!3e3',
   String? nameGuess,
+  // True puts the screen behind a real "open" push (matching
+  // MapsListImportScreen.open's fullscreenDialog route) instead of
+  // rendering it as MaterialApp.home directly -- needed by any test that
+  // depends on AppBar's automatic leading button, which only appears when
+  // Navigator.canPop is true (see place_collection_detail_screen_test.dart
+  // for the same pattern).
+  bool pushed = false,
 }) =>
     ProviderScope(
       overrides: [
@@ -89,7 +106,26 @@ Widget _app({
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
-        home: MapsListImportScreen(url: url, nameGuess: nameGuess),
+        home: pushed
+            ? Builder(
+                builder: (context) => Scaffold(
+                  body: Center(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          fullscreenDialog: true,
+                          builder: (context) => MapsListImportScreen(
+                            url: url,
+                            nameGuess: nameGuess,
+                          ),
+                        ),
+                      ),
+                      child: const Text('open'),
+                    ),
+                  ),
+                ),
+              )
+            : MapsListImportScreen(url: url, nameGuess: nameGuess),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -102,7 +138,7 @@ Widget _app({
 
 void main() {
   testWidgets('scraping state shows progress copy', (tester) async {
-    final scraper = _FakeScraper(null); // never resolves during this pump
+    final scraper = _FakeScraper(null, gate: Completer<ScrapedMapsList?>());
     await tester.pumpWidget(
       _app(scraper: scraper, geocoder: _FakeGeocoder(const {})),
     );
@@ -294,11 +330,22 @@ void main() {
         geocoder: _FakeGeocoder(const {}),
         placeRepo: placeRepo,
         collectionRepo: collectionRepo,
+        // A real push, not MaterialApp.home: the screen's AppBar only
+        // grows an automatic close/back button when Navigator.canPop is
+        // true, and pageBack() below needs that button to exist.
+        pushed: true,
       ),
     );
+
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    await tester.pageBack();
+    // Not tester.pageBack(): AppBar auto-implies a Close ("X") button, not
+    // a Back arrow, for a fullscreenDialog route (see app_bar.dart's
+    // `useCloseButton = parentRoute?.fullscreenDialog`) -- pageBack() only
+    // looks for a 'Back' tooltip / CupertinoNavigationBarBackButton, so it
+    // wouldn't find this screen's real dismiss affordance.
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
     expect(await placeRepo.watchAll().first, isEmpty);

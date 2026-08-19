@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,7 +56,6 @@ class _MapsListImportScreenState extends ConsumerState<MapsListImportScreen> {
   String? _tripId;
   int _geocoded = 0;
   int _geocodeTotal = 0;
-  Timer? _scrapeGate;
 
   @override
   void initState() {
@@ -68,28 +65,11 @@ class _MapsListImportScreenState extends ConsumerState<MapsListImportScreen> {
 
   @override
   void dispose() {
-    // Cancel, don't just abandon: an uncancelled Timer -- even a
-    // Duration.zero one that never got to fire -- trips flutter_test's
-    // "no pending timers after the widget tree is disposed" invariant in
-    // any test that tears down mid-scrape (e.g. asserting the initial
-    // loading frame and ending there, never reaching pumpAndSettle).
-    _scrapeGate?.cancel();
     _title.dispose();
     super.dispose();
   }
 
   Future<void> _scrape() async {
-    // Real-Timer yield point (not just a microtask): a bare `tester.pump()`
-    // flushes microtasks but never elapses the fake clock, so this keeps
-    // the widget parked on the "scraping" stage across such a pump,
-    // letting a widget test capture the in-flight loading state without
-    // racing a scraper fake that resolves with no real delay (same
-    // "don't race the real clock" concern as the Completer-gated fake in
-    // nearby_place_detail_sheet_test.dart).
-    final gate = Completer<void>();
-    _scrapeGate = Timer(Duration.zero, gate.complete);
-    await gate.future;
-    if (!mounted) return;
     final result = await ref.read(mapsListScraperProvider).scrape(widget.url);
     if (!mounted) return;
     if (result == null || result.placeNames.isEmpty) {
@@ -110,15 +90,7 @@ class _MapsListImportScreenState extends ConsumerState<MapsListImportScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      // Explicit leading, not auto-implied: this screen is always pushed
-      // via `open()` in the real app (so a back affordance is always
-      // correct), but AppBar's automatic "canPop" detection would hide it
-      // when this widget happens to sit at the root of the navigator (as
-      // in a widget test that renders it via `home:`).
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(l10n.mapsListImportTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.mapsListImportTitle)),
       body: switch (_stage) {
         _Stage.scraping => _progress(l10n.mapsListImportScraping),
         _Stage.failed => ErrorState(body: l10n.mapsListImportFailedBody),
