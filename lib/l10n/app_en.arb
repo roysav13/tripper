@@ -443,5 +443,34 @@
   "journalPickToday": "Today",
   "journalPickYesterday": "Yesterday",
   "journalTripLocations": "This trip's locations",
-  "journalNewLocation": "New location"
+  "journalNewLocation": "New location",
+  "placesAddButtonTooltip": "Add",
+  "placesMenuAddPlace": "Add place",
+  "placesMenuImportList": "Import Google Maps list…",
+  "importListDialogTitle": "Import Google Maps list",
+  "importListDialogHint": "Paste a Google Maps list link",
+  "importListDialogImport": "Import",
+  "importListDialogInvalidLink": "That doesn't look like a Google Maps link",
+  "mapsListImportTitle": "Import list",
+  "mapsListImportScraping": "Reading list…",
+  "mapsListImportFailedBody": "Couldn't read this list from Google Maps — try sharing individual places instead",
+  "mapsListImportSelectedCount": "{n} selected",
+  "@mapsListImportSelectedCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "mapsListImportButton": "Import {n} places",
+  "@mapsListImportButton": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "mapsListImportProgress": "{done} / {total} located",
+  "@mapsListImportProgress": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  }
 }

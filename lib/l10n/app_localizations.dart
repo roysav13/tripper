@@ -1999,6 +1999,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New location'**
   String get journalNewLocation;
+
+  /// No description provided for @placesAddButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get placesAddButtonTooltip;
+
+  /// No description provided for @placesMenuAddPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Add place'**
+  String get placesMenuAddPlace;
+
+  /// No description provided for @placesMenuImportList.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Google Maps list…'**
+  String get placesMenuImportList;
+
+  /// No description provided for @importListDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Google Maps list'**
+  String get importListDialogTitle;
+
+  /// No description provided for @importListDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a Google Maps list link'**
+  String get importListDialogHint;
+
+  /// No description provided for @importListDialogImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importListDialogImport;
+
+  /// No description provided for @importListDialogInvalidLink.
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a Google Maps link'**
+  String get importListDialogInvalidLink;
+
+  /// No description provided for @mapsListImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import list'**
+  String get mapsListImportTitle;
+
+  /// No description provided for @mapsListImportScraping.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading list…'**
+  String get mapsListImportScraping;
+
+  /// No description provided for @mapsListImportFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read this list from Google Maps — try sharing individual places instead'**
+  String get mapsListImportFailedBody;
+
+  /// No description provided for @mapsListImportSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} selected'**
+  String mapsListImportSelectedCount(int n);
+
+  /// No description provided for @mapsListImportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import {n} places'**
+  String mapsListImportButton(int n);
+
+  /// No description provided for @mapsListImportProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total} located'**
+  String mapsListImportProgress(int done, int total);
 }
 
 class _AppLocalizationsDelegate

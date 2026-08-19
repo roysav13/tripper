@@ -1122,4 +1122,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalNewLocation => 'New location';
+
+  @override
+  String get placesAddButtonTooltip => 'Add';
+
+  @override
+  String get placesMenuAddPlace => 'Add place';
+
+  @override
+  String get placesMenuImportList => 'Import Google Maps list…';
+
+  @override
+  String get importListDialogTitle => 'Import Google Maps list';
+
+  @override
+  String get importListDialogHint => 'Paste a Google Maps list link';
+
+  @override
+  String get importListDialogImport => 'Import';
+
+  @override
+  String get importListDialogInvalidLink =>
+      'That doesn\'t look like a Google Maps link';
+
+  @override
+  String get mapsListImportTitle => 'Import list';
+
+  @override
+  String get mapsListImportScraping => 'Reading list…';
+
+  @override
+  String get mapsListImportFailedBody =>
+      'Couldn\'t read this list from Google Maps — try sharing individual places instead';
+
+  @override
+  String mapsListImportSelectedCount(int n) {
+    return '$n selected';
+  }
+
+  @override
+  String mapsListImportButton(int n) {
+    return 'Import $n places';
+  }
+
+  @override
+  String mapsListImportProgress(int done, int total) {
+    return '$done / $total located';
+  }
 }

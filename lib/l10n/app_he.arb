@@ -443,5 +443,34 @@
   "journalPickToday": "היום",
   "journalPickYesterday": "אתמול",
   "journalTripLocations": "המיקומים של הטיול הזה",
-  "journalNewLocation": "מיקום חדש"
+  "journalNewLocation": "מיקום חדש",
+  "placesAddButtonTooltip": "הוספה",
+  "placesMenuAddPlace": "הוספת מקום",
+  "placesMenuImportList": "ייבוא רשימת Google Maps…",
+  "importListDialogTitle": "ייבוא רשימת Google Maps",
+  "importListDialogHint": "הדבקת קישור לרשימת Google Maps",
+  "importListDialogImport": "ייבוא",
+  "importListDialogInvalidLink": "זה לא נראה כמו קישור של Google Maps",
+  "mapsListImportTitle": "ייבוא רשימה",
+  "mapsListImportScraping": "קוראים את הרשימה…",
+  "mapsListImportFailedBody": "לא הצלחנו לקרוא את הרשימה הזו מ-Google Maps. אפשר לנסות לשתף מקומות בנפרד",
+  "mapsListImportSelectedCount": "{n} נבחרו",
+  "@mapsListImportSelectedCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "mapsListImportButton": "ייבוא {n} מקומות",
+  "@mapsListImportButton": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "mapsListImportProgress": "{done} מתוך {total} אותרו",
+  "@mapsListImportProgress": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  }
 }
