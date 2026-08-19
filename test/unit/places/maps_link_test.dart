@@ -38,7 +38,36 @@ void main() {
     });
   });
 
-  group('MapsLinkService.expand', () {
+  group('isMapsListShareUrl', () {
+    test('matches a real captured list-share redirect target', () {
+      expect(
+        isMapsListShareUrl(
+          'https://www.google.com/maps/@/data=!3m1!4b1!4m3!11m2'
+          '!2sTAO99XYR4fuhOSQo1zrQ0Tit84j9Qw!3e3?entry=tts',
+        ),
+        isTrue,
+      );
+    });
+
+    test('a single-place URL is not a list', () {
+      expect(
+        isMapsListShareUrl(
+          'https://www.google.com/maps/place/Colosseum/@41.8902,12.4922,17z',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a non-maps URL is not a list', () {
+      expect(isMapsListShareUrl('https://example.com/maps/@/data=x'), isFalse);
+    });
+
+    test('an unparseable URL is not a list', () {
+      expect(isMapsListShareUrl('not a url at all'), isFalse);
+    });
+  });
+
+  group('MapsLinkService.expand — place shares', () {
     test('short link resolves through redirect to coordinates', () async {
       final client = MockClient.streaming((request, _) async {
         if (request.url.host == 'maps.app.goo.gl') {
@@ -54,11 +83,12 @@ void main() {
         return http.StreamedResponse(const Stream.empty(), 200);
       });
       final service = MapsLinkService(client);
-      final link =
+      final result =
           await service.expand('Colosseum https://maps.app.goo.gl/AbC');
-      expect(link!.hasCoordinates, isTrue);
-      expect(link.name, 'Colosseum');
-      expect(link.lat, closeTo(41.8902, 0.0001));
+      final share = result as MapsPlaceShare;
+      expect(share.link.hasCoordinates, isTrue);
+      expect(share.link.name, 'Colosseum');
+      expect(share.link.lat, closeTo(41.8902, 0.0001));
     });
 
     test('network failure falls back to partial parse (offline)', () async {
@@ -66,11 +96,66 @@ void main() {
         (request, _) async => throw Exception('offline'),
       );
       final service = MapsLinkService(client);
-      final link =
+      final result =
           await service.expand('Colosseum https://maps.app.goo.gl/AbC');
-      expect(link, isNotNull);
-      expect(link!.hasCoordinates, isFalse);
-      expect(link.name, 'Colosseum');
+      expect(result, isNotNull);
+      final share = result as MapsPlaceShare;
+      expect(share.link.hasCoordinates, isFalse);
+      expect(share.link.name, 'Colosseum');
+    });
+
+    test('a full (non-short) URL never touches the network', () async {
+      final client = MockClient.streaming(
+        (request, _) async => fail('unexpected request to ${request.url}'),
+      );
+      final service = MapsLinkService(client);
+      final result = await service.expand(
+        'https://www.google.com/maps/place/Colosseum/@41.8902,12.4922,17z',
+      );
+      final share = result as MapsPlaceShare;
+      expect(share.link.hasCoordinates, isTrue);
+    });
+  });
+
+  group('MapsLinkService.expand — list shares', () {
+    test('a directly-pasted list URL returns MapsListShare, no network call',
+        () async {
+      final client = MockClient.streaming(
+        (request, _) async => fail('unexpected request to ${request.url}'),
+      );
+      final service = MapsLinkService(client);
+      final result = await service.expand(
+        'Japan https://www.google.com/maps/@/data=!3m1!4b1!4m3!11m2'
+        '!2sTAO99XYR4fuhOSQo1zrQ0Tit84j9Qw!3e3',
+      );
+      expect(result, isA<MapsListShare>());
+      final share = result as MapsListShare;
+      expect(share.url, contains('!11m2!2sTAO99XYR4fuhOSQo1zrQ0Tit84j9Qw!3e3'));
+      expect(share.nameGuess, 'Japan');
+    });
+
+    test('a short link resolving to a list-share URL returns MapsListShare '
+        'without fetching the resolved page body', () async {
+      final client = MockClient.streaming((request, _) async {
+        if (request.url.host == 'maps.app.goo.gl') {
+          return http.StreamedResponse(
+            const Stream.empty(),
+            302,
+            headers: {
+              'location': 'https://www.google.com/maps/@/data=!3m1!4b1!4m3'
+                  '!11m2!2sTAO99XYR4fuhOSQo1zrQ0Tit84j9Qw!3e3?entry=tts',
+            },
+          );
+        }
+        fail('unexpected second request to ${request.url}');
+      });
+      final service = MapsLinkService(client);
+      final result = await service
+          .expand('Japan https://maps.app.goo.gl/gSpd52y9RYFDAspHA');
+      expect(result, isA<MapsListShare>());
+      final share = result as MapsListShare;
+      expect(share.url, contains('!11m2!2sTAO99XYR4fuhOSQo1zrQ0Tit84j9Qw!3e3'));
+      expect(share.nameGuess, 'Japan');
     });
   });
 
