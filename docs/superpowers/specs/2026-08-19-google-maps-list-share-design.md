@@ -123,12 +123,27 @@ dependency — not currently in `pubspec.yaml`):
 
 ### 3. Geocoding
 
-Each scraped name is resolved through the **existing** `Geocoder.search()`
-— the same call `AddPlaceScreen`'s manual search already makes — run
-sequentially (not in parallel: Nominatim's usage policy forbids bursts)
-with a small inter-call delay. The import screen (§4) shows live progress
-("12 / 43 located") while this runs, since a 43-place list takes real time
-— an explicit progress state, not a spinner masking a long wait.
+Neither geocoding backend this app uses supports batching distinct
+queries into one HTTP call — confirmed during design: the public
+Nominatim API explicitly disables its batch-query mode (self-hosted-only
+feature), and Google's Geocoding/Places APIs are one-address-per-request.
+A third-party bulk geocoder (Geoapify, Stadia Maps) would fix that, but
+means a new provider/key/pricing model — out of scope here, given the
+existing `Geocoder` abstraction is deliberately keyless-Nominatim-first.
+
+So calls stay one-per-place, with one free optimization applied first:
+scraped names are **deduplicated** (case-insensitive trim) before
+geocoding — a list with repeated entries only geocodes each unique name
+once, and every place row sharing that name reuses the single result.
+
+The (deduplicated) names are then resolved through the **existing**
+`Geocoder.search()` — the same call `AddPlaceScreen`'s manual search
+already makes — run sequentially (not in parallel: Nominatim's usage
+policy forbids bursts) with a small inter-call delay. The import screen
+(§4) shows live progress ("12 / 43 located") while this runs
+synchronously, since a large list takes real time — an explicit progress
+state, not a spinner masking a long wait. Cancelling mid-geocode writes
+nothing, per Error handling below.
 
 A name that fails to geocode (offline, no match, ambiguous) is still
 imported — name-only, no coordinates — matching the existing "locate
@@ -216,6 +231,9 @@ switch on the sealed `MapsShareResult`:
   progress, successful create (right places, right trip, right new
   collection with all imported places as members), and cancel-writes-nothing
   at each stage.
+- Dedupe: a scraped list with repeated (including differently-cased/
+  whitespace-padded) names calls the mocked `Geocoder` exactly once per
+  unique name, and every matching place row gets that result.
 - Manual paste dialog: submitting a single-place URL routes to
   `AddPlaceScreen`; submitting a list URL routes to `MapsListImportScreen`;
   submitting garbage text shows an inline error, no navigation.
