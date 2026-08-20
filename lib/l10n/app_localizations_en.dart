@@ -1075,6 +1075,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No text found in this frame — you can type it in';
 
   @override
+  String get videoCaptureFrameFailed =>
+      'Couldn\'t capture that frame — try again';
+
+  @override
   String get videoCaptureLookUp => 'Look up';
 
   @override
@@ -1082,6 +1086,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get placeCandidateReviewLookingUp => 'Looking up…';
+
+  @override
+  String get placeCandidateReviewNoSummary => 'No summary found';
 
   @override
   String get placeCandidateReviewNoLocation =>

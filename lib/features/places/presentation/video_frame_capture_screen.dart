@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -58,7 +58,22 @@ class VideoFrameCaptureScreenState
   void dispose() {
     _controller?.dispose();
     _textController.dispose();
+    // The downloaded video exists only for this screen's lifetime (design
+    // spec: the video is held "only transiently until OCR runs"). dispose()
+    // can't await, so this is fire-and-forget — best-effort, same as the
+    // frame cleanup in `_capture()`.
+    final videoPath = _videoPath;
+    if (videoPath != null) unawaited(_deleteQuietly(videoPath));
     super.dispose();
+  }
+
+  /// Best-effort temp cleanup — a leftover temp file is harmless, a crash
+  /// over one would not be (same contract as `DocumentTextExtractor`'s
+  /// per-page cleanup in `document_ocr_service.dart`).
+  Future<void> _deleteQuietly(String path) async {
+    try {
+      await File(path).delete();
+    } catch (_) {}
   }
 
   Future<void> _fetch() async {
@@ -84,13 +99,21 @@ class VideoFrameCaptureScreenState
     // Not awaited into the setState above — initialization can be slow,
     // and the scrub screen already shows a spinner via the
     // `isInitialized` check in build() until this resolves.
-    controller.initialize().then((_) {
-      if (mounted) setState(() {});
-    }).catchError((_) {
-      // Degrades to the same "spinner never resolves past this point"
-      // state a real playback failure would show — on-device only, not
-      // exercised by widget tests (see this task's testability note).
-    });
+    unawaited(
+      controller.initialize().then((_) {
+        if (mounted) setState(() {});
+      }).catchError((_) {
+        // A file that downloaded fine but won't decode is, from the user's
+        // side, the same dead end as a download that never arrived — so it
+        // reuses `fetchFailed`'s visible "couldn't fetch this video" +
+        // cancel UI rather than leaving the spinner turning forever
+        // (CLAUDE.md hard rule 4). Guarded on the stage so a late failure
+        // can't yank the user back out of a review they already reached.
+        if (mounted && _stage == _Stage.scrubbing) {
+          setState(() => _stage = _Stage.fetchFailed);
+        }
+      }),
+    );
   }
 
   Future<void> _capture() async {
@@ -102,9 +125,24 @@ class VideoFrameCaptureScreenState
               path,
               position,
             );
-    if (framePath == null) return; // stays on the scrub screen, re-triable
+    if (framePath == null) {
+      // Stays on the scrub screen, re-triable — but says so out loud
+      // instead of swallowing the tap (CLAUDE.md hard rule 4).
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.videoCaptureFrameFailed)),
+      );
+      return;
+    }
     final text =
         await ref.read(documentTextRecognizerProvider).extractText(framePath);
+    // The frame PNG existed only to be read by OCR, which has now happened,
+    // so nothing downstream waits on the unlink — fire-and-forget keeps the
+    // review screen from waiting on a filesystem round-trip (and keeps real
+    // I/O off the await path, which a widget test's fake-async zone can't
+    // drive to completion).
+    unawaited(_deleteQuietly(framePath));
     if (!mounted) return;
     _textController.text = text;
     setState(() => _stage = _Stage.reviewingText);
@@ -151,29 +189,17 @@ class VideoFrameCaptureScreenState
                   const SizedBox(height: AppSpacing.md),
                   OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(MaterialLocalizations.of(context)
-                        .cancelButtonLabel),
+                    child: Text(
+                      MaterialLocalizations.of(context).cancelButtonLabel,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        _Stage.scrubbing => Column(
-            children: [
-              Expanded(
-                child: _controller != null &&
-                        _controller!.value.isInitialized
-                    ? VideoPlayer(_controller!)
-                    : const Center(child: CircularProgressIndicator()),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: FilledButton(
-                  onPressed: _capture,
-                  child: Text(l10n.videoCaptureButton),
-                ),
-              ),
-            ],
+        _Stage.scrubbing => _ScrubStage(
+            controller: _controller,
+            onCapture: _capture,
           ),
         _Stage.reviewingText => Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -220,6 +246,75 @@ class VideoFrameCaptureScreenState
               ],
             ),
           ),
+      },
+    );
+  }
+}
+
+/// The scrub stage: the video, a draggable progress bar, a play/pause
+/// toggle, and "Capture this frame". Without the bar and the toggle every
+/// capture would grab position zero — the whole premise of the feature is
+/// pausing where the on-screen text is legible and grabbing *that* frame.
+///
+/// [VideoPlayerController] is a [ChangeNotifier], so the controls listen to
+/// it directly ([AnimatedBuilder]) rather than reacting only to their own
+/// taps: that keeps the icon honest when playback state changes for reasons
+/// this widget didn't cause — a scrub-bar drag, reaching the end of the
+/// clip — which is how `video_player`'s own example wires its controls.
+class _ScrubStage extends StatelessWidget {
+  const _ScrubStage({required this.controller, required this.onCapture});
+
+  final VideoPlayerController? controller;
+  final VoidCallback onCapture;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = this.controller;
+    if (controller == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        // A progress bar needs a real duration and the player a real
+        // texture, so both wait on the same `isInitialized` guard the
+        // video itself already used.
+        final ready = controller.value.isInitialized;
+        return Column(
+          children: [
+            Expanded(
+              child: ready
+                  ? VideoPlayer(controller)
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+            if (ready) ...[
+              VideoProgressIndicator(controller, allowScrubbing: true),
+              IconButton(
+                iconSize: 36,
+                icon: Icon(
+                  controller.value.isPlaying
+                      ? Icons.pause_circle_outline
+                      : Icons.play_circle_outline,
+                ),
+                onPressed: () {
+                  if (controller.value.isPlaying) {
+                    controller.pause();
+                  } else {
+                    controller.play();
+                  }
+                },
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsetsDirectional.all(AppSpacing.md),
+              child: FilledButton(
+                onPressed: onCapture,
+                child: Text(l10n.videoCaptureButton),
+              ),
+            ),
+          ],
+        );
       },
     );
   }

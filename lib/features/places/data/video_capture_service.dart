@@ -12,8 +12,8 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 /// `PdfPageRasterizer` — nothing outside this file touches `http` for
 /// video bytes.
 abstract interface class VideoDownloader {
-  /// Temp file path, or null on any failure (offline, non-200, timeout).
-  /// Caller owns cleanup of the returned file.
+  /// Temp file path, or null on any failure (offline, non-200, a non-video
+  /// body, timeout). Caller owns cleanup of the returned file.
   Future<String?> download(Uri videoUrl);
 }
 
@@ -28,6 +28,20 @@ class HttpVideoDownloader implements VideoDownloader {
       final response =
           await _client.get(videoUrl).timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) return null;
+      // A CDN rejection often comes back as a 200 carrying an HTML or JSON
+      // error page. Saving that as a `.mp4` only defers the failure to
+      // `initialize()`, so reject it here where "couldn't fetch this
+      // video" is still the honest answer. The header is advisory — some
+      // servers omit it on perfectly good video responses — so only an
+      // explicitly non-video type disqualifies the body.
+      final contentType = response.headers['content-type'];
+      if (contentType != null &&
+          !contentType.trim().toLowerCase().startsWith('video/')) {
+        if (kDebugMode) {
+          debugPrint('[video] download rejected: content-type $contentType');
+        }
+        return null;
+      }
       final tempDir = await getTemporaryDirectory();
       final file = File(
         p.join(

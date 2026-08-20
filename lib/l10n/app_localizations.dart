@@ -1910,6 +1910,12 @@ abstract class AppLocalizations {
   /// **'No text found in this frame — you can type it in'**
   String get videoCaptureNoTextFound;
 
+  /// No description provided for @videoCaptureFrameFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t capture that frame — try again'**
+  String get videoCaptureFrameFailed;
+
   /// No description provided for @videoCaptureLookUp.
   ///
   /// In en, this message translates to:
@@ -1927,6 +1933,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Looking up…'**
   String get placeCandidateReviewLookingUp;
+
+  /// No description provided for @placeCandidateReviewNoSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'No summary found'**
+  String get placeCandidateReviewNoSummary;
 
   /// No description provided for @placeCandidateReviewNoLocation.
   ///

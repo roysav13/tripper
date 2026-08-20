@@ -25,12 +25,11 @@ class _FakeWikipedia implements PlaceLocationSummaryFetcher {
 }
 
 class _FakeGeocoder implements Geocoder {
-  _FakeGeocoder({this.reverseHit, this.searchResults = const []});
+  _FakeGeocoder({this.reverseHit});
   final GeoResult? reverseHit;
-  final List<GeoResult> searchResults;
 
   @override
-  Future<List<GeoResult>> search(String query) async => searchResults;
+  Future<List<GeoResult>> search(String query) async => const [];
   @override
   Future<GeoResult?> reverse(double lat, double lon) async => reverseHit;
   @override
@@ -44,45 +43,11 @@ Future<ResolvedPlaceCandidate?> _openWith(
   required String candidateName,
 }) async {
   ResolvedPlaceCandidate? result;
-  await tester.pumpWidget(ProviderScope(
-    overrides: [
-      placeLocationSummaryFetcherProvider.overrideWithValue(wikipedia),
-      geocoderProvider.overrideWithValue(geocoder),
-    ],
-    child: MaterialApp(
-      theme: AppTheme.light(),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
-      home: Builder(
-        builder: (context) => ElevatedButton(
-          onPressed: () async {
-            result = await PlaceCandidateReviewScreen.open(
-              context,
-              candidateName: candidateName,
-            );
-          },
-          child: const Text('open'),
-        ),
-      ),
-    ),
-  ));
-  await tester.tap(find.text('open'));
-  await tester.pumpAndSettle();
-  return result;
-}
-
-void main() {
-  testWidgets('shows a loading state while resolving', (tester) async {
-    await tester.pumpWidget(ProviderScope(
+  await tester.pumpWidget(
+    ProviderScope(
       overrides: [
-        placeLocationSummaryFetcherProvider
-            .overrideWithValue(_FakeWikipedia(null)),
-        geocoderProvider.overrideWithValue(_FakeGeocoder()),
+        placeLocationSummaryFetcherProvider.overrideWithValue(wikipedia),
+        geocoderProvider.overrideWithValue(geocoder),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -95,15 +60,53 @@ void main() {
         supportedLocales: const [Locale('en')],
         home: Builder(
           builder: (context) => ElevatedButton(
-            onPressed: () => PlaceCandidateReviewScreen.open(
-              context,
-              candidateName: 'Railay Beach',
-            ),
+            onPressed: () async {
+              result = await PlaceCandidateReviewScreen.open(
+                context,
+                candidateName: candidateName,
+              );
+            },
             child: const Text('open'),
           ),
         ),
       ),
-    ));
+    ),
+  );
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+  return result;
+}
+
+void main() {
+  testWidgets('shows a loading state while resolving', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeLocationSummaryFetcherProvider
+              .overrideWithValue(_FakeWikipedia(null)),
+          geocoderProvider.overrideWithValue(_FakeGeocoder()),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => PlaceCandidateReviewScreen.open(
+                context,
+                candidateName: 'Railay Beach',
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.tap(find.text('open'));
     await tester.pump(); // one frame — resolution hasn't completed yet
 
@@ -146,10 +149,28 @@ void main() {
 
     expect(find.text('Railay Beach'), findsOneWidget);
     expect(find.text('A limestone cove.'), findsOneWidget);
-    expect(find.textContaining('Ao Nang'), findsOneWidget);
+    // City/country is metadata, so it renders through `MonoText`, which
+    // uppercases by convention (SPEC §4.3) — hence 'AO NANG', not 'Ao Nang'.
+    expect(find.textContaining('AO NANG'), findsOneWidget);
     // Not yet confirmed — the button tap in _openWith just opened the
     // screen, this assertion runs against the still-open review UI.
     expect(result, isNull);
+  });
+
+  testWidgets('no summary resolved shows its own empty state, not the OCR one',
+      (tester) async {
+    await _openWith(
+      tester,
+      wikipedia: _FakeWikipedia(null),
+      geocoder: _FakeGeocoder(),
+      candidateName: 'Some Obscure Place',
+    );
+
+    expect(find.text('No summary found'), findsOneWidget);
+    expect(
+      find.text('No text found in this frame — you can type it in'),
+      findsNothing,
+    );
   });
 
   testWidgets('no location resolved shows the explicit empty state',
@@ -169,48 +190,50 @@ void main() {
 
   testWidgets('confirm returns the resolved candidate', (tester) async {
     ResolvedPlaceCandidate? result;
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        placeLocationSummaryFetcherProvider.overrideWithValue(
-          _FakeWikipedia(
-            const WikipediaLookup(summary: 'A cove.', lat: 8.0, lng: 98.8),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeLocationSummaryFetcherProvider.overrideWithValue(
+            _FakeWikipedia(
+              const WikipediaLookup(summary: 'A cove.', lat: 8.0, lng: 98.8),
+            ),
           ),
-        ),
-        geocoderProvider.overrideWithValue(
-          _FakeGeocoder(
-            reverseHit: const GeoResult(
-              name: 'x',
-              displayName: 'x',
-              lat: 8.0,
-              lon: 98.8,
-              country: 'Thailand',
-              city: 'Krabi',
+          geocoderProvider.overrideWithValue(
+            _FakeGeocoder(
+              reverseHit: const GeoResult(
+                name: 'x',
+                displayName: 'x',
+                lat: 8.0,
+                lon: 98.8,
+                country: 'Thailand',
+                city: 'Krabi',
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                result = await PlaceCandidateReviewScreen.open(
+                  context,
+                  candidateName: 'Railay Beach',
+                );
+              },
+              child: const Text('open'),
             ),
           ),
         ),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en')],
-        home: Builder(
-          builder: (context) => ElevatedButton(
-            onPressed: () async {
-              result = await PlaceCandidateReviewScreen.open(
-                context,
-                candidateName: 'Railay Beach',
-              );
-            },
-            child: const Text('open'),
-          ),
-        ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 

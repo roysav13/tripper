@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/geocoding_service.dart';
@@ -74,21 +75,28 @@ class _PlaceCandidateReviewScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // A place name is a name — serif (CLAUDE.md hard rule
+                    // 6), which is `titleLarge` in this app's TextTheme.
+                    // `headlineSmall` isn't defined there and silently fell
+                    // back to a Material sans default.
                     Text(
                       candidate.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     if (candidate.summary != null)
                       Text(candidate.summary!)
                     else
-                      Text(l10n.videoCaptureNoTextFound),
+                      Text(l10n.placeCandidateReviewNoSummary),
                     const SizedBox(height: AppSpacing.sm),
+                    // City/country is metadata — mono and muted, matching
+                    // how `PlaceRowCard` renders the same pair.
                     if (candidate.hasLocation)
-                      Text(
+                      MonoText(
                         [candidate.city, candidate.country]
                             .where((s) => s.isNotEmpty)
                             .join(', '),
+                        muted: true,
                       )
                     else
                       Text(l10n.placeCandidateReviewNoLocation),
