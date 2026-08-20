@@ -102,6 +102,110 @@ void main() {
     });
   });
 
+  group('parseWikipediaCoordinates', () {
+    test('reads lat/lon off a page that has them', () {
+      const body = '''
+{"type": "standard", "coordinates": {"lat": 8.0119, "lon": 98.8378}}
+''';
+      final result = parseWikipediaCoordinates(body);
+      expect(result, isNotNull);
+      expect(result!.lat, 8.0119);
+      expect(result.lng, 98.8378);
+    });
+
+    test('page with no coordinates field yields null', () {
+      expect(
+        parseWikipediaCoordinates('{"type": "standard", "extract": "x"}'),
+        isNull,
+      );
+    });
+
+    test('garbage input never throws', () {
+      expect(parseWikipediaCoordinates('{}'), isNull);
+      expect(parseWikipediaCoordinates('not json'), isNull);
+    });
+  });
+
+  group('WikipediaPlaceSummaryFetcher.lookup', () {
+    test('returns both summary and coordinates when the page has both',
+        () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/w/api.php') {
+          return http.Response(
+            '{"query": {"search": [{"title": "Railay Beach"}]}}',
+            200,
+          );
+        }
+        return http.Response(
+          '{"type": "standard", "extract": "A limestone cove.", '
+          '"coordinates": {"lat": 8.0119, "lon": 98.8378}}',
+          200,
+        );
+      });
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      final result = await fetcher.lookup(name: 'Railay Beach');
+
+      expect(result, isNotNull);
+      expect(result!.summary, 'A limestone cove.');
+      expect(result.lat, 8.0119);
+      expect(result.lng, 98.8378);
+      expect(result.hasCoordinates, isTrue);
+    });
+
+    test('summary-only page yields a result with null coordinates',
+        () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/w/api.php') {
+          return http.Response(
+            '{"query": {"search": [{"title": "Corner Store"}]}}',
+            200,
+          );
+        }
+        return http.Response('{"type": "standard", "extract": "A shop."}', 200);
+      });
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      final result = await fetcher.lookup(name: 'Corner Store');
+
+      expect(result!.summary, 'A shop.');
+      expect(result.hasCoordinates, isFalse);
+    });
+
+    test('no match at all degrades to null', () async {
+      final client = MockClient(
+        (request) async => http.Response('{"query": {"search": []}}', 200),
+      );
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.lookup(name: 'Zzzzznotaplace'), isNull);
+    });
+
+    test('transport failure degrades to null, never throws', () async {
+      final client = MockClient((request) async => throw Exception('down'));
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.lookup(name: 'Railay Beach'), isNull);
+    });
+
+    test('blank name is never even sent to the network', () async {
+      var called = false;
+      final client = MockClient((request) async {
+        called = true;
+        return http.Response('{}', 200);
+      });
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.lookup(name: '   '), isNull);
+      expect(called, isFalse);
+    });
+  });
+
+  test('NoopPlaceSummaryFetcher.lookup always returns null', () async {
+    const fetcher = NoopPlaceSummaryFetcher();
+    expect(await fetcher.lookup(name: 'Anywhere'), isNull);
+  });
+
   group('WikipediaPlaceSummaryFetcher', () {
     test(
         'with coordinates: geosearch match short-circuits straight to the '

@@ -18,14 +18,56 @@ abstract interface class PlaceSummaryFetcher {
   });
 }
 
+/// Wikipedia summary + coordinates for one resolved article — richer than
+/// [PlaceSummaryFetcher.fetchSummary]'s plain `String?`, used by the video
+/// place-capture flow (design spec §5.6), which needs a location hint
+/// before falling back to Google Places.
+@immutable
+class WikipediaLookup {
+  const WikipediaLookup({this.summary, this.lat, this.lng});
+
+  final String? summary;
+  final double? lat;
+  final double? lng;
+
+  bool get hasCoordinates => lat != null && lng != null;
+}
+
+/// A second, additive interface — deliberately separate from
+/// [PlaceSummaryFetcher] rather than adding a method to it, so every
+/// existing implementer/fake of [PlaceSummaryFetcher] (there are several
+/// in tests) keeps compiling unchanged.
+abstract interface class PlaceLocationSummaryFetcher {
+  /// Best-effort — never throws. Null means no article resolved, or the
+  /// resolved article had neither a usable summary nor coordinates.
+  Future<WikipediaLookup?> lookup({
+    required String name,
+    String city = '',
+    String country = '',
+    double? lat,
+    double? lng,
+  });
+}
+
 /// Always yields nothing — the default in tests (network stays off by
 /// default, CLAUDE.md hard rule 5) so a `placeSummaryFetcherProvider`
 /// left un-overridden never reaches out to the real Wikipedia API.
-class NoopPlaceSummaryFetcher implements PlaceSummaryFetcher {
+class NoopPlaceSummaryFetcher
+    implements PlaceSummaryFetcher, PlaceLocationSummaryFetcher {
   const NoopPlaceSummaryFetcher();
 
   @override
   Future<String?> fetchSummary({
+    required String name,
+    String city = '',
+    String country = '',
+    double? lat,
+    double? lng,
+  }) async =>
+      null;
+
+  @override
+  Future<WikipediaLookup?> lookup({
     required String name,
     String city = '',
     String country = '',
@@ -56,7 +98,8 @@ const _userAgent = 'tripper/0.1 (dev.roysav.tripper)';
 ///     already a short plain-text `extract`. Disambiguation pages ("Paris
 ///     may refer to...") are rejected rather than shown as if they were a
 ///     real summary.
-class WikipediaPlaceSummaryFetcher implements PlaceSummaryFetcher {
+class WikipediaPlaceSummaryFetcher
+    implements PlaceSummaryFetcher, PlaceLocationSummaryFetcher {
   WikipediaPlaceSummaryFetcher(this._client);
 
   final http.Client _client;
@@ -149,6 +192,13 @@ class WikipediaPlaceSummaryFetcher implements PlaceSummaryFetcher {
   }
 
   Future<String?> _fetchSummaryForTitle(String title) async {
+    final body = await _fetchPageBody(title);
+    return body == null ? null : parseWikipediaSummary(body);
+  }
+
+  /// Shared by [_fetchSummaryForTitle] and [lookup] — one GET, both
+  /// callers parse whatever fields they need out of the same body.
+  Future<String?> _fetchPageBody(String title) async {
     final encodedTitle = Uri.encodeComponent(title.replaceAll(' ', '_'));
     final response = await _client.get(
       Uri.parse(
@@ -156,8 +206,41 @@ class WikipediaPlaceSummaryFetcher implements PlaceSummaryFetcher {
       ),
       headers: {'User-Agent': _userAgent},
     ).timeout(const Duration(seconds: 8));
-    if (response.statusCode != 200) return null;
-    return parseWikipediaSummary(response.body);
+    return response.statusCode == 200 ? response.body : null;
+  }
+
+  @override
+  Future<WikipediaLookup?> lookup({
+    required String name,
+    String city = '',
+    String country = '',
+    double? lat,
+    double? lng,
+  }) async {
+    if (name.trim().isEmpty) return null;
+    try {
+      final title = await _resolveTitle(
+        name: name,
+        city: city,
+        country: country,
+        lat: lat,
+        lng: lng,
+      );
+      if (title == null) return null;
+      final body = await _fetchPageBody(title);
+      if (body == null) return null;
+      final summary = parseWikipediaSummary(body);
+      final coords = parseWikipediaCoordinates(body);
+      if (summary == null && coords == null) return null;
+      return WikipediaLookup(
+        summary: summary,
+        lat: coords?.lat,
+        lng: coords?.lng,
+      );
+    } catch (e) {
+      debugPrint('[places] wikipedia lookup failed: $e');
+      return null;
+    }
   }
 }
 
@@ -199,6 +282,26 @@ String? parseWikipediaSummary(String body) {
   if (decoded['type'] == 'disambiguation') return null;
   final extract = decoded['extract']?.toString().trim();
   return (extract == null || extract.isEmpty) ? null : extract;
+}
+
+/// Pure parser — unit-tested against fixture JSON, no network. The REST
+/// summary endpoint carries a top-level `coordinates` object when the
+/// article has one; most articles don't, and that's a normal null, not
+/// a failure.
+({double lat, double lng})? parseWikipediaCoordinates(String body) {
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(body);
+  } on FormatException {
+    return null;
+  }
+  if (decoded is! Map<String, dynamic>) return null;
+  final coords = decoded['coordinates'];
+  if (coords is! Map<String, dynamic>) return null;
+  final lat = (coords['lat'] as num?)?.toDouble();
+  final lon = (coords['lon'] as num?)?.toDouble();
+  if (lat == null || lon == null) return null;
+  return (lat: lat, lng: lon);
 }
 
 /// Proximity alone is weak evidence — the nearest Wikipedia article to a
