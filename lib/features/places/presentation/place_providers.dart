@@ -32,6 +32,15 @@ final placeSummaryFetcherProvider = Provider<PlaceSummaryFetcher>(
   (ref) => WikipediaPlaceSummaryFetcher(http.Client()),
 );
 
+/// Separate instance from [placeSummaryFetcherProvider] (same underlying
+/// class, different interface) — deliberately not derived from it via a
+/// cast, so overriding one in a test never silently affects the other.
+/// See design spec §5.6.
+final placeLocationSummaryFetcherProvider =
+    Provider<PlaceLocationSummaryFetcher>(
+  (ref) => WikipediaPlaceSummaryFetcher(http.Client()),
+);
+
 final placeListProvider = StreamProvider<List<Place>>(
   (ref) => ref.watch(placeRepositoryProvider).watchAll(),
 );
