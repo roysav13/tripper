@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -141,6 +142,7 @@ class WebViewMapsListScraper implements MapsListScraper {
   }
 
   Future<ScrapedMapsList?> _collect(WebViewController controller) async {
+    await _logDomForDebugging(controller);
     final rawTitle = await controller.getTitle();
     final names = <String>{};
     for (var i = 0; i < _maxScrollIterations; i++) {
@@ -166,23 +168,70 @@ class WebViewMapsListScraper implements MapsListScraper {
         "'$_placeNameSelector')).map(e => e.textContent.trim())"
         '.filter(t => t.length > 0))',
       );
-      // Android's WebView can return a JSON-encoded *string literal*
-      // (quotes escaped) rather than raw JSON for a runJavaScript result —
-      // decode twice when that's the shape.
-      var value = raw is String ? raw : raw.toString();
-      try {
-        final once = jsonDecode(value);
-        if (once is String) value = once;
-      } catch (_) {
-        // Already the right shape.
-      }
-      final list = jsonDecode(value);
+      final list = jsonDecode(_unwrapJsResult(raw));
       if (list is List) return list.whereType<String>().toList();
     } catch (_) {
       // Malformed/unexpected JS result — treat as "found nothing this
       // pass", not a fatal error (the loop's stability check handles it).
     }
     return const [];
+  }
+
+  /// TEMPORARY diagnostic (remove once `_feedSelector`/`_placeNameSelector`
+  /// are confirmed against a real device): dumps role-attribute counts,
+  /// how many elements the current selectors match, and a chunk of the
+  /// best-guess container's outerHTML to `flutter logs`/logcat (tag
+  /// "flutter"), so the actual DOM shape can drive fixing the selectors
+  /// instead of guessing. Debug builds only.
+  Future<void> _logDomForDebugging(WebViewController controller) async {
+    if (!kDebugMode) return;
+    try {
+      final roleCounts = await controller.runJavaScriptReturningResult(
+        'JSON.stringify((() => { const c = {}; '
+        "document.querySelectorAll('[role]').forEach(e => { "
+        "const r = e.getAttribute('role'); c[r] = (c[r] || 0) + 1; }); "
+        'return c; })())',
+      );
+      debugPrint(
+        '[MapsListScraper] role counts: ${_unwrapJsResult(roleCounts)}',
+      );
+
+      final feedCount = await controller.runJavaScriptReturningResult(
+        "document.querySelectorAll('$_feedSelector').length",
+      );
+      debugPrint('[MapsListScraper] "$_feedSelector" matches: $feedCount');
+
+      final nameCount = await controller.runJavaScriptReturningResult(
+        "document.querySelectorAll('$_placeNameSelector').length",
+      );
+      debugPrint(
+        '[MapsListScraper] "$_placeNameSelector" matches: $nameCount',
+      );
+
+      final html = await controller.runJavaScriptReturningResult(
+        "JSON.stringify((document.querySelector('$_feedSelector') "
+        "|| document.querySelector('[role=\"main\"]') "
+        '|| document.body).outerHTML.slice(0, 8000))',
+      );
+      debugPrint('[MapsListScraper] container outerHTML (first 8000 chars):');
+      debugPrint(_unwrapJsResult(html));
+    } catch (e) {
+      debugPrint('[MapsListScraper] DOM dump failed: $e');
+    }
+  }
+
+  /// Android's WebView can return a JSON-encoded *string literal* (quotes
+  /// escaped) rather than raw JSON for a `runJavaScriptReturningResult`
+  /// call — decode twice when that's the shape.
+  String _unwrapJsResult(Object result) {
+    var value = result is String ? result : result.toString();
+    try {
+      final once = jsonDecode(value);
+      if (once is String) value = once;
+    } catch (_) {
+      // Already the right shape.
+    }
+    return value;
   }
 }
 
