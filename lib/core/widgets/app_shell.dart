@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/places/data/geocoding_service.dart';
-import '../../features/places/presentation/add_place_screen.dart';
 import '../../features/vault/presentation/document_form_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../sharing/maps_link.dart';
+import '../sharing/maps_share_routing.dart';
 import '../sharing/share_intent_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -36,32 +35,15 @@ class AppShell extends ConsumerWidget {
         );
         return;
       }
-      // Text share: a Google Maps link becomes a place (SPEC §3.1).
+      // Text share: a Google Maps link becomes a place, or — for a shared
+      // list — opens the bulk-import review screen (SPEC §3.1,
+      // docs/superpowers/specs/2026-08-19-google-maps-list-share-design.md).
       final result =
           await ref.read(mapsLinkServiceProvider).expand(share.texts.first);
       if (result == null) return;
-
-      // For now, only handle place shares (list shares are handled in later tasks).
-      if (result is! MapsPlaceShare) return;
-
-      // Fill in whatever the link didn't carry (city/country, or coords).
-      final prefill = await enrichSharedPlace(
-        geocoder: ref.read(geocoderProvider),
-        name: result.link.name,
-        lat: result.link.lat,
-        lng: result.link.lng,
-      );
       if (!context.mounted) return;
       navigationShell.goBranch(2);
-      await AddPlaceScreen.open(
-        context,
-        initialName: prefill.name,
-        initialLat: prefill.lat,
-        initialLng: prefill.lng,
-        initialCountry: prefill.country,
-        initialCity: prefill.city,
-        initialNotes: prefill.lat == null ? result.link.url : '',
-      );
+      await openMapsShareResult(context, ref, result);
     });
     return Scaffold(
       body: navigationShell,
