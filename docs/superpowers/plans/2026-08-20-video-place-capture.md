@@ -1729,11 +1729,12 @@ git commit -m "feat(places): add video frame capture and OCR review screen"
 
 **Files:**
 - Create: `lib/features/places/presentation/place_candidate_review_screen.dart`
+- Modify: `lib/features/places/presentation/place_providers.dart` (add `placeLocationSummaryFetcherProvider`)
 - Test: `test/widget/places/place_candidate_review_screen_test.dart`
 
 **Interfaces:**
-- Consumes: `resolvePlaceCandidate` (Task 4), `PlaceLocationSummaryFetcher`/`Geocoder` providers.
-- Produces: `PlaceCandidateReviewScreen.open(BuildContext context, {required String candidateName}) -> Future<ResolvedPlaceCandidate?>` — returns the candidate the user confirmed, or `null` if they cancelled. Consumed by Task 10.
+- Consumes: `resolvePlaceCandidate`/`ResolvedPlaceCandidate` (Task 4), `PlaceLocationSummaryFetcher` (Task 3), `geocoderProvider` (existing).
+- Produces: `PlaceCandidateReviewScreen.open(BuildContext context, {required String candidateName}) -> Future<ResolvedPlaceCandidate?>` — returns the candidate the user confirmed, or `null` if they cancelled. Consumed by Task 10. Also produces `placeLocationSummaryFetcherProvider` (`Provider<PlaceLocationSummaryFetcher>`) in `place_providers.dart`.
 
 - [ ] **Step 1: Write the failing tests**
 
