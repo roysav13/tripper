@@ -118,6 +118,13 @@ class WebViewMapsListScraper implements MapsListScraper {
         ),
       ),
     );
+    // MapsListImportScreen.initState() calls scrape() synchronously as part
+    // of its own push's build phase, while the navigator is still locked —
+    // pushing the invisible WebView route right here would hit
+    // "'!navigator._debugLocked': is not true" (confirmed on-device, see
+    // Task 3 Step 8's manual-verification note). Defer to the frame after
+    // the current build finishes.
+    await WidgetsBinding.instance.endOfFrame;
     unawaited(navigator.push(route));
 
     final overallTimeout = Timer(_scrapeTimeout, () => complete(null));
