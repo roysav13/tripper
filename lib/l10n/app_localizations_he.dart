@@ -1044,6 +1044,55 @@ class AppLocalizationsHe extends AppLocalizations {
   String get placeFormNoTrip => 'ללא טיול';
 
   @override
+  String get videoCaptureTitle => 'Capture place from video';
+
+  @override
+  String get videoCaptureFetching => 'Fetching video…';
+
+  @override
+  String get videoCaptureFetchFailedTitle => 'Couldn\'t fetch this video';
+
+  @override
+  String get videoCaptureFetchFailedBody =>
+      'Try sharing the link again, or add the place manually from the Places tab.';
+
+  @override
+  String get videoCaptureButton => 'Capture this frame';
+
+  @override
+  String get videoCaptureRecapture => 'Try another frame';
+
+  @override
+  String get videoCaptureRecognizedLabel => 'Recognized text';
+
+  @override
+  String get videoCaptureRecognizedHint =>
+      'Edit before continuing — check it\'s right';
+
+  @override
+  String get videoCaptureNoTextFound =>
+      'No text found in this frame — you can type it in';
+
+  @override
+  String get videoCaptureLookUp => 'Look up';
+
+  @override
+  String get placeCandidateReviewTitle => 'Review place';
+
+  @override
+  String get placeCandidateReviewLookingUp => 'Looking up…';
+
+  @override
+  String get placeCandidateReviewNoLocation =>
+      'No location found — you can add one manually next';
+
+  @override
+  String get placeCandidateReviewConfirm => 'Add this place';
+
+  @override
+  String get placeCandidateReviewCancel => 'Cancel';
+
+  @override
   String tripPlacesProgress(int visited, int total) {
     return 'ביקרת ב-$visited מתוך $total';
   }

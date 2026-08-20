@@ -1856,6 +1856,96 @@ abstract class AppLocalizations {
   /// **'No trip'**
   String get placeFormNoTrip;
 
+  /// No description provided for @videoCaptureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture place from video'**
+  String get videoCaptureTitle;
+
+  /// No description provided for @videoCaptureFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching video…'**
+  String get videoCaptureFetching;
+
+  /// No description provided for @videoCaptureFetchFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t fetch this video'**
+  String get videoCaptureFetchFailedTitle;
+
+  /// No description provided for @videoCaptureFetchFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try sharing the link again, or add the place manually from the Places tab.'**
+  String get videoCaptureFetchFailedBody;
+
+  /// No description provided for @videoCaptureButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture this frame'**
+  String get videoCaptureButton;
+
+  /// No description provided for @videoCaptureRecapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another frame'**
+  String get videoCaptureRecapture;
+
+  /// No description provided for @videoCaptureRecognizedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized text'**
+  String get videoCaptureRecognizedLabel;
+
+  /// No description provided for @videoCaptureRecognizedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit before continuing — check it\'s right'**
+  String get videoCaptureRecognizedHint;
+
+  /// No description provided for @videoCaptureNoTextFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No text found in this frame — you can type it in'**
+  String get videoCaptureNoTextFound;
+
+  /// No description provided for @videoCaptureLookUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up'**
+  String get videoCaptureLookUp;
+
+  /// No description provided for @placeCandidateReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review place'**
+  String get placeCandidateReviewTitle;
+
+  /// No description provided for @placeCandidateReviewLookingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking up…'**
+  String get placeCandidateReviewLookingUp;
+
+  /// No description provided for @placeCandidateReviewNoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No location found — you can add one manually next'**
+  String get placeCandidateReviewNoLocation;
+
+  /// No description provided for @placeCandidateReviewConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Add this place'**
+  String get placeCandidateReviewConfirm;
+
+  /// No description provided for @placeCandidateReviewCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get placeCandidateReviewCancel;
+
   /// No description provided for @tripPlacesProgress.
   ///
   /// In en, this message translates to:
