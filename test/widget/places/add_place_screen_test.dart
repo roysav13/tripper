@@ -74,6 +74,23 @@ class _FixedSummaryFetcher implements PlaceSummaryFetcher {
       result;
 }
 
+class _CountingSummaryFetcher implements PlaceSummaryFetcher {
+  _CountingSummaryFetcher(this.onCalled);
+  final VoidCallback onCalled;
+
+  @override
+  Future<String?> fetchSummary({
+    required String name,
+    String city = '',
+    String country = '',
+    double? lat,
+    double? lng,
+  }) async {
+    onCalled();
+    return 'should not be used';
+  }
+}
+
 Widget _app(
   FakeGeocoder geocoder,
   FakePlaceRepository repo, {
@@ -305,5 +322,53 @@ void main() {
     final saved = (await repo.watchAll().first).single;
     final memberships = await collectionRepo.watchMembershipsByPlace().first;
     expect(memberships[saved.id], {collections.single.id});
+  });
+
+  testWidgets(
+      'a pre-resolved summary is stored directly, without re-fetching',
+      (tester) async {
+    final repo = FakePlaceRepository([]);
+    var fetchCalled = false;
+    // Built directly with `initialSummary` rather than through the
+    // existing `_app()` helper above — that helper's `home:` doesn't take
+    // this new param, and this is the one test in this file that needs it.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          geocoderProvider.overrideWithValue(FakeGeocoder([_railay])),
+          placeRepositoryProvider.overrideWithValue(repo),
+          placeCollectionRepositoryProvider
+              .overrideWithValue(FakePlaceCollectionRepository([])),
+          tripRepositoryProvider.overrideWithValue(FakeTripRepository([])),
+          clockProvider.overrideWithValue(() => DateTime(2026, 7, 19)),
+          placeSummaryFetcherProvider.overrideWithValue(
+            _CountingSummaryFetcher(() => fetchCalled = true),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const AddPlaceScreen(
+            renderMap: false,
+            initialName: 'Railay Beach',
+            initialSummary: 'A limestone cove.',
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = (await repo.watchAll().first).single;
+    expect(saved.summary, 'A limestone cove.');
+    expect(fetchCalled, isFalse);
   });
 }

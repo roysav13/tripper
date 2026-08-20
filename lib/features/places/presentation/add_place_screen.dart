@@ -32,6 +32,7 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
     this.initialCountry,
     this.initialCity,
     this.initialNotes,
+    this.initialSummary,
     this.renderMap = true,
   });
 
@@ -45,6 +46,13 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
   final String? initialCity;
   final String? initialNotes;
 
+  /// Pre-resolved via the video place-capture flow's Wikipedia-then-Places
+  /// lookup (design spec §5.6) — when set, `_save()` stores this directly
+  /// instead of re-fetching, so what the user reviewed before adding is
+  /// exactly what gets saved. Every other caller leaves this null and
+  /// behavior is unchanged from before this field existed.
+  final String? initialSummary;
+
   /// False in widget tests: Google Maps needs a platform view.
   final bool renderMap;
 
@@ -57,6 +65,7 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
     String? initialCountry,
     String? initialCity,
     String? initialNotes,
+    String? initialSummary,
   }) {
     return Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
@@ -69,6 +78,7 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
           initialCountry: initialCountry,
           initialCity: initialCity,
           initialNotes: initialNotes,
+          initialSummary: initialSummary,
         ),
       ),
     );
@@ -578,18 +588,25 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     }
     // Enhancement, not a gate (CLAUDE.md hard rule 4) — the save flow
     // doesn't wait on this, and any failure just leaves the summary empty.
-    unawaited(
-      fetchAndStorePlaceSummary(
-        fetcher: summaryFetcher,
-        repo: repo,
-        placeId: id,
-        name: name,
-        city: _city,
-        country: _country,
-        lat: lat,
-        lng: lng,
-      ),
-    );
+    // Pre-resolved (video place-capture flow) skips the fetch entirely —
+    // storing exactly what the user already reviewed rather than
+    // re-querying Wikipedia a second time with the same inputs.
+    if (widget.initialSummary != null) {
+      unawaited(repo.setSummary(id, summary: widget.initialSummary));
+    } else {
+      unawaited(
+        fetchAndStorePlaceSummary(
+          fetcher: summaryFetcher,
+          repo: repo,
+          placeId: id,
+          name: name,
+          city: _city,
+          country: _country,
+          lat: lat,
+          lng: lng,
+        ),
+      );
+    }
     if (mounted) Navigator.of(context).pop();
   }
 }
