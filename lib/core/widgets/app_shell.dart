@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/places/data/geocoding_service.dart';
 import '../../features/places/presentation/add_place_screen.dart';
+import '../../features/places/presentation/place_candidate_review_screen.dart';
+import '../../features/places/presentation/video_frame_capture_screen.dart';
 import '../../features/vault/presentation/document_form_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../sharing/maps_link.dart';
 import '../sharing/share_intent_service.dart';
+import '../sharing/tiktok_link.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
@@ -33,6 +36,30 @@ class AppShell extends ConsumerWidget {
         await showDocumentFormSheet(
           context,
           initialFilePath: share.files.first.path,
+        );
+        return;
+      }
+      final text = share.texts.first;
+      // A TikTok link routes into the video place-capture flow instead of
+      // the Maps-link path below (design spec §5.1).
+      if (parseTikTokShare(text) != null) {
+        navigationShell.goBranch(2);
+        final candidateName =
+            await VideoFrameCaptureScreen.open(context, sharedText: text);
+        if (candidateName == null || !context.mounted) return;
+        final candidate = await PlaceCandidateReviewScreen.open(
+          context,
+          candidateName: candidateName,
+        );
+        if (candidate == null || !context.mounted) return;
+        await AddPlaceScreen.open(
+          context,
+          initialName: candidate.name,
+          initialLat: candidate.lat,
+          initialLng: candidate.lng,
+          initialCountry: candidate.country,
+          initialCity: candidate.city,
+          initialSummary: candidate.summary,
         );
         return;
       }
