@@ -119,24 +119,48 @@ class MapsLinkService {
   final http.Client _client;
 
   Future<MapsShareResult?> expand(String text) async {
+    _log('shared text: "$text"');
     final link = parseMapsShare(text);
-    if (link == null) return null;
+    if (link == null) {
+      _log('parseMapsShare found no Maps link -> null');
+      return null;
+    }
+    _log(
+      'parsed link: url="${link.url}" name="${link.name}" '
+      'hasCoordinates=${link.hasCoordinates} '
+      'isShortMapsLink=${isShortMapsLink(link.url)} '
+      'isMapsListShareUrl=${isMapsListShareUrl(link.url)}',
+    );
     // A pasted/shared list link is recognizable before any resolution —
     // check it first so a directly-pasted (non-short) list URL never
     // falls through to place parsing.
     if (isMapsListShareUrl(link.url)) {
+      _log('-> MapsListShare (pre-redirect URL already matched)');
       return MapsListShare(url: link.url, nameGuess: link.name);
     }
     if (link.hasCoordinates || !isShortMapsLink(link.url)) {
+      _log(
+        '-> MapsPlaceShare (hasCoordinates=${link.hasCoordinates}, '
+        'not a short link, or both -- never resolved)',
+      );
       return MapsPlaceShare(link);
     }
     try {
       final resolved = await _resolveRedirects(link.url);
+      _log(
+        'resolved short link to: "$resolved" '
+        'isMapsListShareUrl=${isMapsListShareUrl(resolved)}',
+      );
       if (isMapsListShareUrl(resolved)) {
+        _log('-> MapsListShare (post-redirect URL matched)');
         return MapsListShare(url: resolved, nameGuess: link.name);
       }
       final expanded = parseMapsShare(resolved);
-      if (expanded == null) return MapsPlaceShare(link);
+      if (expanded == null) {
+        _log('-> MapsPlaceShare (resolved URL did not parse as a Maps link)');
+        return MapsPlaceShare(link);
+      }
+      _log('-> MapsPlaceShare (resolved to a place)');
       return MapsPlaceShare(
         MapsLink(
           url: link.url,
@@ -145,10 +169,18 @@ class MapsLinkService {
           lng: expanded.lng,
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      _log('-> MapsPlaceShare (offline/error fallback: $e)');
       // Offline fallback: name + url only, "locate later".
       return MapsPlaceShare(link);
     }
+  }
+
+  /// TEMPORARY diagnostic (remove once list-share detection is confirmed
+  /// against a real device): traces expand()'s decision path to
+  /// `flutter logs`/logcat. Debug builds only.
+  void _log(String message) {
+    if (kDebugMode) debugPrint('[MapsLinkService] $message');
   }
 
   /// Follows redirects; when the chain ends on an HTML page (Google often
