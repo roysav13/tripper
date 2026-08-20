@@ -96,7 +96,23 @@ class WebViewMapsListScraper implements MapsListScraper {
               complete(null);
             }
           },
-          onWebResourceError: (_) => complete(null),
+          onWebResourceError: (error) {
+            if (kDebugMode) {
+              debugPrint(
+                '[MapsListScraper] onWebResourceError: '
+                'isForMainFrame=${error.isForMainFrame} '
+                'errorCode=${error.errorCode} '
+                'errorType=${error.errorType} '
+                'description=${error.description}',
+              );
+            }
+            // A failed subresource (a blocked ad/analytics ping, a font,
+            // anything) fires this same callback -- only a main-frame
+            // failure means the list page itself never loaded. `null`
+            // means "unknown", which some platforms report for the main
+            // frame too, so it isn't excluded.
+            if (error.isForMainFrame != false) complete(null);
+          },
         ),
       ),
     );
