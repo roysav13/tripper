@@ -8,6 +8,7 @@ import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/location/location_providers.dart';
 import '../../../core/location/location_service.dart';
 import '../../../core/settings/settings_service.dart';
+import '../../../core/sharing/maps_share_routing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -25,6 +26,7 @@ import '../domain/place.dart';
 import '../domain/place_collection.dart';
 import '../domain/place_sort.dart';
 import 'add_place_screen.dart';
+import 'import_maps_list_dialog.dart';
 import 'nearby_anchor_sheet.dart';
 import 'place_actions_sheet.dart';
 import 'place_collection_providers.dart';
@@ -79,6 +81,24 @@ class PlacesScreen extends ConsumerWidget {
   }
 }
 
+enum _AddMenuAction { addPlace, importList }
+
+Future<void> _onAddMenuAction(
+  BuildContext context,
+  WidgetRef ref,
+  _AddMenuAction action,
+  AppLocalizations l10n,
+) async {
+  switch (action) {
+    case _AddMenuAction.addPlace:
+      await AddPlaceScreen.open(context);
+    case _AddMenuAction.importList:
+      final result = await promptMapsListUrl(context, ref);
+      if (result == null || !context.mounted) return;
+      await openMapsShareResult(context, ref, result);
+  }
+}
+
 class _PlacesScreenBody extends ConsumerWidget {
   const _PlacesScreenBody({
     required this.all,
@@ -130,10 +150,21 @@ class _PlacesScreenBody extends ConsumerWidget {
               tooltip: l10n.nearbyEntryTooltip,
               onPressed: () => showNearbyAnchorSheet(context, ref, places: all),
             ),
-          IconButton(
+          PopupMenuButton<_AddMenuAction>(
             icon: Icon(Icons.add, color: colors.accent),
-            tooltip: l10n.placesEmptyCta,
-            onPressed: () => AddPlaceScreen.open(context),
+            tooltip: l10n.placesAddButtonTooltip,
+            onSelected: (action) =>
+                _onAddMenuAction(context, ref, action, l10n),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _AddMenuAction.addPlace,
+                child: Text(l10n.placesMenuAddPlace),
+              ),
+              PopupMenuItem(
+                value: _AddMenuAction.importList,
+                child: Text(l10n.placesMenuImportList),
+              ),
+            ],
           ),
         ],
       ),
