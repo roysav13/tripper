@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/geocoding_service.dart';
 import '../data/place_candidate_resolver.dart';
@@ -68,48 +69,50 @@ class _PlaceCandidateReviewScreenState
           ? Center(child: Text(l10n.placeCandidateReviewLookingUp))
           : Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    candidate.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (candidate.summary != null)
-                    Text(candidate.summary!)
-                  else
-                    Text(l10n.videoCaptureNoTextFound),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (candidate.hasLocation)
+              child: PaperCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      [candidate.city, candidate.country]
-                          .where((s) => s.isNotEmpty)
-                          .join(', '),
-                    )
-                  else
-                    Text(l10n.placeCandidateReviewNoLocation),
-                  const SizedBox(height: AppSpacing.lg),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(l10n.placeCandidateReviewCancel),
+                      candidate.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (candidate.summary != null)
+                      Text(candidate.summary!)
+                    else
+                      Text(l10n.videoCaptureNoTextFound),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (candidate.hasLocation)
+                      Text(
+                        [candidate.city, candidate.country]
+                            .where((s) => s.isNotEmpty)
+                            .join(', '),
+                      )
+                    else
+                      Text(l10n.placeCandidateReviewNoLocation),
+                    const SizedBox(height: AppSpacing.lg),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(l10n.placeCandidateReviewCancel),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () =>
-                              Navigator.of(context).pop(candidate),
-                          child: Text(l10n.placeCandidateReviewConfirm),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(candidate),
+                            child: Text(l10n.placeCandidateReviewConfirm),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
     );

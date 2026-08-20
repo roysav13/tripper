@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/places/data/geocoding_service.dart';
 import 'package:tripper/features/places/data/place_summary_service.dart';
 import 'package:tripper/features/places/presentation/place_candidate_review_screen.dart';
@@ -49,6 +50,7 @@ Future<ResolvedPlaceCandidate?> _openWith(
       geocoderProvider.overrideWithValue(geocoder),
     ],
     child: MaterialApp(
+      theme: AppTheme.light(),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -83,6 +85,7 @@ void main() {
         geocoderProvider.overrideWithValue(_FakeGeocoder()),
       ],
       child: MaterialApp(
+        theme: AppTheme.light(),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -187,6 +190,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
+        theme: AppTheme.light(),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
