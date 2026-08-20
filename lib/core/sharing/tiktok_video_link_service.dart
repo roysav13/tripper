@@ -25,22 +25,22 @@ class TikTokVideoLinkService {
     final link = parseTikTokShare(sharedText);
     if (link == null) return null;
     try {
-      final pageUrl = await _resolveRedirects(link);
-      final response = await _client.get(
-        Uri.parse(pageUrl),
-        headers: {'User-Agent': _userAgent},
-      ).timeout(const Duration(seconds: 8));
-      if (response.statusCode != 200) return null;
-      final videoUrl = extractTikTokVideoUrl(response.body);
+      final pageBody = await _resolveRedirects(link);
+      if (pageBody == null) return null;
+      final videoUrl = extractTikTokVideoUrl(pageBody);
       return videoUrl == null ? null : Uri.tryParse(videoUrl);
     } catch (_) {
       return null;
     }
   }
 
-  /// Same technique as `MapsLinkService._resolveRedirects` — TikTok's
-  /// short links (`vt.tiktok.com`/`vm.tiktok.com`) 302 to the real page.
-  Future<String> _resolveRedirects(String url) async {
+  /// Follows redirect chains and fetches the final page body in one request.
+  /// TikTok's short links (`vt.tiktok.com`/`vm.tiktok.com`) 302 to the real
+  /// page. Returns the response body as a string, or null on any error.
+  /// Pattern matches `MapsLinkService._resolveRedirects`: reads the body via
+  /// `response.stream.bytesToString()` when the redirect chain ends, avoiding
+  /// a redundant second request.
+  Future<String?> _resolveRedirects(String url) async {
     var current = url;
     for (var i = 0; i < 6; i++) {
       final request = http.Request('GET', Uri.parse(current))
@@ -49,10 +49,21 @@ class TikTokVideoLinkService {
       final response =
           await _client.send(request).timeout(const Duration(seconds: 8));
       final location = response.headers['location'];
-      if (location == null) return current;
+      if (location == null) {
+        // No redirect — this is the final response
+        if (response.statusCode != 200) return null;
+        return await response.stream.bytesToString();
+      }
       current = Uri.parse(current).resolve(location).toString();
     }
-    return current;
+    // Max redirects reached — fetch the final URL one more time
+    final request = http.Request('GET', Uri.parse(current))
+      ..followRedirects = false
+      ..headers['User-Agent'] = _userAgent;
+    final response =
+        await _client.send(request).timeout(const Duration(seconds: 8));
+    if (response.statusCode != 200) return null;
+    return await response.stream.bytesToString();
   }
 }
 
@@ -78,7 +89,7 @@ String? extractTikTokVideoUrl(String html) {
   try {
     final decoded = jsonDecode(scriptMatch.group(1)!);
     final videoUrl = _findPlayAddr(decoded);
-    return videoUrl?.replaceAll(r'/', '/');
+    return videoUrl;
   } catch (_) {
     return null;
   }

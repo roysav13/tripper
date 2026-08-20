@@ -47,7 +47,8 @@ void main() {
 
     test('missing script tag yields null', () {
       expect(extractTikTokVideoUrl('<html><body>nothing here</body></html>'),
-          isNull);
+          isNull,
+      );
     });
 
     test('malformed JSON yields null, never throws', () {
@@ -87,7 +88,8 @@ void main() {
         }
         if (request.url.host == 'www.tiktok.com') {
           return http.Response(_pageWithVideo('https://v.tiktokcdn.com/x.mp4'),
-              200);
+              200,
+          );
         }
         return http.Response('', 404);
       });
