@@ -15,28 +15,6 @@ class MapsLink {
   bool get hasCoordinates => lat != null && lng != null;
 }
 
-/// What [MapsLinkService.expand] resolves a share to: either one place, or
-/// a whole list (Google Maps List share — see the design spec). Callers
-/// (`app_shell.dart`'s share listener, the manual paste dialog) branch on
-/// this via `openMapsShareResult` rather than duplicating the decision.
-sealed class MapsShareResult {}
-
-class MapsPlaceShare extends MapsShareResult {
-  MapsPlaceShare(this.link);
-  final MapsLink link;
-}
-
-class MapsListShare extends MapsShareResult {
-  MapsListShare({required this.url, this.nameGuess});
-
-  /// Resolved list URL — handed to `MapsListScraper.scrape`.
-  final String url;
-
-  /// Best-effort name from surrounding share text (e.g. "Check out my
-  /// list! <link>") — often null; the scraper's own title takes priority.
-  final String? nameGuess;
-}
-
 final _urlPattern = RegExp(r'https?://\S+');
 final _atCoords = RegExp(r'@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)');
 final _qCoords = RegExp(r'^(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)$');
@@ -54,19 +32,6 @@ bool isShortMapsLink(String url) {
   if (uri == null) return false;
   final host = uri.host.toLowerCase();
   return host == 'maps.app.goo.gl' || host == 'goo.gl';
-}
-
-/// A Google Maps **list** share (Maps' "Share list") resolves to an opaque
-/// share token, not coordinates — `/maps/@/data=!...!11m2!2s<id>!3e3!...`,
-/// with no `/place/` segment. Confirmed against a real captured list link
-/// during design (see the spec) — no rendering needed to tell these apart
-/// from a single-place share, just the resolved URL shape.
-bool isMapsListShareUrl(String url) {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return false;
-  return uri.path.startsWith('/maps/@/data=') &&
-      uri.path.contains('!11m2!2s') &&
-      uri.path.contains('!3e3');
 }
 
 /// Pure parser (unit-tested): pulls a Maps URL out of shared text and
@@ -118,69 +83,23 @@ class MapsLinkService {
 
   final http.Client _client;
 
-  Future<MapsShareResult?> expand(String text) async {
-    _log('shared text: "$text"');
+  Future<MapsLink?> expand(String text) async {
     final link = parseMapsShare(text);
-    if (link == null) {
-      _log('parseMapsShare found no Maps link -> null');
-      return null;
-    }
-    _log(
-      'parsed link: url="${link.url}" name="${link.name}" '
-      'hasCoordinates=${link.hasCoordinates} '
-      'isShortMapsLink=${isShortMapsLink(link.url)} '
-      'isMapsListShareUrl=${isMapsListShareUrl(link.url)}',
-    );
-    // A pasted/shared list link is recognizable before any resolution —
-    // check it first so a directly-pasted (non-short) list URL never
-    // falls through to place parsing.
-    if (isMapsListShareUrl(link.url)) {
-      _log('-> MapsListShare (pre-redirect URL already matched)');
-      return MapsListShare(url: link.url, nameGuess: link.name);
-    }
-    if (link.hasCoordinates || !isShortMapsLink(link.url)) {
-      _log(
-        '-> MapsPlaceShare (hasCoordinates=${link.hasCoordinates}, '
-        'not a short link, or both -- never resolved)',
-      );
-      return MapsPlaceShare(link);
-    }
+    if (link == null) return null;
+    if (link.hasCoordinates || !isShortMapsLink(link.url)) return link;
     try {
       final resolved = await _resolveRedirects(link.url);
-      _log(
-        'resolved short link to: "$resolved" '
-        'isMapsListShareUrl=${isMapsListShareUrl(resolved)}',
-      );
-      if (isMapsListShareUrl(resolved)) {
-        _log('-> MapsListShare (post-redirect URL matched)');
-        return MapsListShare(url: resolved, nameGuess: link.name);
-      }
       final expanded = parseMapsShare(resolved);
-      if (expanded == null) {
-        _log('-> MapsPlaceShare (resolved URL did not parse as a Maps link)');
-        return MapsPlaceShare(link);
-      }
-      _log('-> MapsPlaceShare (resolved to a place)');
-      return MapsPlaceShare(
-        MapsLink(
-          url: link.url,
-          name: expanded.name ?? link.name,
-          lat: expanded.lat,
-          lng: expanded.lng,
-        ),
+      if (expanded == null) return link;
+      return MapsLink(
+        url: link.url,
+        name: expanded.name ?? link.name,
+        lat: expanded.lat,
+        lng: expanded.lng,
       );
-    } catch (e) {
-      _log('-> MapsPlaceShare (offline/error fallback: $e)');
-      // Offline fallback: name + url only, "locate later".
-      return MapsPlaceShare(link);
+    } catch (_) {
+      return link; // offline fallback: name + url only, "locate later"
     }
-  }
-
-  /// TEMPORARY diagnostic (remove once list-share detection is confirmed
-  /// against a real device): traces expand()'s decision path to
-  /// `flutter logs`/logcat. Debug builds only.
-  void _log(String message) {
-    if (kDebugMode) debugPrint('[MapsLinkService] $message');
   }
 
   /// Follows redirects; when the chain ends on an HTML page (Google often
@@ -197,11 +116,8 @@ class MapsLinkService {
       final location = response.headers['location'];
       if (location != null) {
         current = Uri.parse(current).resolve(location).toString();
-        // Already carries coordinates, or is a list share (nothing useful
-        // to read from the body either way) — stop early.
-        if (_atCoords.hasMatch(current) || isMapsListShareUrl(current)) {
-          return current;
-        }
+        // Already carries coordinates — stop early.
+        if (_atCoords.hasMatch(current)) return current;
         continue;
       }
       final body = await response.stream.bytesToString();

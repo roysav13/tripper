@@ -3,20 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/testing.dart';
 import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/location/location_providers.dart';
 import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/settings/settings_service.dart';
-import 'package:tripper/core/sharing/maps_link.dart';
-import 'package:tripper/core/sharing/maps_list_scraper.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/filtering/active_filter_strip.dart';
 import 'package:tripper/core/widgets/filtering/filter_sort_button.dart';
 import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/places/domain/place.dart';
-import 'package:tripper/features/places/presentation/add_place_screen.dart';
-import 'package:tripper/features/places/presentation/maps_list_import_screen.dart';
 import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/places/presentation/places_screen.dart';
@@ -30,12 +25,6 @@ import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
 final _today = DateTime(2026, 7, 19);
-
-class _FakeMapsListScraper implements MapsListScraper {
-  @override
-  Future<ScrapedMapsList?> scrape(String listUrl) async =>
-      const ScrapedMapsList(title: 'Japan', placeNames: ['Sensō-ji']);
-}
 
 Place _p(
   String name, {
@@ -85,15 +74,6 @@ Widget _app(
         nearbyPlacesEnabledProvider.overrideWith(
           () => _FixedNearbyToggle(nearbyEnabled),
         ),
-        mapsLinkServiceProvider.overrideWithValue(
-          MapsLinkService(
-            MockClient(
-              (request) async =>
-                  throw Exception('unexpected request to ${request.url}'),
-            ),
-          ),
-        ),
-        mapsListScraperProvider.overrideWithValue(_FakeMapsListScraper()),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -812,83 +792,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('DAY 3'), findsOneWidget);
-  });
-
-  testWidgets('add menu: "Add place" opens AddPlaceScreen', (tester) async {
-    // A non-empty list, not `_app([])`: an empty Places tab's own
-    // EmptyState CTA also reads "Add place" (placesEmptyCta shares the
-    // same ARB string as placesMenuAddPlace) — an empty list here would
-    // make `find.text('Add place')` ambiguous between the CTA and the
-    // menu item under test. A non-empty list also renders its own
-    // "add to collection" chip icon (Icons.add, size 16) alongside the
-    // toolbar's add-menu button, so byIcon(Icons.add) is ambiguous too —
-    // the toolbar button's tooltip disambiguates it.
-    await tester.pumpWidget(_app([_p('Railay viewpoint')]));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Add'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Add place'));
-    await tester.pumpAndSettle();
-    expect(find.byType(AddPlaceScreen), findsOneWidget);
-  });
-
-  testWidgets(
-      'add menu: pasting a single-place link opens AddPlaceScreen prefilled',
-      (tester) async {
-    await tester.pumpWidget(_app([]));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Import Google Maps list…'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byType(TextField),
-      'https://www.google.com/maps/place/Colosseum/@41.8902,12.4922,17z',
-    );
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AddPlaceScreen), findsOneWidget);
-  });
-
-  testWidgets('add menu: pasting a list link opens MapsListImportScreen',
-      (tester) async {
-    await tester.pumpWidget(_app([]));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Import Google Maps list…'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byType(TextField),
-      'https://www.google.com/maps/@/data=!3m1!4b1!4m3!11m2!2sX!3e3',
-    );
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MapsListImportScreen), findsOneWidget);
-  });
-
-  testWidgets('add menu: pasting garbage shows an inline error, no navigation',
-      (tester) async {
-    await tester.pumpWidget(_app([]));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Import Google Maps list…'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField), 'not a link');
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text("That doesn't look like a Google Maps link"),
-      findsOneWidget,
-    );
-    expect(find.byType(AddPlaceScreen), findsNothing);
-    expect(find.byType(MapsListImportScreen), findsNothing);
   });
 }
