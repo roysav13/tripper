@@ -137,8 +137,7 @@ class _MapsListImportScreenState extends ConsumerState<MapsListImportScreen> {
               scrollDirection: Axis.horizontal,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
                   child: ChoiceChip(
                     label: Text(l10n.placeFormNoTrip),
                     selected: _tripId == null,

@@ -146,7 +146,8 @@ class MapsLinkService {
         ),
       );
     } catch (_) {
-      return MapsPlaceShare(link); // offline fallback: name + url only, "locate later"
+      // Offline fallback: name + url only, "locate later".
+      return MapsPlaceShare(link);
     }
   }
 

@@ -134,7 +134,8 @@ void main() {
       expect(share.nameGuess, 'Japan');
     });
 
-    test('a short link resolving to a list-share URL returns MapsListShare '
+    test(
+        'a short link resolving to a list-share URL returns MapsListShare '
         'without fetching the resolved page body', () async {
       final client = MockClient.streaming((request, _) async {
         if (request.url.host == 'maps.app.goo.gl') {
