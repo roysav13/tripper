@@ -11,6 +11,7 @@ import '../../trips/domain/trip.dart';
 import '../domain/packing_category.dart';
 import '../domain/packing_item_status.dart';
 import '../domain/trip_packing_item.dart';
+import 'packing_item_form_sheet.dart';
 import 'packing_providers.dart';
 import 'packing_widgets.dart';
 
@@ -28,6 +29,7 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final asyncItems = ref.watch(tripPackingItemsProvider(widget.trip.id));
+    final hasItems = (asyncItems.valueOrNull ?? const []).isNotEmpty;
 
     // Everything below returns through this one Scaffold — Task 5 adds
     // `floatingActionButton:` and Task 6 adds `appBar:` to this same
@@ -36,6 +38,13 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
     // error, not just the populated list.
     return Scaffold(
       backgroundColor: Colors.transparent,
+      floatingActionButton: hasItems
+          ? FloatingActionButton(
+              onPressed: () =>
+                  showPackingItemFormSheet(context, tripId: widget.trip.id),
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: _body(context, l10n, asyncItems),
     );
   }
@@ -59,7 +68,8 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
         title: l10n.packingEmptyTitle,
         body: l10n.packingEmptyBody,
         ctaLabel: l10n.packingEmptyCta,
-        onCta: () {}, // Wired to the add-item sheet in Task 5.
+        onCta: () =>
+            showPackingItemFormSheet(context, tripId: widget.trip.id),
       );
     }
 
@@ -112,7 +122,18 @@ class _ItemRow extends ConsumerWidget {
                       ),
             ),
           Expanded(
-            child: Text(item.label, overflow: TextOverflow.ellipsis),
+            child: isClothing
+                ? Text(item.label, overflow: TextOverflow.ellipsis)
+                : InkWell(
+                    onTap: () => showPackingItemFormSheet(
+                      context,
+                      tripId: item.tripId,
+                      existingId: item.id,
+                      existingLabel: item.label,
+                      existingCategory: item.category,
+                    ),
+                    child: Text(item.label, overflow: TextOverflow.ellipsis),
+                  ),
           ),
           if (isClothing) PackingStatusChip(status: item.status),
           IconButton(

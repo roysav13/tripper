@@ -157,4 +157,49 @@ void main() {
 
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('the empty-state CTA opens the add-item sheet', (tester) async {
+    await tester.pumpWidget(_app(FakePackingRepository()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add an item'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add item'), findsOneWidget);
+  });
+
+  testWidgets(
+      'adding an item picks a category and label, then appears in that '
+      "category's section", (tester) async {
+    final repo = FakePackingRepository();
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add an item'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Documents'));
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Item'),
+      'Passport',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Passport'), findsOneWidget);
+    expect(find.text('DOCUMENTS'), findsOneWidget);
+  });
+
+  testWidgets('a floating add button is shown once there are items',
+      (tester) async {
+    final repo = FakePackingRepository(tripItems: [_item(id: 'a')]);
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Add item'), findsOneWidget);
+  });
 }

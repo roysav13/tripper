@@ -1220,4 +1220,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get packingItemDeleted => 'Item deleted.';
+
+  @override
+  String get packingItemFormAddTitle => 'Add item';
+
+  @override
+  String get packingItemFormEditTitle => 'Edit item';
+
+  @override
+  String get packingItemFormLabel => 'Item';
+
+  @override
+  String get packingItemFormCategory => 'Category';
+
+  @override
+  String get errPackingLabelRequired => 'Enter a name for this item';
 }

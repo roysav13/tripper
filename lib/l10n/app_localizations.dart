@@ -2185,6 +2185,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Item deleted.'**
   String get packingItemDeleted;
+
+  /// No description provided for @packingItemFormAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get packingItemFormAddTitle;
+
+  /// No description provided for @packingItemFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get packingItemFormEditTitle;
+
+  /// No description provided for @packingItemFormLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get packingItemFormLabel;
+
+  /// No description provided for @packingItemFormCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get packingItemFormCategory;
+
+  /// No description provided for @errPackingLabelRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for this item'**
+  String get errPackingLabelRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -474,5 +474,10 @@
   "packingStatusClean": "Clean",
   "deletePackingItemTitle": "Delete this item?",
   "deletePackingItemBody": "This removes it from the packing list.",
-  "packingItemDeleted": "Item deleted."
+  "packingItemDeleted": "Item deleted.",
+  "packingItemFormAddTitle": "Add item",
+  "packingItemFormEditTitle": "Edit item",
+  "packingItemFormLabel": "Item",
+  "packingItemFormCategory": "Category",
+  "errPackingLabelRequired": "Enter a name for this item"
 }
