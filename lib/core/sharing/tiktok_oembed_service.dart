@@ -41,10 +41,21 @@ class HttpTikTokOEmbedFetcher implements TikTokOEmbedFetcher {
       final response = await _client
           .get(Uri.https('www.tiktok.com', '/oembed', {'url': link}))
           .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) {
+        if (kDebugMode) {
+          // A 429 in particular is worth seeing the Retry-After header
+          // for — a fixed sleep-and-retry is a guess without it, and this
+          // endpoint has a real rate limit (seen on-device).
+          debugPrint(
+            '[tiktok] oEmbed GET -> ${response.statusCode}\n'
+            '[tiktok] oEmbed response headers: ${response.headers}',
+          );
+        }
+        return null;
+      }
       if (kDebugMode) {
         debugPrint('[tiktok] oEmbed GET -> ${response.statusCode}');
       }
-      if (response.statusCode != 200) return null;
       return parseTikTokOEmbed(response.body);
     } catch (e) {
       if (kDebugMode) debugPrint('[tiktok] oEmbed fetch failed: $e');
