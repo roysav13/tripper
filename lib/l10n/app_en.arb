@@ -64,6 +64,7 @@
   "errNoDestination": "Add at least one destination",
   "errDatesRequired": "Pick valid start and end dates",
   "menuEdit": "Edit",
+  "menuRename": "Rename",
   "menuArchive": "Archive",
   "menuUnarchive": "Unarchive",
   "menuDelete": "Delete",
@@ -489,5 +490,16 @@
       "count": { "type": "int" },
       "name": { "type": "String" }
     }
-  }
+  },
+  "packingTemplatesTitle": "Packing templates",
+  "packingTemplatesEmptyTitle": "No templates yet",
+  "packingTemplatesEmptyBody": "Build a reusable list once, then apply it to any trip.",
+  "packingTemplatesEmptyCta": "New template",
+  "newTemplateDialogTitle": "New template",
+  "renameTemplateDialogTitle": "Rename template",
+  "templateNameLabel": "Template name",
+  "errTemplateNameRequired": "Enter a name for this template",
+  "deleteTemplateTitle": "Delete this template?",
+  "deleteTemplateBody": "This only removes the template — trips that already used it keep their packing list.",
+  "templateDeleted": "Template deleted."
 }

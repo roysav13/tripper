@@ -386,6 +386,12 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get menuEdit;
 
+  /// No description provided for @menuRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get menuRename;
+
   /// No description provided for @menuArchive.
   ///
   /// In en, this message translates to:
@@ -2239,6 +2245,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{Added 1 item from {name}} other{Added {count} items from {name}}}'**
   String packingApplyTemplateApplied(int count, String name);
+
+  /// No description provided for @packingTemplatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Packing templates'**
+  String get packingTemplatesTitle;
+
+  /// No description provided for @packingTemplatesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No templates yet'**
+  String get packingTemplatesEmptyTitle;
+
+  /// No description provided for @packingTemplatesEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a reusable list once, then apply it to any trip.'**
+  String get packingTemplatesEmptyBody;
+
+  /// No description provided for @packingTemplatesEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'New template'**
+  String get packingTemplatesEmptyCta;
+
+  /// No description provided for @newTemplateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New template'**
+  String get newTemplateDialogTitle;
+
+  /// No description provided for @renameTemplateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename template'**
+  String get renameTemplateDialogTitle;
+
+  /// No description provided for @templateNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Template name'**
+  String get templateNameLabel;
+
+  /// No description provided for @errTemplateNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for this template'**
+  String get errTemplateNameRequired;
+
+  /// No description provided for @deleteTemplateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this template?'**
+  String get deleteTemplateTitle;
+
+  /// No description provided for @deleteTemplateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This only removes the template — trips that already used it keep their packing list.'**
+  String get deleteTemplateBody;
+
+  /// No description provided for @templateDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Template deleted.'**
+  String get templateDeleted;
 }
 
 class _AppLocalizationsDelegate

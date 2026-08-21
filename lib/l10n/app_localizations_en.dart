@@ -166,6 +166,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuEdit => 'Edit';
 
   @override
+  String get menuRename => 'Rename';
+
+  @override
   String get menuArchive => 'Archive';
 
   @override
@@ -1256,4 +1259,39 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get packingTemplatesTitle => 'Packing templates';
+
+  @override
+  String get packingTemplatesEmptyTitle => 'No templates yet';
+
+  @override
+  String get packingTemplatesEmptyBody =>
+      'Build a reusable list once, then apply it to any trip.';
+
+  @override
+  String get packingTemplatesEmptyCta => 'New template';
+
+  @override
+  String get newTemplateDialogTitle => 'New template';
+
+  @override
+  String get renameTemplateDialogTitle => 'Rename template';
+
+  @override
+  String get templateNameLabel => 'Template name';
+
+  @override
+  String get errTemplateNameRequired => 'Enter a name for this template';
+
+  @override
+  String get deleteTemplateTitle => 'Delete this template?';
+
+  @override
+  String get deleteTemplateBody =>
+      'This only removes the template — trips that already used it keep their packing list.';
+
+  @override
+  String get templateDeleted => 'Template deleted.';
 }
