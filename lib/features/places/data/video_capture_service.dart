@@ -20,6 +20,12 @@ abstract interface class VideoDownloader {
   Future<String?> download(Uri videoUrl);
 }
 
+/// Pure — unit-tested directly. A ranged request (see `HttpVideoDownloader`,
+/// which always sends `Range: bytes=0-`) is expected to answer 206, not
+/// 200 — both mean "here is a real video body".
+bool isAcceptableVideoStatus(int statusCode) =>
+    statusCode == 200 || statusCode == 206;
+
 class HttpVideoDownloader implements VideoDownloader {
   HttpVideoDownloader(this._client);
 
@@ -31,7 +37,12 @@ class HttpVideoDownloader implements VideoDownloader {
       // TikTok's CDN URLs are signed/time-limited and reject a request
       // that doesn't look like it came from the same browser session that
       // loaded the page — same User-Agent as TikTokVideoLinkService, a
-      // Referer pointing at the site, and (critically) the SAME
+      // Referer/Origin pointing at the site (Akamai's edge, fronting this
+      // CDN, echoes `access-control-allow-origin: https://www.tiktok.com`
+      // on a rejection — it's gating on Origin specifically, not just
+      // Referer), a Range header (the edge also allows `range` via CORS,
+      // consistent with expecting a real <video>-element-style ranged
+      // request rather than a plain full-file GET), and the SAME
       // http.Client instance (see tiktokHttpClientProvider) so any
       // session cookie set while fetching the page is replayed here.
       final response = await _client.get(
@@ -39,9 +50,11 @@ class HttpVideoDownloader implements VideoDownloader {
         headers: {
           'User-Agent': tiktokUserAgent,
           'Referer': 'https://www.tiktok.com/',
+          'Origin': 'https://www.tiktok.com',
+          'Range': 'bytes=0-',
         },
       ).timeout(const Duration(seconds: 30));
-      if (response.statusCode != 200) {
+      if (!isAcceptableVideoStatus(response.statusCode)) {
         if (kDebugMode) {
           // CDNs are usually explicit about *why* a request was rejected
           // (signature mismatch, referrer check, expired token) — logging

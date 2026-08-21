@@ -55,7 +55,8 @@ void main() {
   });
 
   group('HttpVideoDownloader sends anti-hotlinking headers', () {
-    test('every request carries a User-Agent and a Referer', () async {
+    test('every request carries User-Agent, Referer, Origin, and Range',
+        () async {
       Map<String, String>? capturedHeaders;
       final client = MockClient((request) async {
         capturedHeaders = request.headers;
@@ -72,6 +73,22 @@ void main() {
       expect(capturedHeaders, isNotNull);
       expect(capturedHeaders!['User-Agent'], isNotEmpty);
       expect(capturedHeaders!['Referer'], 'https://www.tiktok.com/');
+      expect(capturedHeaders!['Origin'], 'https://www.tiktok.com');
+      expect(capturedHeaders!['Range'], 'bytes=0-');
+    });
+  });
+
+  group('isAcceptableVideoStatus', () {
+    test('200 and 206 (ranged partial content) are both acceptable', () {
+      expect(isAcceptableVideoStatus(200), isTrue);
+      expect(isAcceptableVideoStatus(206), isTrue);
+    });
+
+    test('rejection/redirect/error statuses are not', () {
+      expect(isAcceptableVideoStatus(403), isFalse);
+      expect(isAcceptableVideoStatus(404), isFalse);
+      expect(isAcceptableVideoStatus(500), isFalse);
+      expect(isAcceptableVideoStatus(302), isFalse);
     });
   });
 }
