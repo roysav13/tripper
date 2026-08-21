@@ -60,9 +60,20 @@ dev_dependencies:
 # instead of addPostFrameCallback, letting an unbounded number of extra
 # frames pass before the widget tree settles back down during an active
 # zoom gesture.
+#
+# Vendored, patched copy of video_thumbnail 0.5.6 — see
+# third_party/video_thumbnail/PATCHES.md for what changed and why. Its
+# Android build script called the removed jcenter() repository method
+# and pinned an ancient (4.1.0) Android Gradle Plugin classpath, which
+# fails outright against this app's AGP 9.0.1 (`Could not find method
+# jcenter()`, cascading into a `kotlin-android` plugin error). Patched to
+# mavenCentral() + AGP 8.7.3, matching the already-working
+# sqlite3_flutter_libs dependency's own pinned classpath.
 dependency_overrides:
   flutter_earth_globe:
     path: third_party/flutter_earth_globe
+  video_thumbnail:
+    path: third_party/video_thumbnail
 
 flutter:
   uses-material-design: true
