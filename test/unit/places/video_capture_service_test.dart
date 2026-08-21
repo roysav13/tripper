@@ -54,9 +54,10 @@ void main() {
     });
   });
 
-  group('HttpVideoDownloader sends anti-hotlinking headers', () {
-    test('every request carries User-Agent, Referer, Origin, and Range',
-        () async {
+  group('HttpVideoDownloader sends a browser-like header set', () {
+    test(
+        'every request carries User-Agent, Referer, Origin, Range, and '
+        'Fetch Metadata headers', () async {
       Map<String, String>? capturedHeaders;
       final client = MockClient((request) async {
         capturedHeaders = request.headers;
@@ -75,6 +76,9 @@ void main() {
       expect(capturedHeaders!['Referer'], 'https://www.tiktok.com/');
       expect(capturedHeaders!['Origin'], 'https://www.tiktok.com');
       expect(capturedHeaders!['Range'], 'bytes=0-');
+      expect(capturedHeaders!['Sec-Fetch-Dest'], 'video');
+      expect(capturedHeaders!['Sec-Fetch-Mode'], 'no-cors');
+      expect(capturedHeaders!['Sec-Fetch-Site'], 'same-site');
     });
   });
 

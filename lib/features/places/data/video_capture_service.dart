@@ -52,6 +52,22 @@ class HttpVideoDownloader implements VideoDownloader {
           'Referer': 'https://www.tiktok.com/',
           'Origin': 'https://www.tiktok.com',
           'Range': 'bytes=0-',
+          // Fetch Metadata headers a real browser's <video> element sends
+          // automatically for a cross-origin media request — the video CDN
+          // host (v16-webapp-prime.tiktok.com) shares tiktok.com's
+          // registrable domain with the Referer/Origin (www.tiktok.com),
+          // which is what makes this "same-site" rather than "cross-site".
+          // A hand-rolled HTTP client sending none of these is a cheap,
+          // header-visible tell that Bot Manager-style rules commonly gate
+          // on directly, separate from (and unlike) TLS-level fingerprinting.
+          'Sec-Fetch-Dest': 'video',
+          'Sec-Fetch-Mode': 'no-cors',
+          'Sec-Fetch-Site': 'same-site',
+          'Accept': '*/*',
+          'sec-ch-ua':
+              '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile': '?1',
+          'sec-ch-ua-platform': '"Android"',
         },
       ).timeout(const Duration(seconds: 30));
       if (!isAcceptableVideoStatus(response.statusCode)) {
