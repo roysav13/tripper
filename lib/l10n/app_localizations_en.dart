@@ -1048,7 +1048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoCaptureTitle => 'Capture place from video';
 
   @override
-  String get videoCaptureFetching => 'Fetching video…';
+  String get videoCaptureFetching => 'Fetching…';
 
   @override
   String get videoCaptureFetchFailedTitle => 'Couldn\'t fetch this video';
@@ -1056,12 +1056,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get videoCaptureFetchFailedBody =>
       'Try sharing the link again, or add the place manually from the Places tab.';
-
-  @override
-  String get videoCaptureButton => 'Capture this frame';
-
-  @override
-  String get videoCaptureRecapture => 'Try another frame';
 
   @override
   String get videoCaptureRecognizedLabel => 'Recognized text';
@@ -1073,10 +1067,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get videoCaptureNoTextFound =>
       'No text found in this frame — you can type it in';
-
-  @override
-  String get videoCaptureFrameFailed =>
-      'Couldn\'t capture that frame — try again';
 
   @override
   String get videoCaptureLookUp => 'Look up';

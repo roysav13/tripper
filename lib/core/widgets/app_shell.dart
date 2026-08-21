@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/places/data/geocoding_service.dart';
 import '../../features/places/presentation/add_place_screen.dart';
 import '../../features/places/presentation/place_candidate_review_screen.dart';
-import '../../features/places/presentation/video_frame_capture_screen.dart';
+import '../../features/places/presentation/tiktok_cover_capture_screen.dart';
 import '../../features/vault/presentation/document_form_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../sharing/maps_link.dart';
@@ -45,7 +45,7 @@ class AppShell extends ConsumerWidget {
       if (parseTikTokShare(text) != null) {
         navigationShell.goBranch(2);
         final candidateName =
-            await VideoFrameCaptureScreen.open(context, sharedText: text);
+            await TikTokCoverCaptureScreen.open(context, sharedText: text);
         if (candidateName == null || !context.mounted) return;
         final candidate = await PlaceCandidateReviewScreen.open(
           context,

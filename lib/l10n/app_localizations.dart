@@ -1865,7 +1865,7 @@ abstract class AppLocalizations {
   /// No description provided for @videoCaptureFetching.
   ///
   /// In en, this message translates to:
-  /// **'Fetching video…'**
+  /// **'Fetching…'**
   String get videoCaptureFetching;
 
   /// No description provided for @videoCaptureFetchFailedTitle.
@@ -1879,18 +1879,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try sharing the link again, or add the place manually from the Places tab.'**
   String get videoCaptureFetchFailedBody;
-
-  /// No description provided for @videoCaptureButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Capture this frame'**
-  String get videoCaptureButton;
-
-  /// No description provided for @videoCaptureRecapture.
-  ///
-  /// In en, this message translates to:
-  /// **'Try another frame'**
-  String get videoCaptureRecapture;
 
   /// No description provided for @videoCaptureRecognizedLabel.
   ///
@@ -1909,12 +1897,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No text found in this frame — you can type it in'**
   String get videoCaptureNoTextFound;
-
-  /// No description provided for @videoCaptureFrameFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t capture that frame — try again'**
-  String get videoCaptureFrameFailed;
 
   /// No description provided for @videoCaptureLookUp.
   ///
