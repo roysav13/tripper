@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,13 +24,41 @@ class TikTokVideoLinkService {
 
   Future<Uri?> resolveVideoUrl(String sharedText) async {
     final link = parseTikTokShare(sharedText);
-    if (link == null) return null;
+    if (link == null) {
+      if (kDebugMode) {
+        debugPrint('[tiktok] no TikTok URL found in shared text');
+      }
+      return null;
+    }
     try {
       final pageBody = await _resolveRedirects(link);
-      if (pageBody == null) return null;
+      if (pageBody == null) {
+        if (kDebugMode) debugPrint('[tiktok] page fetch failed (see above)');
+        return null;
+      }
+      if (kDebugMode) {
+        debugPrint('[tiktok] page fetched, ${pageBody.length} chars');
+      }
       final videoUrl = extractTikTokVideoUrl(pageBody);
-      return videoUrl == null ? null : Uri.tryParse(videoUrl);
-    } catch (_) {
+      if (videoUrl == null) {
+        if (kDebugMode) {
+          final hasRehydration =
+              pageBody.contains('__UNIVERSAL_DATA_FOR_REHYDRATION__');
+          final looksLikeCaptcha = pageBody.toLowerCase().contains('captcha') ||
+              pageBody.toLowerCase().contains('verify you are human') ||
+              pageBody.toLowerCase().contains('unusual traffic');
+          debugPrint(
+            '[tiktok] no video URL extracted — '
+            'has rehydration script: $hasRehydration, '
+            'looks like a bot-check page: $looksLikeCaptcha',
+          );
+        }
+        return null;
+      }
+      if (kDebugMode) debugPrint('[tiktok] extracted video URL: $videoUrl');
+      return Uri.tryParse(videoUrl);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[tiktok] resolveVideoUrl threw: $e');
       return null;
     }
   }
@@ -49,6 +78,12 @@ class TikTokVideoLinkService {
       final response =
           await _client.send(request).timeout(const Duration(seconds: 8));
       final location = response.headers['location'];
+      if (kDebugMode) {
+        debugPrint(
+          '[tiktok] GET $current -> ${response.statusCode}'
+          '${location == null ? '' : ' -> $location'}',
+        );
+      }
       if (location == null) {
         // No redirect — this is the final response
         if (response.statusCode != 200) return null;
@@ -62,6 +97,11 @@ class TikTokVideoLinkService {
       ..headers['User-Agent'] = _userAgent;
     final response =
         await _client.send(request).timeout(const Duration(seconds: 8));
+    if (kDebugMode) {
+      debugPrint(
+        '[tiktok] GET $current -> ${response.statusCode} (max redirects)',
+      );
+    }
     if (response.statusCode != 200) return null;
     return await response.stream.bytesToString();
   }
@@ -89,8 +129,18 @@ String? extractTikTokVideoUrl(String html) {
   try {
     final decoded = jsonDecode(scriptMatch.group(1)!);
     final videoUrl = _findPlayAddr(decoded);
+    if (videoUrl == null && kDebugMode) {
+      debugPrint(
+        '[tiktok] rehydration script found and parsed as JSON, but no '
+        'playAddr/downloadAddr field anywhere in it — TikTok likely '
+        'nested the video data under different keys than expected',
+      );
+    }
     return videoUrl;
-  } catch (_) {
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[tiktok] rehydration script found but JSON decode failed: $e');
+    }
     return null;
   }
 }
