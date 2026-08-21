@@ -202,4 +202,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Add item'), findsOneWidget);
   });
+
+  testWidgets('applying a template with no saved templates shows a hint',
+      (tester) async {
+    await tester.pumpWidget(_app(FakePackingRepository()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply template…'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('No saved templates yet — create one from Manage templates.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'applying a template appends its items to the trip list and shows '
+      'a confirmation', (tester) async {
+    final repo = FakePackingRepository();
+    await repo.createTemplate(name: 'Beach trip');
+    final templates = await repo.watchTemplates().first;
+    await repo.addTemplateItem(
+      templateId: templates.single.id,
+      category: PackingCategory.clothing,
+      label: 'Swimsuit',
+    );
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply template…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Beach trip'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Swimsuit'), findsOneWidget);
+    expect(find.text('Added 1 item from Beach trip'), findsOneWidget);
+  });
 }

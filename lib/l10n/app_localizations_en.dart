@@ -1235,4 +1235,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errPackingLabelRequired => 'Enter a name for this item';
+
+  @override
+  String get packingApplyTemplateAction => 'Apply template…';
+
+  @override
+  String get packingManageTemplatesAction => 'Manage templates…';
+
+  @override
+  String get packingApplyTemplateEmpty =>
+      'No saved templates yet — create one from Manage templates.';
+
+  @override
+  String packingApplyTemplateApplied(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count items from $name',
+      one: 'Added 1 item from $name',
+    );
+    return '$_temp0';
+  }
 }

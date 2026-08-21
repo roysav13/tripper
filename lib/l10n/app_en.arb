@@ -479,5 +479,15 @@
   "packingItemFormEditTitle": "Edit item",
   "packingItemFormLabel": "Item",
   "packingItemFormCategory": "Category",
-  "errPackingLabelRequired": "Enter a name for this item"
+  "errPackingLabelRequired": "Enter a name for this item",
+  "packingApplyTemplateAction": "Apply template…",
+  "packingManageTemplatesAction": "Manage templates…",
+  "packingApplyTemplateEmpty": "No saved templates yet — create one from Manage templates.",
+  "packingApplyTemplateApplied": "{count, plural, one{Added 1 item from {name}} other{Added {count} items from {name}}}",
+  "@packingApplyTemplateApplied": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "name": { "type": "String" }
+    }
+  }
 }

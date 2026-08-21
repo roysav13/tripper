@@ -11,6 +11,7 @@ import '../../trips/domain/trip.dart';
 import '../domain/packing_category.dart';
 import '../domain/packing_item_status.dart';
 import '../domain/trip_packing_item.dart';
+import 'apply_template_sheet.dart';
 import 'packing_item_form_sheet.dart';
 import 'packing_providers.dart';
 import 'packing_widgets.dart';
@@ -31,13 +32,39 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
     final asyncItems = ref.watch(tripPackingItemsProvider(widget.trip.id));
     final hasItems = (asyncItems.valueOrNull ?? const []).isNotEmpty;
 
-    // Everything below returns through this one Scaffold — Task 5 adds
-    // `floatingActionButton:` and Task 6 adds `appBar:` to this same
-    // widget rather than restructuring it, so the overflow menu (once
-    // Task 6 adds it) is reachable from every state, including empty and
-    // error, not just the populated list.
+    // Everything below returns through this one Scaffold, with its own
+    // transparent AppBar hosting the overflow menu — reachable from every
+    // state, including empty and error, not just the populated list.
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (action) {
+              switch (action) {
+                case 'apply':
+                  showApplyTemplateSheet(context, tripId: widget.trip.id);
+                case 'manage':
+                  // Wired in Task 9, once PackingTemplateManagerScreen
+                  // exists (Task 7).
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'apply',
+                child: Text(l10n.packingApplyTemplateAction),
+              ),
+              PopupMenuItem(
+                value: 'manage',
+                child: Text(l10n.packingManageTemplatesAction),
+              ),
+            ],
+          ),
+        ],
+      ),
       floatingActionButton: hasItems
           ? FloatingActionButton(
               onPressed: () =>

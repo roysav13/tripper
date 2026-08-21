@@ -2215,6 +2215,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a name for this item'**
   String get errPackingLabelRequired;
+
+  /// No description provided for @packingApplyTemplateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply template…'**
+  String get packingApplyTemplateAction;
+
+  /// No description provided for @packingManageTemplatesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage templates…'**
+  String get packingManageTemplatesAction;
+
+  /// No description provided for @packingApplyTemplateEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved templates yet — create one from Manage templates.'**
+  String get packingApplyTemplateEmpty;
+
+  /// No description provided for @packingApplyTemplateApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Added 1 item from {name}} other{Added {count} items from {name}}}'**
+  String packingApplyTemplateApplied(int count, String name);
 }
 
 class _AppLocalizationsDelegate
