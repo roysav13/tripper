@@ -6,6 +6,12 @@ import 'package:http/http.dart' as http;
 
 import 'tiktok_link.dart';
 
+/// Shared with `HttpVideoDownloader` (`video_capture_service.dart`) so both
+/// requests present the same browser fingerprint — some anti-bot checks
+/// compare the User-Agent across a session's requests.
+const tiktokUserAgent = 'Mozilla/5.0 (Linux; Android 13) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
+
 /// Resolves a shared TikTok link to a direct, downloadable video URL.
 ///
 /// This is the one deliberately fragile, isolated boundary named in the
@@ -18,9 +24,6 @@ class TikTokVideoLinkService {
   TikTokVideoLinkService(this._client);
 
   final http.Client _client;
-
-  static const _userAgent = 'Mozilla/5.0 (Linux; Android 13) '
-      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
 
   Future<Uri?> resolveVideoUrl(String sharedText) async {
     final link = parseTikTokShare(sharedText);
@@ -74,7 +77,7 @@ class TikTokVideoLinkService {
     for (var i = 0; i < 6; i++) {
       final request = http.Request('GET', Uri.parse(current))
         ..followRedirects = false
-        ..headers['User-Agent'] = _userAgent;
+        ..headers['User-Agent'] = tiktokUserAgent;
       final response =
           await _client.send(request).timeout(const Duration(seconds: 8));
       final location = response.headers['location'];
@@ -94,7 +97,7 @@ class TikTokVideoLinkService {
     // Max redirects reached — fetch the final URL one more time
     final request = http.Request('GET', Uri.parse(current))
       ..followRedirects = false
-      ..headers['User-Agent'] = _userAgent;
+      ..headers['User-Agent'] = tiktokUserAgent;
     final response =
         await _client.send(request).timeout(const Duration(seconds: 8));
     if (kDebugMode) {
@@ -107,11 +110,21 @@ class TikTokVideoLinkService {
   }
 }
 
-/// Real `http.Client` by default, same pattern as `mapsLinkServiceProvider`
-/// — overridden with a fake in Task 7's widget tests so nothing there
+/// Shared with `videoDownloaderProvider` (`video_capture_service.dart`) —
+/// on native platforms `http.Client()` is backed by `dart:io.HttpClient`,
+/// which keeps its own per-instance cookie jar. TikTok's video CDN 403s a
+/// bare request even with a matching User-Agent/Referer, consistent with
+/// it checking a session cookie set on the page load (`www.tiktok.com`,
+/// typically scoped `.tiktok.com` so it also covers the CDN subdomain);
+/// two independent `http.Client()`s would never share that cookie. A
+/// single client across both requests is required for the download to
+/// have any chance of working, not just an optimization.
+final tiktokHttpClientProvider = Provider<http.Client>((ref) => http.Client());
+
+/// Overridden with a fake in Task 7's widget tests so nothing there
 /// touches the real network.
 final tikTokVideoLinkServiceProvider = Provider<TikTokVideoLinkService>(
-  (ref) => TikTokVideoLinkService(http.Client()),
+  (ref) => TikTokVideoLinkService(ref.watch(tiktokHttpClientProvider)),
 );
 
 /// Pure parser (unit-tested against fixture HTML) — pulls the direct

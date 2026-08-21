@@ -7,6 +7,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import '../../../core/sharing/tiktok_video_link_service.dart'
+    show tiktokHttpClientProvider, tiktokUserAgent;
+
 /// Downloads a resolved TikTok video URL to a temp file. Seam for
 /// testability, same pattern as `DocumentTextRecognizer`/
 /// `PdfPageRasterizer` — nothing outside this file touches `http` for
@@ -22,21 +25,19 @@ class HttpVideoDownloader implements VideoDownloader {
 
   final http.Client _client;
 
-  static const _userAgent = 'Mozilla/5.0 (Linux; Android 13) '
-      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
-
   @override
   Future<String?> download(Uri videoUrl) async {
     try {
-      // TikTok's CDN URLs are signed/time-limited and commonly reject a
-      // bare request with no User-Agent/Referer (standard anti-hotlinking
-      // behavior) — same UA as TikTokVideoLinkService, plus a Referer
-      // pointing at the site itself, which is enough to satisfy this
-      // without needing to plumb the exact source page through.
+      // TikTok's CDN URLs are signed/time-limited and reject a request
+      // that doesn't look like it came from the same browser session that
+      // loaded the page — same User-Agent as TikTokVideoLinkService, a
+      // Referer pointing at the site, and (critically) the SAME
+      // http.Client instance (see tiktokHttpClientProvider) so any
+      // session cookie set while fetching the page is replayed here.
       final response = await _client.get(
         videoUrl,
         headers: {
-          'User-Agent': _userAgent,
+          'User-Agent': tiktokUserAgent,
           'Referer': 'https://www.tiktok.com/',
         },
       ).timeout(const Duration(seconds: 30));
@@ -74,8 +75,9 @@ class HttpVideoDownloader implements VideoDownloader {
   }
 }
 
-final videoDownloaderProvider =
-    Provider<VideoDownloader>((ref) => HttpVideoDownloader(http.Client()));
+final videoDownloaderProvider = Provider<VideoDownloader>(
+  (ref) => HttpVideoDownloader(ref.watch(tiktokHttpClientProvider)),
+);
 
 /// Rasterizes a single still frame from a local video file at a given
 /// position — `video_player` (used for the live scrub preview, Task 7)
