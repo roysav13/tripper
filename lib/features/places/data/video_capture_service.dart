@@ -41,10 +41,27 @@ class HttpVideoDownloader implements VideoDownloader {
           'Referer': 'https://www.tiktok.com/',
         },
       ).timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        if (kDebugMode) {
+          // CDNs are usually explicit about *why* a request was rejected
+          // (signature mismatch, referrer check, expired token) — logging
+          // it beats guessing at another header to add blind. `.get()`
+          // already buffers the whole body (it's `http.Response`, not a
+          // streamed response), and a rejection body is small (an error
+          // page, not a video), so reading it here is safe.
+          final body = response.body;
+          debugPrint(
+            '[video] GET $videoUrl -> ${response.statusCode}\n'
+            '[video] response headers: ${response.headers}\n'
+            '[video] response body: '
+            '${body.substring(0, body.length < 500 ? body.length : 500)}',
+          );
+        }
+        return null;
+      }
       if (kDebugMode) {
         debugPrint('[video] GET $videoUrl -> ${response.statusCode}');
       }
-      if (response.statusCode != 200) return null;
       // A CDN rejection often comes back as a 200 carrying an HTML or JSON
       // error page. Saving that as a `.mp4` only defers the failure to
       // `initialize()`, so reject it here where "couldn't fetch this
