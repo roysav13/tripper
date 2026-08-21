@@ -6,6 +6,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/packing_template.dart';
 import 'packing_providers.dart';
+import 'packing_template_editor_screen.dart';
 import 'packing_template_name_dialog.dart';
 
 class PackingTemplateManagerScreen extends ConsumerWidget {
@@ -47,9 +48,12 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return ListTile(
       title: Text(template.name),
-      onTap: () {
-        // Opens PackingTemplateEditorScreen — wired in Task 8.
-      },
+      onTap: () => Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute<void>(
+          builder: (context) =>
+              PackingTemplateEditorScreen(templateId: template.id),
+        ),
+      ),
       trailing: PopupMenuButton<String>(
         onSelected: (action) {
           switch (action) {

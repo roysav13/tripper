@@ -5,19 +5,29 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/pill_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/packing_category.dart';
+import '../domain/packing_template.dart';
 import 'packing_providers.dart';
 import 'packing_widgets.dart';
 
-/// Add (or, with [existingLabel]/[existingId], edit) a trip packing item.
-/// Category is only asked when creating — editing changes the label only,
-/// so an item never has to move between category sections this round.
+/// Adds or edits a packing item, on either a trip or a template — exactly
+/// one of [tripId]/[templateId] must be non-null.
+///
+/// For a **trip** item, [existingId] + [existingLabel] are enough to edit
+/// (label-only; category can't change after creation — see the class doc
+/// below). For a **template** item, pass [existingTemplateItem] instead:
+/// its `sortOrder` must round-trip through the edit because
+/// [PackingRepository.updateTemplateItem] writes it straight through
+/// rather than re-fetching it.
 Future<void> showPackingItemFormSheet(
   BuildContext context, {
-  required String tripId,
+  String? tripId,
+  String? templateId,
   String? existingId,
   String? existingLabel,
   PackingCategory? existingCategory,
+  PackingTemplateItem? existingTemplateItem,
 }) {
+  assert((tripId == null) != (templateId == null));
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -26,9 +36,11 @@ Future<void> showPackingItemFormSheet(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: _ItemForm(
         tripId: tripId,
+        templateId: templateId,
         existingId: existingId,
-        existingLabel: existingLabel,
-        existingCategory: existingCategory,
+        existingLabel: existingLabel ?? existingTemplateItem?.label,
+        existingCategory: existingCategory ?? existingTemplateItem?.category,
+        existingTemplateItem: existingTemplateItem,
       ),
     ),
   );
@@ -36,16 +48,20 @@ Future<void> showPackingItemFormSheet(
 
 class _ItemForm extends ConsumerStatefulWidget {
   const _ItemForm({
-    required this.tripId,
+    this.tripId,
+    this.templateId,
     this.existingId,
     this.existingLabel,
     this.existingCategory,
+    this.existingTemplateItem,
   });
 
-  final String tripId;
+  final String? tripId;
+  final String? templateId;
   final String? existingId;
   final String? existingLabel;
   final PackingCategory? existingCategory;
+  final PackingTemplateItem? existingTemplateItem;
 
   @override
   ConsumerState<_ItemForm> createState() => _ItemFormState();
@@ -129,14 +145,22 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
     setState(() => _saving = true);
     final repo = ref.read(packingRepositoryProvider);
     final existingId = widget.existingId;
-    if (existingId == null) {
-      await repo.addTripItem(
-        tripId: widget.tripId,
+    final tripId = widget.tripId;
+    final templateId = widget.templateId;
+    final existingTemplateItem = widget.existingTemplateItem;
+
+    if (existingId != null && tripId != null) {
+      await repo.updateTripItemLabel(existingId, label);
+    } else if (existingTemplateItem != null) {
+      await repo.updateTemplateItem(existingTemplateItem.copyWith(label: label));
+    } else if (tripId != null) {
+      await repo.addTripItem(tripId: tripId, category: _category, label: label);
+    } else {
+      await repo.addTemplateItem(
+        templateId: templateId!,
         category: _category,
         label: label,
       );
-    } else {
-      await repo.updateTripItemLabel(existingId, label);
     }
     if (mounted) Navigator.of(context).pop();
   }
