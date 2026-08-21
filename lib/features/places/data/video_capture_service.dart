@@ -22,11 +22,27 @@ class HttpVideoDownloader implements VideoDownloader {
 
   final http.Client _client;
 
+  static const _userAgent = 'Mozilla/5.0 (Linux; Android 13) '
+      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
+
   @override
   Future<String?> download(Uri videoUrl) async {
     try {
-      final response =
-          await _client.get(videoUrl).timeout(const Duration(seconds: 30));
+      // TikTok's CDN URLs are signed/time-limited and commonly reject a
+      // bare request with no User-Agent/Referer (standard anti-hotlinking
+      // behavior) — same UA as TikTokVideoLinkService, plus a Referer
+      // pointing at the site itself, which is enough to satisfy this
+      // without needing to plumb the exact source page through.
+      final response = await _client.get(
+        videoUrl,
+        headers: {
+          'User-Agent': _userAgent,
+          'Referer': 'https://www.tiktok.com/',
+        },
+      ).timeout(const Duration(seconds: 30));
+      if (kDebugMode) {
+        debugPrint('[video] GET $videoUrl -> ${response.statusCode}');
+      }
       if (response.statusCode != 200) return null;
       // A CDN rejection often comes back as a 200 carrying an HTML or JSON
       // error page. Saving that as a `.mp4` only defers the failure to

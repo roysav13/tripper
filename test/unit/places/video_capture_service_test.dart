@@ -53,4 +53,25 @@ void main() {
       );
     });
   });
+
+  group('HttpVideoDownloader sends anti-hotlinking headers', () {
+    test('every request carries a User-Agent and a Referer', () async {
+      Map<String, String>? capturedHeaders;
+      final client = MockClient((request) async {
+        capturedHeaders = request.headers;
+        return http.Response(
+          'fake video bytes',
+          200,
+          headers: {'content-type': 'video/mp4'},
+        );
+      });
+
+      await HttpVideoDownloader(client)
+          .download(Uri.parse('https://cdn.example.com/v.mp4'));
+
+      expect(capturedHeaders, isNotNull);
+      expect(capturedHeaders!['User-Agent'], isNotEmpty);
+      expect(capturedHeaders!['Referer'], 'https://www.tiktok.com/');
+    });
+  });
 }
