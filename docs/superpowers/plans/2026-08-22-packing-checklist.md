@@ -271,9 +271,13 @@ void main() {
   setUp(() => db = AppDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  const insertTrip = 'INSERT INTO trips (id, name, destinations, '
-      "color_tag, completion_prompt_shown) VALUES ('t1', 'Thailand', "
-      "'[]', 0, 0)";
+  // Matches the working insertTrip in expenses_migration_test.dart —
+  // trips has no `destinations` column (that's the separate
+  // TripDestinations table) and `created_at` is NOT NULL with no
+  // default, so it must be supplied.
+  const insertTrip = 'INSERT INTO trips (id, name, color_tag, archived, '
+      'completion_prompt_shown, created_at) '
+      "VALUES ('t1', 'Thailand', 0, 0, 0, 0)";
 
   test(
       'v16 -> v17 creates packing_templates, packing_template_items and '
