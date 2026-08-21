@@ -1029,7 +1029,7 @@ git commit -m "feat(packing): add PackingRepository with copy-on-apply semantics
 
 **Interfaces:**
 - Consumes: `PackingRepository`, `DriftPackingRepository`, domain types (Tasks 1, 3); `PillChip`, `PaperCard`, `SectionLabel`, `EmptyState`, `ErrorState` (existing `lib/core/widgets/`); `Trip` (`lib/features/trips/domain/trip.dart`).
-- Produces: `packingDaoProvider`, `packingRepositoryProvider`, `packingTemplatesProvider` (`StreamProvider<List<PackingTemplate>>`), `tripPackingItemsProvider` (`StreamProvider.family<List<TripPackingItem>, String>`), `packingTemplateItemsProvider` (`StreamProvider.family<List<PackingTemplateItem>, String>`); `packingCategoryLabel(l10n, category)`, `packingCategoryIcon(category)`, `packingStatusLabel(l10n, status)`; `class TripPackingTab extends ConsumerStatefulWidget({required Trip trip})`; `class FakePackingRepository implements PackingRepository` (test helper, constructed with optional initial `templates`/`templateItems`/`tripItems` lists, with an `emitError` method matching `FakeExpenseRepository`'s shape).
+- Produces: `packingDaoProvider`, `packingRepositoryProvider`, `packingTemplatesProvider` (`StreamProvider<List<PackingTemplate>>`), `tripPackingItemsProvider` (`StreamProvider.family<List<TripPackingItem>, String>`), `packingTemplateItemsProvider` (`StreamProvider.family<List<PackingTemplateItem>, String>`); `packingCategoryLabel(l10n, category)`, `packingCategoryIcon(category)`, `packingStatusLabel(l10n, status)`; `class TripPackingTab extends ConsumerStatefulWidget({required Trip trip})`; `class FakePackingRepository implements PackingRepository` (test helper, constructed with optional initial `templates`/`templateItems`/`tripItems` lists, with an `emitTripItemsError` method matching `FakeExpenseRepository.emitError`'s shape).
 
 - [ ] **Step 1: Add ARB strings**
 
@@ -1525,6 +1525,22 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
     final l10n = AppLocalizations.of(context)!;
     final asyncItems = ref.watch(tripPackingItemsProvider(widget.trip.id));
 
+    // Everything below returns through this one Scaffold — Task 5 adds
+    // `floatingActionButton:` and Task 6 adds `appBar:` to this same
+    // widget rather than restructuring it, so the overflow menu (once
+    // Task 6 adds it) is reachable from every state, including empty and
+    // error, not just the populated list.
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: _body(context, l10n, asyncItems),
+    );
+  }
+
+  Widget _body(
+    BuildContext context,
+    AppLocalizations l10n,
+    AsyncValue<List<TripPackingItem>> asyncItems,
+  ) {
     if (asyncItems.hasError) {
       return ErrorState(
         onRetry: () =>
@@ -1903,33 +1919,58 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
 
 - [ ] **Step 5: Wire the sheet into `TripPackingTab`**
 
-In `trip_packing_tab.dart`, add the import (`import 'packing_item_form_sheet.dart';`), replace the empty-state's `onCta: () {}` with:
+In `trip_packing_tab.dart`, add the import `import 'packing_item_form_sheet.dart';`.
+
+Task 4's `build()` already wraps every state in one `Scaffold` (see its comment) — this step only adds a `floatingActionButton:` to that same `Scaffold`, shown only once there's something to add to (empty state keeps its own CTA instead, matching `TripExpensesTab`'s precedent):
+
+```dart
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final asyncItems = ref.watch(tripPackingItemsProvider(widget.trip.id));
+    final hasItems = (asyncItems.valueOrNull ?? const []).isNotEmpty;
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: hasItems
+          ? FloatingActionButton(
+              onPressed: () =>
+                  showPackingItemFormSheet(context, tripId: widget.trip.id),
+              child: const Icon(Icons.add),
+            )
+          : null,
+      body: _body(context, l10n, asyncItems),
+    );
+  }
+```
+
+Replace the empty-state's `onCta: () {}` (in `_body`) with:
 
 ```dart
         onCta: () =>
             showPackingItemFormSheet(context, tripId: widget.trip.id),
 ```
 
-and wrap the `ListView` return value in a `Scaffold` with a FAB, matching `TripExpensesTab`'s shape:
+Make `_ItemRow`'s tap-to-edit reachable for non-clothing rows (clothing rows already use the whole card's tap for the status menu). Replace the `Expanded` label in `_ItemRow.build`:
 
 ```dart
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            showPackingItemFormSheet(context, tripId: widget.trip.id),
-        child: const Icon(Icons.add),
-      ),
-      body: ListView(
-        padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
-        children: [
-          // ...unchanged category-grouped list from Task 4...
-        ],
-      ),
-    );
+          Expanded(
+            child: isClothing
+                ? Text(item.label, overflow: TextOverflow.ellipsis)
+                : InkWell(
+                    onTap: () => showPackingItemFormSheet(
+                      context,
+                      tripId: item.tripId,
+                      existingId: item.id,
+                      existingLabel: item.label,
+                      existingCategory: item.category,
+                    ),
+                    child: Text(item.label, overflow: TextOverflow.ellipsis),
+                  ),
+          ),
 ```
 
-Also make `_ItemRow`'s tap-to-edit reachable for non-clothing rows (clothing rows already use tap for the status menu): wrap the row's label `Text` in a `GestureDetector`/`InkWell` for non-clothing items only, calling `showPackingItemFormSheet(context, tripId: item.tripId, existingId: item.id, existingLabel: item.label, existingCategory: item.category)`.
+Add the import `import 'packing_item_form_sheet.dart';` to `_ItemRow`'s file if not already present (same file as above).
 
 - [ ] **Step 6: Run test to verify it passes**
 
@@ -2104,9 +2145,15 @@ class _ApplyTemplateSheet extends ConsumerWidget {
 
 - [ ] **Step 5: Add the overflow menu to `TripPackingTab`**
 
-Wrap `TripPackingTab`'s body (from Task 5) in a `Scaffold` with an `AppBar` (it currently has none — the tab bar above it in `TripDetailScreen` covers navigation, but the "…" menu needs a home; matches `TripExpensesTab`'s transparent-background pattern, just adding `appBar:`):
+Add `appBar:` to the same `Scaffold` `build()` returns (Task 5 already put `floatingActionButton:` and `body:` there — the tab bar above this screen in `TripDetailScreen` covers navigation, but the "…" menu needs a home, so this screen gets its own transparent `AppBar` on top of that). Replace `build()` with:
 
 ```dart
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final asyncItems = ref.watch(tripPackingItemsProvider(widget.trip.id));
+    final hasItems = (asyncItems.valueOrNull ?? const []).isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -2119,7 +2166,8 @@ Wrap `TripPackingTab`'s body (from Task 5) in a `Scaffold` with an `AppBar` (it 
                 case 'apply':
                   showApplyTemplateSheet(context, tripId: widget.trip.id);
                 case 'manage':
-                  // Wired in Task 7.
+                  // Wired in Task 9, once PackingTemplateManagerScreen
+                  // exists (Task 7).
                   break;
               }
             },
@@ -2136,9 +2184,16 @@ Wrap `TripPackingTab`'s body (from Task 5) in a `Scaffold` with an `AppBar` (it 
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(/* unchanged from Task 5 */),
-      body: /* unchanged from Task 5 */,
+      floatingActionButton: hasItems
+          ? FloatingActionButton(
+              onPressed: () =>
+                  showPackingItemFormSheet(context, tripId: widget.trip.id),
+              child: const Icon(Icons.add),
+            )
+          : null,
+      body: _body(context, l10n, asyncItems),
     );
+  }
 ```
 
 Add the import: `import 'apply_template_sheet.dart';`.
