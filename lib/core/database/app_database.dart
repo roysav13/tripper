@@ -5,6 +5,8 @@ import '../../features/expenses/data/expenses_dao.dart';
 import '../../features/itinerary/data/itinerary_tables.dart';
 import '../../features/journal/data/journal_dao.dart';
 import '../../features/journal/data/journal_tables.dart';
+import '../../features/packing/data/packing_dao.dart';
+import '../../features/packing/data/packing_tables.dart';
 import '../../features/places/data/place_collection_tables.dart';
 import '../../features/places/data/place_collections_dao.dart';
 import '../../features/places/data/place_tables.dart';
@@ -38,6 +40,9 @@ part 'app_database.g.dart';
 ///   v16 — PlaceCollections + PlaceCollectionMemberships (Locations lists:
 ///         user-made place groupings, many-to-many, independent of
 ///         PlaceCategory and of trips)
+///   v17 — PackingTemplates + PackingTemplateItems + TripPackingItems
+///         (Packing checklist feature — see
+///         docs/superpowers/specs/2026-08-22-packing-checklist-design.md)
 ///
 /// ItineraryItems has no DAO and nothing reads or writes it: the Plan
 /// feature was withdrawn on 2026-07-26 as "currently won't do"
@@ -58,6 +63,9 @@ part 'app_database.g.dart';
     JournalPhotos,
     PlaceCollections,
     PlaceCollectionMemberships,
+    PackingTemplates,
+    PackingTemplateItems,
+    TripPackingItems,
   ],
   daos: [
     TripsDao,
@@ -66,6 +74,7 @@ part 'app_database.g.dart';
     ExpensesDao,
     JournalDao,
     PlaceCollectionsDao,
+    PackingDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -73,7 +82,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -140,6 +149,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 16) {
             await m.createTable(placeCollections);
             await m.createTable(placeCollectionMemberships);
+          }
+          if (from < 17) {
+            await m.createTable(packingTemplates);
+            await m.createTable(packingTemplateItems);
+            await m.createTable(tripPackingItems);
           }
         },
         beforeOpen: (details) async {

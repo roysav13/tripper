@@ -4540,6 +4540,871 @@ class PlaceCollectionMembershipsCompanion
   }
 }
 
+class $PackingTemplatesTable extends PackingTemplates
+    with TableInfo<$PackingTemplatesTable, PackingTemplateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PackingTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'packing_templates';
+  @override
+  VerificationContext validateIntegrity(Insertable<PackingTemplateRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PackingTemplateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PackingTemplateRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+    );
+  }
+
+  @override
+  $PackingTemplatesTable createAlias(String alias) {
+    return $PackingTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class PackingTemplateRow extends DataClass
+    implements Insertable<PackingTemplateRow> {
+  final String id;
+  final String name;
+  const PackingTemplateRow({required this.id, required this.name});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  PackingTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return PackingTemplatesCompanion(
+      id: Value(id),
+      name: Value(name),
+    );
+  }
+
+  factory PackingTemplateRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PackingTemplateRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  PackingTemplateRow copyWith({String? id, String? name}) => PackingTemplateRow(
+        id: id ?? this.id,
+        name: name ?? this.name,
+      );
+  PackingTemplateRow copyWithCompanion(PackingTemplatesCompanion data) {
+    return PackingTemplateRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackingTemplateRow(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PackingTemplateRow &&
+          other.id == this.id &&
+          other.name == this.name);
+}
+
+class PackingTemplatesCompanion extends UpdateCompanion<PackingTemplateRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<int> rowid;
+  const PackingTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PackingTemplatesCompanion.insert({
+    required String id,
+    required String name,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name);
+  static Insertable<PackingTemplateRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PackingTemplatesCompanion copyWith(
+      {Value<String>? id, Value<String>? name, Value<int>? rowid}) {
+    return PackingTemplatesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackingTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PackingTemplateItemsTable extends PackingTemplateItems
+    with TableInfo<$PackingTemplateItemsTable, PackingTemplateItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PackingTemplateItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _templateIdMeta =
+      const VerificationMeta('templateId');
+  @override
+  late final GeneratedColumn<String> templateId = GeneratedColumn<String>(
+      'template_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES packing_templates (id) ON DELETE CASCADE'));
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<int> category = GeneratedColumn<int>(
+      'category', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, templateId, category, label, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'packing_template_items';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<PackingTemplateItemRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('template_id')) {
+      context.handle(
+          _templateIdMeta,
+          templateId.isAcceptableOrUnknown(
+              data['template_id']!, _templateIdMeta));
+    } else if (isInserting) {
+      context.missing(_templateIdMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PackingTemplateItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PackingTemplateItemRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      templateId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}template_id'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}category'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $PackingTemplateItemsTable createAlias(String alias) {
+    return $PackingTemplateItemsTable(attachedDatabase, alias);
+  }
+}
+
+class PackingTemplateItemRow extends DataClass
+    implements Insertable<PackingTemplateItemRow> {
+  final String id;
+  final String templateId;
+
+  /// Index into the PackingCategory enum (domain layer).
+  final int category;
+  final String label;
+  final int sortOrder;
+  const PackingTemplateItemRow(
+      {required this.id,
+      required this.templateId,
+      required this.category,
+      required this.label,
+      required this.sortOrder});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['template_id'] = Variable<String>(templateId);
+    map['category'] = Variable<int>(category);
+    map['label'] = Variable<String>(label);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  PackingTemplateItemsCompanion toCompanion(bool nullToAbsent) {
+    return PackingTemplateItemsCompanion(
+      id: Value(id),
+      templateId: Value(templateId),
+      category: Value(category),
+      label: Value(label),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory PackingTemplateItemRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PackingTemplateItemRow(
+      id: serializer.fromJson<String>(json['id']),
+      templateId: serializer.fromJson<String>(json['templateId']),
+      category: serializer.fromJson<int>(json['category']),
+      label: serializer.fromJson<String>(json['label']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'templateId': serializer.toJson<String>(templateId),
+      'category': serializer.toJson<int>(category),
+      'label': serializer.toJson<String>(label),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  PackingTemplateItemRow copyWith(
+          {String? id,
+          String? templateId,
+          int? category,
+          String? label,
+          int? sortOrder}) =>
+      PackingTemplateItemRow(
+        id: id ?? this.id,
+        templateId: templateId ?? this.templateId,
+        category: category ?? this.category,
+        label: label ?? this.label,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
+  PackingTemplateItemRow copyWithCompanion(PackingTemplateItemsCompanion data) {
+    return PackingTemplateItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      templateId:
+          data.templateId.present ? data.templateId.value : this.templateId,
+      category: data.category.present ? data.category.value : this.category,
+      label: data.label.present ? data.label.value : this.label,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackingTemplateItemRow(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('category: $category, ')
+          ..write('label: $label, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, templateId, category, label, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PackingTemplateItemRow &&
+          other.id == this.id &&
+          other.templateId == this.templateId &&
+          other.category == this.category &&
+          other.label == this.label &&
+          other.sortOrder == this.sortOrder);
+}
+
+class PackingTemplateItemsCompanion
+    extends UpdateCompanion<PackingTemplateItemRow> {
+  final Value<String> id;
+  final Value<String> templateId;
+  final Value<int> category;
+  final Value<String> label;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const PackingTemplateItemsCompanion({
+    this.id = const Value.absent(),
+    this.templateId = const Value.absent(),
+    this.category = const Value.absent(),
+    this.label = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PackingTemplateItemsCompanion.insert({
+    required String id,
+    required String templateId,
+    required int category,
+    required String label,
+    required int sortOrder,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        templateId = Value(templateId),
+        category = Value(category),
+        label = Value(label),
+        sortOrder = Value(sortOrder);
+  static Insertable<PackingTemplateItemRow> custom({
+    Expression<String>? id,
+    Expression<String>? templateId,
+    Expression<int>? category,
+    Expression<String>? label,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (templateId != null) 'template_id': templateId,
+      if (category != null) 'category': category,
+      if (label != null) 'label': label,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PackingTemplateItemsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? templateId,
+      Value<int>? category,
+      Value<String>? label,
+      Value<int>? sortOrder,
+      Value<int>? rowid}) {
+    return PackingTemplateItemsCompanion(
+      id: id ?? this.id,
+      templateId: templateId ?? this.templateId,
+      category: category ?? this.category,
+      label: label ?? this.label,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (templateId.present) {
+      map['template_id'] = Variable<String>(templateId.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<int>(category.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackingTemplateItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('category: $category, ')
+          ..write('label: $label, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TripPackingItemsTable extends TripPackingItems
+    with TableInfo<$TripPackingItemsTable, TripPackingItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TripPackingItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+      'trip_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES trips (id) ON DELETE CASCADE'));
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<int> category = GeneratedColumn<int>(
+      'category', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<int> status = GeneratedColumn<int>(
+      'status', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, tripId, category, label, status, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trip_packing_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<TripPackingItemRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(_tripIdMeta,
+          tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta));
+    } else if (isInserting) {
+      context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TripPackingItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TripPackingItemRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      tripId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}trip_id'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}category'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}status'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $TripPackingItemsTable createAlias(String alias) {
+    return $TripPackingItemsTable(attachedDatabase, alias);
+  }
+}
+
+class TripPackingItemRow extends DataClass
+    implements Insertable<TripPackingItemRow> {
+  final String id;
+
+  /// Cascade, unlike Places (SET NULL): a packing list without its trip
+  /// is meaningless — same reasoning as Expenses.tripId.
+  final String tripId;
+
+  /// Index into the PackingCategory enum (domain layer).
+  final int category;
+  final String label;
+
+  /// Index into the PackingItemStatus enum (domain layer). Non-clothing
+  /// items only ever hold toPack(0)/packed(1); clothing items use all 5.
+  final int status;
+  final int sortOrder;
+  const TripPackingItemRow(
+      {required this.id,
+      required this.tripId,
+      required this.category,
+      required this.label,
+      required this.status,
+      required this.sortOrder});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['trip_id'] = Variable<String>(tripId);
+    map['category'] = Variable<int>(category);
+    map['label'] = Variable<String>(label);
+    map['status'] = Variable<int>(status);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  TripPackingItemsCompanion toCompanion(bool nullToAbsent) {
+    return TripPackingItemsCompanion(
+      id: Value(id),
+      tripId: Value(tripId),
+      category: Value(category),
+      label: Value(label),
+      status: Value(status),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory TripPackingItemRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TripPackingItemRow(
+      id: serializer.fromJson<String>(json['id']),
+      tripId: serializer.fromJson<String>(json['tripId']),
+      category: serializer.fromJson<int>(json['category']),
+      label: serializer.fromJson<String>(json['label']),
+      status: serializer.fromJson<int>(json['status']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'tripId': serializer.toJson<String>(tripId),
+      'category': serializer.toJson<int>(category),
+      'label': serializer.toJson<String>(label),
+      'status': serializer.toJson<int>(status),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  TripPackingItemRow copyWith(
+          {String? id,
+          String? tripId,
+          int? category,
+          String? label,
+          int? status,
+          int? sortOrder}) =>
+      TripPackingItemRow(
+        id: id ?? this.id,
+        tripId: tripId ?? this.tripId,
+        category: category ?? this.category,
+        label: label ?? this.label,
+        status: status ?? this.status,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
+  TripPackingItemRow copyWithCompanion(TripPackingItemsCompanion data) {
+    return TripPackingItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      category: data.category.present ? data.category.value : this.category,
+      label: data.label.present ? data.label.value : this.label,
+      status: data.status.present ? data.status.value : this.status,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripPackingItemRow(')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('category: $category, ')
+          ..write('label: $label, ')
+          ..write('status: $status, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, tripId, category, label, status, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TripPackingItemRow &&
+          other.id == this.id &&
+          other.tripId == this.tripId &&
+          other.category == this.category &&
+          other.label == this.label &&
+          other.status == this.status &&
+          other.sortOrder == this.sortOrder);
+}
+
+class TripPackingItemsCompanion extends UpdateCompanion<TripPackingItemRow> {
+  final Value<String> id;
+  final Value<String> tripId;
+  final Value<int> category;
+  final Value<String> label;
+  final Value<int> status;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const TripPackingItemsCompanion({
+    this.id = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.category = const Value.absent(),
+    this.label = const Value.absent(),
+    this.status = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TripPackingItemsCompanion.insert({
+    required String id,
+    required String tripId,
+    required int category,
+    required String label,
+    required int status,
+    required int sortOrder,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        tripId = Value(tripId),
+        category = Value(category),
+        label = Value(label),
+        status = Value(status),
+        sortOrder = Value(sortOrder);
+  static Insertable<TripPackingItemRow> custom({
+    Expression<String>? id,
+    Expression<String>? tripId,
+    Expression<int>? category,
+    Expression<String>? label,
+    Expression<int>? status,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tripId != null) 'trip_id': tripId,
+      if (category != null) 'category': category,
+      if (label != null) 'label': label,
+      if (status != null) 'status': status,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TripPackingItemsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? tripId,
+      Value<int>? category,
+      Value<String>? label,
+      Value<int>? status,
+      Value<int>? sortOrder,
+      Value<int>? rowid}) {
+    return TripPackingItemsCompanion(
+      id: id ?? this.id,
+      tripId: tripId ?? this.tripId,
+      category: category ?? this.category,
+      label: label ?? this.label,
+      status: status ?? this.status,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<int>(category.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(status.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripPackingItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('category: $category, ')
+          ..write('label: $label, ')
+          ..write('status: $status, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4557,6 +5422,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PlaceCollectionsTable(this);
   late final $PlaceCollectionMembershipsTable placeCollectionMemberships =
       $PlaceCollectionMembershipsTable(this);
+  late final $PackingTemplatesTable packingTemplates =
+      $PackingTemplatesTable(this);
+  late final $PackingTemplateItemsTable packingTemplateItems =
+      $PackingTemplateItemsTable(this);
+  late final $TripPackingItemsTable tripPackingItems =
+      $TripPackingItemsTable(this);
   late final TripsDao tripsDao = TripsDao(this as AppDatabase);
   late final DocumentsDao documentsDao = DocumentsDao(this as AppDatabase);
   late final PlacesDao placesDao = PlacesDao(this as AppDatabase);
@@ -4564,6 +5435,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final JournalDao journalDao = JournalDao(this as AppDatabase);
   late final PlaceCollectionsDao placeCollectionsDao =
       PlaceCollectionsDao(this as AppDatabase);
+  late final PackingDao packingDao = PackingDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4579,7 +5451,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         journalEntries,
         journalPhotos,
         placeCollections,
-        placeCollectionMemberships
+        placeCollectionMemberships,
+        packingTemplates,
+        packingTemplateItems,
+        tripPackingItems
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -4668,6 +5543,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
             result: [
               TableUpdate('place_collection_memberships',
                   kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('packing_templates',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('packing_template_items', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('trips',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('trip_packing_items', kind: UpdateKind.delete),
             ],
           ),
         ],
@@ -4785,6 +5674,22 @@ final class $$TripsTableReferences
         .filter((f) => f.tripId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_journalEntriesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$TripPackingItemsTable, List<TripPackingItemRow>>
+      _tripPackingItemsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.tripPackingItems,
+              aliasName: 'trips__id__trip_packing_items__trip_id');
+
+  $$TripPackingItemsTableProcessedTableManager get tripPackingItemsRefs {
+    final manager =
+        $$TripPackingItemsTableTableManager($_db, $_db.tripPackingItems)
+            .filter((f) => f.tripId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_tripPackingItemsRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -4945,6 +5850,27 @@ class $$TripsTableFilterComposer extends Composer<_$AppDatabase, $TripsTable> {
             $$JournalEntriesTableFilterComposer(
               $db: $db,
               $table: $db.journalEntries,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> tripPackingItemsRefs(
+      Expression<bool> Function($$TripPackingItemsTableFilterComposer f) f) {
+    final $$TripPackingItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.tripPackingItems,
+        getReferencedColumn: (t) => t.tripId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripPackingItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.tripPackingItems,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -5154,6 +6080,27 @@ class $$TripsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> tripPackingItemsRefs<T extends Object>(
+      Expression<T> Function($$TripPackingItemsTableAnnotationComposer a) f) {
+    final $$TripPackingItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.tripPackingItems,
+        getReferencedColumn: (t) => t.tripId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripPackingItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.tripPackingItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$TripsTableTableManager extends RootTableManager<
@@ -5173,7 +6120,8 @@ class $$TripsTableTableManager extends RootTableManager<
         bool placesRefs,
         bool expensesRefs,
         bool itineraryItemsRefs,
-        bool journalEntriesRefs})> {
+        bool journalEntriesRefs,
+        bool tripPackingItemsRefs})> {
   $$TripsTableTableManager(_$AppDatabase db, $TripsTable table)
       : super(TableManagerState(
           db: db,
@@ -5242,7 +6190,8 @@ class $$TripsTableTableManager extends RootTableManager<
               placesRefs = false,
               expensesRefs = false,
               itineraryItemsRefs = false,
-              journalEntriesRefs = false}) {
+              journalEntriesRefs = false,
+              tripPackingItemsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
@@ -5251,7 +6200,8 @@ class $$TripsTableTableManager extends RootTableManager<
                 if (placesRefs) db.places,
                 if (expensesRefs) db.expenses,
                 if (itineraryItemsRefs) db.itineraryItems,
-                if (journalEntriesRefs) db.journalEntries
+                if (journalEntriesRefs) db.journalEntries,
+                if (tripPackingItemsRefs) db.tripPackingItems
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -5329,6 +6279,19 @@ class $$TripsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.tripId == item.id),
+                        typedResults: items),
+                  if (tripPackingItemsRefs)
+                    await $_getPrefetchedData<TripRow, $TripsTable,
+                            TripPackingItemRow>(
+                        currentTable: table,
+                        referencedTable: $$TripsTableReferences
+                            ._tripPackingItemsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TripsTableReferences(db, table, p0)
+                                .tripPackingItemsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.tripId == item.id),
                         typedResults: items)
                 ];
               },
@@ -5354,7 +6317,8 @@ typedef $$TripsTableProcessedTableManager = ProcessedTableManager<
         bool placesRefs,
         bool expensesRefs,
         bool itineraryItemsRefs,
-        bool journalEntriesRefs})>;
+        bool journalEntriesRefs,
+        bool tripPackingItemsRefs})>;
 typedef $$TripDestinationsTableCreateCompanionBuilder
     = TripDestinationsCompanion Function({
   required String id,
@@ -8994,6 +9958,800 @@ typedef $$PlaceCollectionMembershipsTableProcessedTableManager
         ),
         PlaceCollectionMembershipRow,
         PrefetchHooks Function({bool collectionId, bool placeId})>;
+typedef $$PackingTemplatesTableCreateCompanionBuilder
+    = PackingTemplatesCompanion Function({
+  required String id,
+  required String name,
+  Value<int> rowid,
+});
+typedef $$PackingTemplatesTableUpdateCompanionBuilder
+    = PackingTemplatesCompanion Function({
+  Value<String> id,
+  Value<String> name,
+  Value<int> rowid,
+});
+
+final class $$PackingTemplatesTableReferences extends BaseReferences<
+    _$AppDatabase, $PackingTemplatesTable, PackingTemplateRow> {
+  $$PackingTemplatesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PackingTemplateItemsTable,
+      List<PackingTemplateItemRow>> _packingTemplateItemsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.packingTemplateItems,
+          aliasName:
+              'packing_templates__id__packing_template_items__template_id');
+
+  $$PackingTemplateItemsTableProcessedTableManager
+      get packingTemplateItemsRefs {
+    final manager = $$PackingTemplateItemsTableTableManager(
+            $_db, $_db.packingTemplateItems)
+        .filter((f) => f.templateId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_packingTemplateItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$PackingTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $PackingTemplatesTable> {
+  $$PackingTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> packingTemplateItemsRefs(
+      Expression<bool> Function($$PackingTemplateItemsTableFilterComposer f)
+          f) {
+    final $$PackingTemplateItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.packingTemplateItems,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PackingTemplateItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.packingTemplateItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$PackingTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PackingTemplatesTable> {
+  $$PackingTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+}
+
+class $$PackingTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PackingTemplatesTable> {
+  $$PackingTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  Expression<T> packingTemplateItemsRefs<T extends Object>(
+      Expression<T> Function($$PackingTemplateItemsTableAnnotationComposer a)
+          f) {
+    final $$PackingTemplateItemsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.packingTemplateItems,
+            getReferencedColumn: (t) => t.templateId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$PackingTemplateItemsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.packingTemplateItems,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$PackingTemplatesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PackingTemplatesTable,
+    PackingTemplateRow,
+    $$PackingTemplatesTableFilterComposer,
+    $$PackingTemplatesTableOrderingComposer,
+    $$PackingTemplatesTableAnnotationComposer,
+    $$PackingTemplatesTableCreateCompanionBuilder,
+    $$PackingTemplatesTableUpdateCompanionBuilder,
+    (PackingTemplateRow, $$PackingTemplatesTableReferences),
+    PackingTemplateRow,
+    PrefetchHooks Function({bool packingTemplateItemsRefs})> {
+  $$PackingTemplatesTableTableManager(
+      _$AppDatabase db, $PackingTemplatesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PackingTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PackingTemplatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PackingTemplatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PackingTemplatesCompanion(
+            id: id,
+            name: name,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PackingTemplatesCompanion.insert(
+            id: id,
+            name: name,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$PackingTemplatesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({packingTemplateItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (packingTemplateItemsRefs) db.packingTemplateItems
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (packingTemplateItemsRefs)
+                    await $_getPrefetchedData<PackingTemplateRow,
+                            $PackingTemplatesTable, PackingTemplateItemRow>(
+                        currentTable: table,
+                        referencedTable: $$PackingTemplatesTableReferences
+                            ._packingTemplateItemsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$PackingTemplatesTableReferences(db, table, p0)
+                                .packingTemplateItemsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.templateId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$PackingTemplatesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $PackingTemplatesTable,
+    PackingTemplateRow,
+    $$PackingTemplatesTableFilterComposer,
+    $$PackingTemplatesTableOrderingComposer,
+    $$PackingTemplatesTableAnnotationComposer,
+    $$PackingTemplatesTableCreateCompanionBuilder,
+    $$PackingTemplatesTableUpdateCompanionBuilder,
+    (PackingTemplateRow, $$PackingTemplatesTableReferences),
+    PackingTemplateRow,
+    PrefetchHooks Function({bool packingTemplateItemsRefs})>;
+typedef $$PackingTemplateItemsTableCreateCompanionBuilder
+    = PackingTemplateItemsCompanion Function({
+  required String id,
+  required String templateId,
+  required int category,
+  required String label,
+  required int sortOrder,
+  Value<int> rowid,
+});
+typedef $$PackingTemplateItemsTableUpdateCompanionBuilder
+    = PackingTemplateItemsCompanion Function({
+  Value<String> id,
+  Value<String> templateId,
+  Value<int> category,
+  Value<String> label,
+  Value<int> sortOrder,
+  Value<int> rowid,
+});
+
+final class $$PackingTemplateItemsTableReferences extends BaseReferences<
+    _$AppDatabase, $PackingTemplateItemsTable, PackingTemplateItemRow> {
+  $$PackingTemplateItemsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $PackingTemplatesTable _templateIdTable(_$AppDatabase db) =>
+      db.packingTemplates.createAlias(
+          'packing_template_items__template_id__packing_templates__id');
+
+  $$PackingTemplatesTableProcessedTableManager get templateId {
+    final $_column = $_itemColumn<String>('template_id')!;
+
+    final manager =
+        $$PackingTemplatesTableTableManager($_db, $_db.packingTemplates)
+            .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_templateIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$PackingTemplateItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $PackingTemplateItemsTable> {
+  $$PackingTemplateItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  $$PackingTemplatesTableFilterComposer get templateId {
+    final $$PackingTemplatesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.packingTemplates,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PackingTemplatesTableFilterComposer(
+              $db: $db,
+              $table: $db.packingTemplates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PackingTemplateItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PackingTemplateItemsTable> {
+  $$PackingTemplateItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+
+  $$PackingTemplatesTableOrderingComposer get templateId {
+    final $$PackingTemplatesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.packingTemplates,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PackingTemplatesTableOrderingComposer(
+              $db: $db,
+              $table: $db.packingTemplates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PackingTemplateItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PackingTemplateItemsTable> {
+  $$PackingTemplateItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  $$PackingTemplatesTableAnnotationComposer get templateId {
+    final $$PackingTemplatesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.packingTemplates,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PackingTemplatesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.packingTemplates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$PackingTemplateItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PackingTemplateItemsTable,
+    PackingTemplateItemRow,
+    $$PackingTemplateItemsTableFilterComposer,
+    $$PackingTemplateItemsTableOrderingComposer,
+    $$PackingTemplateItemsTableAnnotationComposer,
+    $$PackingTemplateItemsTableCreateCompanionBuilder,
+    $$PackingTemplateItemsTableUpdateCompanionBuilder,
+    (PackingTemplateItemRow, $$PackingTemplateItemsTableReferences),
+    PackingTemplateItemRow,
+    PrefetchHooks Function({bool templateId})> {
+  $$PackingTemplateItemsTableTableManager(
+      _$AppDatabase db, $PackingTemplateItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PackingTemplateItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PackingTemplateItemsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PackingTemplateItemsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> templateId = const Value.absent(),
+            Value<int> category = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PackingTemplateItemsCompanion(
+            id: id,
+            templateId: templateId,
+            category: category,
+            label: label,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String templateId,
+            required int category,
+            required String label,
+            required int sortOrder,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PackingTemplateItemsCompanion.insert(
+            id: id,
+            templateId: templateId,
+            category: category,
+            label: label,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$PackingTemplateItemsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({templateId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (templateId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.templateId,
+                    referencedTable: $$PackingTemplateItemsTableReferences
+                        ._templateIdTable(db),
+                    referencedColumn: $$PackingTemplateItemsTableReferences
+                        ._templateIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$PackingTemplateItemsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $PackingTemplateItemsTable,
+        PackingTemplateItemRow,
+        $$PackingTemplateItemsTableFilterComposer,
+        $$PackingTemplateItemsTableOrderingComposer,
+        $$PackingTemplateItemsTableAnnotationComposer,
+        $$PackingTemplateItemsTableCreateCompanionBuilder,
+        $$PackingTemplateItemsTableUpdateCompanionBuilder,
+        (PackingTemplateItemRow, $$PackingTemplateItemsTableReferences),
+        PackingTemplateItemRow,
+        PrefetchHooks Function({bool templateId})>;
+typedef $$TripPackingItemsTableCreateCompanionBuilder
+    = TripPackingItemsCompanion Function({
+  required String id,
+  required String tripId,
+  required int category,
+  required String label,
+  required int status,
+  required int sortOrder,
+  Value<int> rowid,
+});
+typedef $$TripPackingItemsTableUpdateCompanionBuilder
+    = TripPackingItemsCompanion Function({
+  Value<String> id,
+  Value<String> tripId,
+  Value<int> category,
+  Value<String> label,
+  Value<int> status,
+  Value<int> sortOrder,
+  Value<int> rowid,
+});
+
+final class $$TripPackingItemsTableReferences extends BaseReferences<
+    _$AppDatabase, $TripPackingItemsTable, TripPackingItemRow> {
+  $$TripPackingItemsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $TripsTable _tripIdTable(_$AppDatabase db) =>
+      db.trips.createAlias('trip_packing_items__trip_id__trips__id');
+
+  $$TripsTableProcessedTableManager get tripId {
+    final $_column = $_itemColumn<String>('trip_id')!;
+
+    final manager = $$TripsTableTableManager($_db, $_db.trips)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tripIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$TripPackingItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $TripPackingItemsTable> {
+  $$TripPackingItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  $$TripsTableFilterComposer get tripId {
+    final $$TripsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableFilterComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TripPackingItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TripPackingItemsTable> {
+  $$TripPackingItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+
+  $$TripsTableOrderingComposer get tripId {
+    final $$TripsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableOrderingComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TripPackingItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TripPackingItemsTable> {
+  $$TripPackingItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  $$TripsTableAnnotationComposer get tripId {
+    final $$TripsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.trips,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.trips,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TripPackingItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TripPackingItemsTable,
+    TripPackingItemRow,
+    $$TripPackingItemsTableFilterComposer,
+    $$TripPackingItemsTableOrderingComposer,
+    $$TripPackingItemsTableAnnotationComposer,
+    $$TripPackingItemsTableCreateCompanionBuilder,
+    $$TripPackingItemsTableUpdateCompanionBuilder,
+    (TripPackingItemRow, $$TripPackingItemsTableReferences),
+    TripPackingItemRow,
+    PrefetchHooks Function({bool tripId})> {
+  $$TripPackingItemsTableTableManager(
+      _$AppDatabase db, $TripPackingItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TripPackingItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TripPackingItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TripPackingItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> tripId = const Value.absent(),
+            Value<int> category = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<int> status = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TripPackingItemsCompanion(
+            id: id,
+            tripId: tripId,
+            category: category,
+            label: label,
+            status: status,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String tripId,
+            required int category,
+            required String label,
+            required int status,
+            required int sortOrder,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TripPackingItemsCompanion.insert(
+            id: id,
+            tripId: tripId,
+            category: category,
+            label: label,
+            status: status,
+            sortOrder: sortOrder,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$TripPackingItemsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({tripId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (tripId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.tripId,
+                    referencedTable:
+                        $$TripPackingItemsTableReferences._tripIdTable(db),
+                    referencedColumn:
+                        $$TripPackingItemsTableReferences._tripIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$TripPackingItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TripPackingItemsTable,
+    TripPackingItemRow,
+    $$TripPackingItemsTableFilterComposer,
+    $$TripPackingItemsTableOrderingComposer,
+    $$TripPackingItemsTableAnnotationComposer,
+    $$TripPackingItemsTableCreateCompanionBuilder,
+    $$TripPackingItemsTableUpdateCompanionBuilder,
+    (TripPackingItemRow, $$TripPackingItemsTableReferences),
+    TripPackingItemRow,
+    PrefetchHooks Function({bool tripId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9022,4 +10780,10 @@ class $AppDatabaseManager {
       get placeCollectionMemberships =>
           $$PlaceCollectionMembershipsTableTableManager(
               _db, _db.placeCollectionMemberships);
+  $$PackingTemplatesTableTableManager get packingTemplates =>
+      $$PackingTemplatesTableTableManager(_db, _db.packingTemplates);
+  $$PackingTemplateItemsTableTableManager get packingTemplateItems =>
+      $$PackingTemplateItemsTableTableManager(_db, _db.packingTemplateItems);
+  $$TripPackingItemsTableTableManager get tripPackingItems =>
+      $$TripPackingItemsTableTableManager(_db, _db.tripPackingItems);
 }
