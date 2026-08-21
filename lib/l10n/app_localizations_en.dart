@@ -191,6 +191,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabExpenses => 'Spend';
 
   @override
+  String get tabPacking => 'Packing';
+
+  @override
   String get expensesEmptyTitle => 'Track what this trip costs';
 
   @override
@@ -1168,4 +1171,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalNewLocation => 'New location';
+
+  @override
+  String get packingEmptyTitle => 'Nothing packed yet';
+
+  @override
+  String get packingEmptyBody =>
+      'Add items yourself, or apply a saved template to get started.';
+
+  @override
+  String get packingEmptyCta => 'Add an item';
+
+  @override
+  String get packingCatClothing => 'Clothing';
+
+  @override
+  String get packingCatDocuments => 'Documents';
+
+  @override
+  String get packingCatElectronics => 'Electronics';
+
+  @override
+  String get packingCatToiletries => 'Toiletries';
+
+  @override
+  String get packingCatOther => 'Other';
+
+  @override
+  String get packingStatusToPack => 'To pack';
+
+  @override
+  String get packingStatusPacked => 'Packed';
+
+  @override
+  String get packingStatusWorn => 'Worn';
+
+  @override
+  String get packingStatusInWash => 'In wash';
+
+  @override
+  String get packingStatusClean => 'Clean';
+
+  @override
+  String get deletePackingItemTitle => 'Delete this item?';
+
+  @override
+  String get deletePackingItemBody => 'This removes it from the packing list.';
+
+  @override
+  String get packingItemDeleted => 'Item deleted.';
 }

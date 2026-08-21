@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Spend'**
   String get tabExpenses;
 
+  /// No description provided for @tabPacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Packing'**
+  String get tabPacking;
+
   /// No description provided for @expensesEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -2083,6 +2089,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New location'**
   String get journalNewLocation;
+
+  /// No description provided for @packingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing packed yet'**
+  String get packingEmptyTitle;
+
+  /// No description provided for @packingEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add items yourself, or apply a saved template to get started.'**
+  String get packingEmptyBody;
+
+  /// No description provided for @packingEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an item'**
+  String get packingEmptyCta;
+
+  /// No description provided for @packingCatClothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothing'**
+  String get packingCatClothing;
+
+  /// No description provided for @packingCatDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get packingCatDocuments;
+
+  /// No description provided for @packingCatElectronics.
+  ///
+  /// In en, this message translates to:
+  /// **'Electronics'**
+  String get packingCatElectronics;
+
+  /// No description provided for @packingCatToiletries.
+  ///
+  /// In en, this message translates to:
+  /// **'Toiletries'**
+  String get packingCatToiletries;
+
+  /// No description provided for @packingCatOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get packingCatOther;
+
+  /// No description provided for @packingStatusToPack.
+  ///
+  /// In en, this message translates to:
+  /// **'To pack'**
+  String get packingStatusToPack;
+
+  /// No description provided for @packingStatusPacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Packed'**
+  String get packingStatusPacked;
+
+  /// No description provided for @packingStatusWorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Worn'**
+  String get packingStatusWorn;
+
+  /// No description provided for @packingStatusInWash.
+  ///
+  /// In en, this message translates to:
+  /// **'In wash'**
+  String get packingStatusInWash;
+
+  /// No description provided for @packingStatusClean.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get packingStatusClean;
+
+  /// No description provided for @deletePackingItemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this item?'**
+  String get deletePackingItemTitle;
+
+  /// No description provided for @deletePackingItemBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes it from the packing list.'**
+  String get deletePackingItemBody;
+
+  /// No description provided for @packingItemDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Item deleted.'**
+  String get packingItemDeleted;
 }
 
 class _AppLocalizationsDelegate
