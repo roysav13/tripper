@@ -147,6 +147,10 @@ class _ItemRow extends ConsumerWidget {
 
     return PaperCard(
       onTap: isClothing ? () => _pickStatus(context, ref) : null,
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
           if (!isClothing)
@@ -160,9 +164,11 @@ class _ItemRow extends ConsumerWidget {
                             : PackingItemStatus.toPack,
                       ),
             ),
+          // No overflow/maxLines: a long label wraps onto a second line
+          // instead of truncating with an ellipsis.
           Expanded(
             child: isClothing
-                ? Text(item.label, overflow: TextOverflow.ellipsis)
+                ? Text(item.label)
                 : InkWell(
                     onTap: () => showPackingItemFormSheet(
                       context,
@@ -171,7 +177,7 @@ class _ItemRow extends ConsumerWidget {
                       existingLabel: item.label,
                       existingCategory: item.category,
                     ),
-                    child: Text(item.label, overflow: TextOverflow.ellipsis),
+                    child: Text(item.label),
                   ),
           ),
           if (isClothing) ...[

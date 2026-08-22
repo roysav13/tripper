@@ -102,6 +102,10 @@ class PackingTemplateEditorScreen extends ConsumerWidget {
                   existingId: item.id,
                   existingTemplateItem: item,
                 ),
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
                 child: Row(
                   children: [
                     Expanded(child: Text(item.label)),
