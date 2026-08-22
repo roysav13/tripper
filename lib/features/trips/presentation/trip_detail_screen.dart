@@ -198,8 +198,11 @@ class TripDetailScreen extends ConsumerWidget {
                         unselectedLabelColor: colors.inkMuted,
                         indicatorColor: colors.accent,
                         labelStyle: AppTextStyles.label,
-                        // Fixed (non-scrollable) so the tabs share the width
-                        // evenly and each label sits centred in its slot.
+                        // Scrollable: five tabs no longer fit evenly at
+                        // every width, so labels scroll instead of
+                        // compacting/wrapping.
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
                         tabs: [
                           Tab(text: l10n.tabDocuments),
                           Tab(text: l10n.tabPlacesInTrip),
