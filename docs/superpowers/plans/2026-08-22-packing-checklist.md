@@ -33,7 +33,7 @@
 **Interfaces:**
 - Produces: `enum PackingCategory { clothing, documents, electronics, toiletries, other }`; `enum PackingItemStatus { toPack, packed, worn, inWash, clean }`; `class PackingTemplate { id, name }`; `class PackingTemplateItem { id, templateId, category, label, sortOrder }`; `class TripPackingItem { id, tripId, category, label, status, sortOrder }` — all `@immutable` with `copyWith`, `==`, `hashCode`, following `lib/features/expenses/domain/expense.dart`'s shape exactly.
 
-- [ ] **Step 1: Write the failing domain test**
+- [x] **Step 1: Write the failing domain test**
 
 ```dart
 // test/unit/packing/packing_domain_test.dart
@@ -86,12 +86,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/packing/packing_domain_test.dart`
 Expected: FAIL — `package:tripper/features/packing/...` files don't exist yet.
 
-- [ ] **Step 3: Implement the domain files**
+- [x] **Step 3: Implement the domain files**
 
 ```dart
 // lib/features/packing/domain/packing_category.dart
@@ -228,12 +228,12 @@ class TripPackingItem {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/unit/packing/packing_domain_test.dart`
 Expected: PASS (4 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/features/packing/domain test/unit/packing/packing_domain_test.dart
@@ -254,7 +254,7 @@ git commit -m "feat(packing): add domain models for packing checklist"
 - Consumes: nothing from Task 1 (tables store enum values as raw `int`, not the domain enums).
 - Produces: Drift tables `PackingTemplates`, `PackingTemplateItems`, `TripPackingItems` (data classes `PackingTemplateRow`, `PackingTemplateItemRow`, `TripPackingItemRow`); `PackingDao` with `watchTemplates()`, `getTemplateById(String)`, `insertTemplate(PackingTemplateRow)`, `updateTemplate(PackingTemplateRow)`, `deleteTemplate(String)`, `watchTemplateItems(String templateId)`, `getTemplateItems(String templateId)`, `getTemplateItemById(String)`, `insertTemplateItem(PackingTemplateItemRow)`, `updateTemplateItem(PackingTemplateItemRow)`, `deleteTemplateItem(String)`, `watchTripItems(String tripId)`, `getTripItems(String tripId)`, `getTripItemById(String)`, `insertTripItem(TripPackingItemRow)`, `updateTripItem(TripPackingItemRow)`, `deleteTripItem(String)`; `AppDatabase.packingDao` getter; `AppDatabase.schemaVersion == 17`.
 
-- [ ] **Step 1: Write the failing migration test**
+- [x] **Step 1: Write the failing migration test**
 
 ```dart
 // test/unit/packing/packing_migration_test.dart
@@ -361,12 +361,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/packing/packing_migration_test.dart`
 Expected: FAIL — schema is still at v16, tables don't exist.
 
-- [ ] **Step 3: Create the tables**
+- [x] **Step 3: Create the tables**
 
 ```dart
 // lib/features/packing/data/packing_tables.dart
@@ -421,7 +421,7 @@ class TripPackingItems extends Table {
 }
 ```
 
-- [ ] **Step 4: Create the DAO**
+- [x] **Step 4: Create the DAO**
 
 ```dart
 // lib/features/packing/data/packing_dao.dart
@@ -507,7 +507,7 @@ class PackingDao extends DatabaseAccessor<AppDatabase> with _$PackingDaoMixin {
 }
 ```
 
-- [ ] **Step 5: Wire into `app_database.dart`**
+- [x] **Step 5: Wire into `app_database.dart`**
 
 Add imports:
 
@@ -546,17 +546,17 @@ Bump the version and add the migration step:
           }
 ```
 
-- [ ] **Step 6: Run build_runner to generate Drift code**
+- [x] **Step 6: Run build_runner to generate Drift code**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates/updates `app_database.g.dart` and `packing_dao.g.dart` with no errors.
 
-- [ ] **Step 7: Run test to verify it passes**
+- [x] **Step 7: Run test to verify it passes**
 
 Run: `flutter test test/unit/packing/packing_migration_test.dart`
 Expected: PASS (4 tests)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/features/packing/data/packing_tables.dart lib/features/packing/data/packing_dao.dart lib/features/packing/data/packing_dao.g.dart lib/core/database/app_database.dart lib/core/database/app_database.g.dart test/unit/packing/packing_migration_test.dart
@@ -575,7 +575,7 @@ git commit -m "feat(packing): add Drift schema, DAO, and v17 migration"
 - Consumes: `PackingDao` and its methods (Task 2); `PackingCategory`, `PackingItemStatus`, `PackingTemplate`, `PackingTemplateItem`, `TripPackingItem` (Task 1).
 - Produces: `abstract interface class PackingRepository` with `watchTemplates()`, `createTemplate({required name})`, `renameTemplate(id, name)`, `deleteTemplate(id)`, `watchTemplateItems(templateId)`, `addTemplateItem({required templateId, required category, required label})`, `updateTemplateItem(PackingTemplateItem)`, `deleteTemplateItem(id)`, `watchTripItems(tripId)`, `addTripItem({required tripId, required category, required label})`, `updateTripItemLabel(id, label)`, `updateTripItemStatus(id, status)`, `deleteTripItem(id)`, `applyTemplate({required tripId, required templateId})`; and `class DriftPackingRepository implements PackingRepository`, constructed as `DriftPackingRepository(PackingDao dao, String Function() idGen)`.
 
-- [ ] **Step 1: Write the failing repository test**
+- [x] **Step 1: Write the failing repository test**
 
 ```dart
 // test/unit/packing/packing_repository_test.dart
@@ -761,12 +761,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/packing/packing_repository_test.dart`
 Expected: FAIL — `packing_repository.dart` doesn't exist yet.
 
-- [ ] **Step 3: Implement the repository**
+- [x] **Step 3: Implement the repository**
 
 ```dart
 // lib/features/packing/data/packing_repository.dart
@@ -1007,12 +1007,12 @@ class DriftPackingRepository implements PackingRepository {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/unit/packing/packing_repository_test.dart`
 Expected: PASS (12 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/features/packing/data/packing_repository.dart test/unit/packing/packing_repository_test.dart
@@ -1035,7 +1035,7 @@ git commit -m "feat(packing): add PackingRepository with copy-on-apply semantics
 - Consumes: `PackingRepository`, `DriftPackingRepository`, domain types (Tasks 1, 3); `PillChip`, `PaperCard`, `SectionLabel`, `EmptyState`, `ErrorState` (existing `lib/core/widgets/`); `Trip` (`lib/features/trips/domain/trip.dart`).
 - Produces: `packingDaoProvider`, `packingRepositoryProvider`, `packingTemplatesProvider` (`StreamProvider<List<PackingTemplate>>`), `tripPackingItemsProvider` (`StreamProvider.family<List<TripPackingItem>, String>`), `packingTemplateItemsProvider` (`StreamProvider.family<List<PackingTemplateItem>, String>`); `packingCategoryLabel(l10n, category)`, `packingCategoryIcon(category)`, `packingStatusLabel(l10n, status)`; `class TripPackingTab extends ConsumerStatefulWidget({required Trip trip})`; `class FakePackingRepository implements PackingRepository` (test helper, constructed with optional initial `templates`/`templateItems`/`tripItems` lists, with an `emitTripItemsError` method matching `FakeExpenseRepository.emitError`'s shape).
 
-- [ ] **Step 1: Add ARB strings**
+- [x] **Step 1: Add ARB strings**
 
 Add to `lib/l10n/app_en.arb` (near the other `tab*` and feature-empty-state keys):
 
@@ -1059,7 +1059,7 @@ Add to `lib/l10n/app_en.arb` (near the other `tab*` and feature-empty-state keys
   "packingItemDeleted": "Item deleted."
 ```
 
-- [ ] **Step 2: Write the failing widget test**
+- [x] **Step 2: Write the failing widget test**
 
 ```dart
 // test/widget/packing/trip_packing_tab_test.dart
@@ -1215,12 +1215,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: FAIL — none of the new files exist yet.
 
-- [ ] **Step 4: Implement the fake repository**
+- [x] **Step 4: Implement the fake repository**
 
 ```dart
 // test/helpers/fake_packing_repository.dart
@@ -1398,7 +1398,7 @@ class FakePackingRepository implements PackingRepository {
 }
 ```
 
-- [ ] **Step 5: Implement providers**
+- [x] **Step 5: Implement providers**
 
 ```dart
 // lib/features/packing/presentation/packing_providers.dart
@@ -1436,7 +1436,7 @@ final tripPackingItemsProvider =
 );
 ```
 
-- [ ] **Step 6: Implement category/status presentation helpers**
+- [x] **Step 6: Implement category/status presentation helpers**
 
 ```dart
 // lib/features/packing/presentation/packing_widgets.dart
@@ -1493,7 +1493,7 @@ class PackingStatusChip extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 7: Implement the trip tab**
+- [x] **Step 7: Implement the trip tab**
 
 ```dart
 // lib/features/packing/presentation/trip_packing_tab.dart
@@ -1679,13 +1679,13 @@ class _ItemRow extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 8: Generate localizations and run test to verify it passes**
+- [x] **Step 8: Generate localizations and run test to verify it passes**
 
 Run: `flutter gen-l10n` (or `flutter pub get`, which triggers it automatically if `generate: true` in `pubspec.yaml`), then:
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: PASS (6 tests)
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add lib/features/packing/presentation/packing_providers.dart lib/features/packing/presentation/packing_widgets.dart lib/features/packing/presentation/trip_packing_tab.dart lib/l10n/app_en.arb test/helpers/fake_packing_repository.dart test/widget/packing/trip_packing_tab_test.dart
@@ -1706,7 +1706,7 @@ git commit -m "feat(packing): add providers and the trip Packing tab"
 - Consumes: `PackingCategory`, `PillChip`, `packingCategoryLabel`/`packingCategoryIcon` (Task 4).
 - Produces: `Future<void> showPackingItemFormSheet(BuildContext, {required String tripId, TripPackingItem? existing})` — opens a bottom sheet to add or edit a trip item (category picker + label text field); calls `packingRepositoryProvider`'s `addTripItem`/`updateTripItemLabel` directly (category is fixed once created, matching the design's "fixed categories" decision — editing an item only changes its label, not its category, to avoid a resort-into-a-new-section edge case this round). Wires into `TripPackingTab`'s empty-state CTA and a new FAB.
 
-- [ ] **Step 1: Add ARB strings**
+- [x] **Step 1: Add ARB strings**
 
 ```json
   "packingItemFormAddTitle": "Add item",
@@ -1716,7 +1716,7 @@ git commit -m "feat(packing): add providers and the trip Packing tab"
   "errPackingLabelRequired": "Enter a name for this item"
 ```
 
-- [ ] **Step 2: Write the failing test additions**
+- [x] **Step 2: Write the failing test additions**
 
 Add to `test/widget/packing/trip_packing_tab_test.dart`:
 
@@ -1767,12 +1767,12 @@ Add to `test/widget/packing/trip_packing_tab_test.dart`:
   });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: FAIL — no FAB, empty-state CTA is a no-op, `showPackingItemFormSheet` doesn't exist.
 
-- [ ] **Step 4: Implement the form sheet**
+- [x] **Step 4: Implement the form sheet**
 
 ```dart
 // lib/features/packing/presentation/packing_item_form_sheet.dart
@@ -1921,7 +1921,7 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
 }
 ```
 
-- [ ] **Step 5: Wire the sheet into `TripPackingTab`**
+- [x] **Step 5: Wire the sheet into `TripPackingTab`**
 
 In `trip_packing_tab.dart`, add the import `import 'packing_item_form_sheet.dart';`.
 
@@ -1976,12 +1976,12 @@ Make `_ItemRow`'s tap-to-edit reachable for non-clothing rows (clothing rows alr
 
 Add the import `import 'packing_item_form_sheet.dart';` to `_ItemRow`'s file if not already present (same file as above).
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: PASS (9 tests)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/features/packing/presentation/packing_item_form_sheet.dart lib/features/packing/presentation/trip_packing_tab.dart lib/l10n/app_en.arb test/widget/packing/trip_packing_tab_test.dart
@@ -2002,7 +2002,7 @@ git commit -m "feat(packing): add the add/edit item form sheet"
 - Consumes: `packingTemplatesProvider`, `packingRepositoryProvider.applyTemplate` (Tasks 3, 4).
 - Produces: `Future<void> showApplyTemplateSheet(BuildContext, {required String tripId})`; an overflow `PopupMenuButton` on `TripPackingTab`'s `AppBar` with an "Apply template…" action (and a placeholder "Manage templates…" action wired for real in Task 7).
 
-- [ ] **Step 1: Add ARB strings**
+- [x] **Step 1: Add ARB strings**
 
 ```json
   "packingApplyTemplateAction": "Apply template…",
@@ -2017,7 +2017,7 @@ git commit -m "feat(packing): add the add/edit item form sheet"
   }
 ```
 
-- [ ] **Step 2: Write the failing test additions**
+- [x] **Step 2: Write the failing test additions**
 
 Add to `test/widget/packing/trip_packing_tab_test.dart` — no new override is needed in `_app`: `packingTemplatesProvider` reads through `packingRepositoryProvider`, which is already overridden there.
 
@@ -2064,12 +2064,12 @@ Add to `test/widget/packing/trip_packing_tab_test.dart` — no new override is n
   });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: FAIL — no `PopupMenuButton` on the tab yet.
 
-- [ ] **Step 4: Implement the apply-template sheet**
+- [x] **Step 4: Implement the apply-template sheet**
 
 ```dart
 // lib/features/packing/presentation/apply_template_sheet.dart
@@ -2147,7 +2147,7 @@ class _ApplyTemplateSheet extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 5: Add the overflow menu to `TripPackingTab`**
+- [x] **Step 5: Add the overflow menu to `TripPackingTab`**
 
 Add `appBar:` to the same `Scaffold` `build()` returns (Task 5 already put `floatingActionButton:` and `body:` there — the tab bar above this screen in `TripDetailScreen` covers navigation, but the "…" menu needs a home, so this screen gets its own transparent `AppBar` on top of that). Replace `build()` with:
 
@@ -2202,12 +2202,12 @@ Add `appBar:` to the same `Scaffold` `build()` returns (Task 5 already put `floa
 
 Add the import: `import 'apply_template_sheet.dart';`.
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `flutter test test/widget/packing/trip_packing_tab_test.dart`
 Expected: PASS (11 tests)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/features/packing/presentation/apply_template_sheet.dart lib/features/packing/presentation/trip_packing_tab.dart lib/l10n/app_en.arb test/widget/packing/trip_packing_tab_test.dart
@@ -2228,7 +2228,7 @@ git commit -m "feat(packing): add apply-template picker sheet"
 - Consumes: `packingTemplatesProvider`, `packingRepositoryProvider` (Task 4).
 - Produces: `Future<String?> promptTemplateName(BuildContext, {required String title, required String confirmLabel, String initial})`; `class PackingTemplateManagerScreen extends ConsumerWidget` — list of templates (name only this round; item counts are shown once Task 8's editor exists, via `packingTemplateItemsProvider` — out of scope for this task's list row), tap opens `PackingTemplateEditorScreen` (Task 8, referenced but not yet implemented — this task's list row navigation is wired in Task 8 instead, since the editor screen doesn't exist yet). New template / rename / delete actions.
 
-- [ ] **Step 1: Add ARB strings**
+- [x] **Step 1: Add ARB strings**
 
 ```json
   "packingTemplatesTitle": "Packing templates",
@@ -2244,7 +2244,7 @@ git commit -m "feat(packing): add apply-template picker sheet"
   "templateDeleted": "Template deleted."
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```dart
 // test/widget/packing/packing_template_manager_screen_test.dart
@@ -2339,12 +2339,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `flutter test test/widget/packing/packing_template_manager_screen_test.dart`
 Expected: FAIL — the screen and dialog don't exist yet.
 
-- [ ] **Step 4: Implement the name dialog**
+- [x] **Step 4: Implement the name dialog**
 
 ```dart
 // lib/features/packing/presentation/packing_template_name_dialog.dart
@@ -2432,7 +2432,7 @@ class _TemplateNameDialogState extends State<_TemplateNameDialog> {
 }
 ```
 
-- [ ] **Step 5: Implement the manager screen**
+- [x] **Step 5: Implement the manager screen**
 
 ```dart
 // lib/features/packing/presentation/packing_template_manager_screen.dart
@@ -2567,12 +2567,12 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
 
 **Note:** this reuses `l10n.menuRename`/`l10n.menuDelete` — check `lib/l10n/app_en.arb` for an existing `menuRename` key (the Trip menu only has `menuEdit`/`menuArchive`/`menuDelete` per `trip_detail_screen.dart`). If `menuRename` doesn't exist, add it: `"menuRename": "Rename"`.
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `flutter test test/widget/packing/packing_template_manager_screen_test.dart`
 Expected: PASS (4 tests)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/features/packing/presentation/packing_template_name_dialog.dart lib/features/packing/presentation/packing_template_manager_screen.dart lib/l10n/app_en.arb test/widget/packing/packing_template_manager_screen_test.dart
@@ -2593,7 +2593,7 @@ git commit -m "feat(packing): add the template manager screen"
 - Consumes: `packingTemplateItemsProvider`, `packingRepositoryProvider.addTemplateItem`/`updateTemplateItem`/`deleteTemplateItem` (Tasks 3, 4); `PillChip`, `packingCategoryLabel`/`packingCategoryIcon` (Task 4).
 - Produces: `class PackingTemplateEditorScreen extends ConsumerWidget({required String templateId})`; extends `showPackingItemFormSheet` (Task 5) to also handle template items via a new optional `templateId` parameter (mutually exclusive with `tripId` — exactly one is passed).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```dart
 // test/widget/packing/packing_template_editor_screen_test.dart
@@ -2677,12 +2677,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/widget/packing/packing_template_editor_screen_test.dart`
 Expected: FAIL — `PackingTemplateEditorScreen` doesn't exist yet.
 
-- [ ] **Step 3: Extend the item form sheet to handle template items**
+- [x] **Step 3: Extend the item form sheet to handle template items**
 
 Task 3's `updateTemplateItem(PackingTemplateItem item)` writes whatever `sortOrder` is on the passed-in item straight through — it doesn't re-fetch. So editing a template item must pass the full existing `PackingTemplateItem` back in (to preserve its `sortOrder`), while editing a trip item only ever needed a label (Task 5's `updateTripItemLabel(id, label)` already preserves everything else server-side). Rather than two different edit shapes, `packing_item_form_sheet.dart` takes an optional full `PackingTemplateItem` for the template-edit case specifically. Replace the file's contents with:
 
@@ -2857,7 +2857,7 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
 }
 ```
 
-- [ ] **Step 4: Implement the editor screen**
+- [x] **Step 4: Implement the editor screen**
 
 ```dart
 // lib/features/packing/presentation/packing_template_editor_screen.dart
@@ -2957,7 +2957,7 @@ class PackingTemplateEditorScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 5: Wire navigation from the template manager screen**
+- [x] **Step 5: Wire navigation from the template manager screen**
 
 In `packing_template_manager_screen.dart`, replace the `_row` method's empty `onTap` body with:
 
@@ -2972,12 +2972,12 @@ In `packing_template_manager_screen.dart`, replace the `_row` method's empty `on
 
 Add the import: `import 'packing_template_editor_screen.dart';`.
 
-- [ ] **Step 6: Run tests to verify everything passes**
+- [x] **Step 6: Run tests to verify everything passes**
 
 Run: `flutter test test/widget/packing/`
 Expected: PASS (all packing widget tests, including Task 4-7's suites still passing after the shared form sheet's signature change).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/features/packing/presentation/packing_template_editor_screen.dart lib/features/packing/presentation/packing_item_form_sheet.dart lib/features/packing/presentation/packing_template_manager_screen.dart test/widget/packing/packing_template_editor_screen_test.dart
@@ -2997,7 +2997,7 @@ git commit -m "feat(packing): add the template editor screen"
 - Consumes: `TripPackingTab` (Task 5), `PackingTemplateManagerScreen` (Task 7), `FakePackingRepository` (Task 4).
 - Produces: `TripDetailScreen` with 5 tabs (Documents, Places, Spend, Journal, Packing); `TripPackingTab`'s overflow menu's "Manage templates…" action now actually navigates.
 
-- [ ] **Step 1: Write the failing test changes**
+- [x] **Step 1: Write the failing test changes**
 
 In `test/widget/trips/trip_detail_screen_test.dart`:
 
@@ -3062,12 +3062,12 @@ Update the "all tabs reachable" test to include Packing:
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/widget/trips/trip_detail_screen_test.dart`
 Expected: FAIL — still 4 tabs, no "Packing" tab or label.
 
-- [ ] **Step 3: Wire the tab into `trip_detail_screen.dart`**
+- [x] **Step 3: Wire the tab into `trip_detail_screen.dart`**
 
 Add the import: `import '../../packing/presentation/trip_packing_tab.dart';`
 
@@ -3110,7 +3110,7 @@ Add the tab and view:
                   ],
 ```
 
-- [ ] **Step 4: Wire "Manage templates…" to actually navigate**
+- [x] **Step 4: Wire "Manage templates…" to actually navigate**
 
 In `trip_packing_tab.dart`, replace the `case 'manage': break;` placeholder from Task 6 with:
 
@@ -3126,7 +3126,7 @@ In `trip_packing_tab.dart`, replace the `case 'manage': break;` placeholder from
 
 Add the import: `import 'packing_template_manager_screen.dart';`.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `flutter test test/widget/trips/trip_detail_screen_test.dart`
 Expected: PASS (7 tests)
@@ -3134,7 +3134,7 @@ Expected: PASS (7 tests)
 Run: `flutter test` (full suite)
 Expected: PASS — no regressions elsewhere.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/features/trips/presentation/trip_detail_screen.dart lib/features/packing/presentation/trip_packing_tab.dart test/widget/trips/trip_detail_screen_test.dart
