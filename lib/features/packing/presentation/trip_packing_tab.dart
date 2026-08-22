@@ -14,6 +14,7 @@ import '../domain/trip_packing_item.dart';
 import 'apply_template_sheet.dart';
 import 'packing_item_form_sheet.dart';
 import 'packing_providers.dart';
+import 'packing_template_manager_screen.dart';
 import 'packing_widgets.dart';
 
 class TripPackingTab extends ConsumerStatefulWidget {
@@ -47,9 +48,12 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
                 case 'apply':
                   showApplyTemplateSheet(context, tripId: widget.trip.id);
                 case 'manage':
-                  // Wired in Task 9, once PackingTemplateManagerScreen
-                  // exists (Task 7).
-                  break;
+                  Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) =>
+                          const PackingTemplateManagerScreen(),
+                    ),
+                  );
               }
             },
             itemBuilder: (context) => [

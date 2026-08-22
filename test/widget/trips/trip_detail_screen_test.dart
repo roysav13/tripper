@@ -7,6 +7,7 @@ import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/core/widgets/glass_chrome.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
 import 'package:tripper/features/journal/presentation/journal_providers.dart';
+import 'package:tripper/features/packing/presentation/packing_providers.dart';
 import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
@@ -18,6 +19,7 @@ import 'package:tripper/l10n/app_localizations.dart';
 import '../../helpers/fake_document_repository.dart';
 import '../../helpers/fake_expense_repository.dart';
 import '../../helpers/fake_journal_repository.dart';
+import '../../helpers/fake_packing_repository.dart';
 import '../../helpers/fake_place_collection_repository.dart';
 import '../../helpers/fake_place_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
@@ -46,6 +48,7 @@ Future<Widget> _app(Trip trip) async => ProviderScope(
         ),
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
         journalRepositoryProvider.overrideWithValue(FakeJournalRepository([])),
+        packingRepositoryProvider.overrideWithValue(FakePackingRepository()),
         clockProvider.overrideWithValue(() => _today),
       ],
       child: MaterialApp(
@@ -118,7 +121,22 @@ void main() {
     expect(find.text('Track what this trip costs'), findsNothing);
   });
 
-  testWidgets('all four tabs are reachable from an active trip',
+  testWidgets(
+      'the withdrawn Plan tab stays gone, and Packing is the new fifth tab',
+      (tester) async {
+    final trip = _trip(
+      start: DateTime(2026, 7, 16),
+      end: DateTime(2026, 7, 27),
+    );
+    await tester.pumpWidget(await _app(trip));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Tab), findsNWidgets(5));
+    expect(find.text('Plan'), findsNothing);
+    expect(find.text('Packing'), findsOneWidget);
+  });
+
+  testWidgets('all five tabs are reachable from an active trip',
       (tester) async {
     final trip = _trip(
       start: DateTime(2026, 7, 16),
@@ -129,13 +147,9 @@ void main() {
 
     await tester.tap(find.text('Documents'));
     await tester.pumpAndSettle();
-    // The Documents tab's actual empty-state content (no docs are wired
-    // into _app's fixtures), not just "no exception was thrown" — that
-    // vacuous check would still pass even if the tap missed the tab bar
-    // entirely and the view never switched.
     expectTabShowing('No documents linked');
 
-    for (final tab in ['Places', 'Journal']) {
+    for (final tab in ['Places', 'Journal', 'Packing']) {
       await tester.tap(find.text(tab));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: tab);
@@ -144,20 +158,6 @@ void main() {
     await tester.tap(find.text('Spend'));
     await tester.pumpAndSettle();
     expectTabShowing('Track what this trip costs');
-  });
-
-  testWidgets(
-      'the withdrawn Plan tab stays gone — Journal reuses that slot, not '
-      'a stray fifth tab', (tester) async {
-    final trip = _trip(
-      start: DateTime(2026, 7, 16),
-      end: DateTime(2026, 7, 27),
-    );
-    await tester.pumpWidget(await _app(trip));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(Tab), findsNWidgets(4));
-    expect(find.text('Plan'), findsNothing);
   });
 
   testWidgets('the cover hero and glass chrome render without overflow',

@@ -320,7 +320,7 @@ void main() {
     // opens on the Expenses tab (index 2) by default — visit all in a
     // fixed, known order regardless.
     final tabs = find.byType(Tab);
-    expect(tabs, findsNWidgets(4));
+    expect(tabs, findsNWidgets(5));
 
     await tester.tap(tabs.at(0)); // Documents
     await tester.pumpAndSettle();

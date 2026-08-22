@@ -16,20 +16,22 @@ import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../expenses/presentation/trip_expenses_tab.dart';
 import '../../journal/presentation/trip_journal_tab.dart';
+import '../../packing/presentation/trip_packing_tab.dart';
 import '../../places/presentation/trip_places_tab.dart';
 import '../../vault/presentation/trip_documents_tab.dart';
 import '../domain/trip.dart';
 import 'trip_card.dart';
 import 'trip_providers.dart';
 
-/// Tab order is Documents, Places, Spend, Journal — keep these in sync
-/// with the `tabs:`/`TabBarView` children below.
+/// Tab order is Documents, Places, Spend, Journal, Packing — keep these
+/// in sync with the `tabs:`/`TabBarView` children below.
 ///
 /// A "Plan" tab (the day-by-day itinerary) lived in this fourth slot until
 /// 2026-07-26 and was withdrawn as "currently won't do"; see
 /// `docs/adr/ADR-001-itinerary-redesign.md`. Journal is unrelated new work
-/// that happens to reuse the freed slot.
-const _tabCount = 4;
+/// that happens to reuse the freed slot. Packing (2026-08-22) is a new
+/// fifth tab, not a slot reuse.
+const _tabCount = 5;
 const _expensesTabIndex = 2;
 
 const _coverHeight = 160.0;
@@ -203,6 +205,7 @@ class TripDetailScreen extends ConsumerWidget {
                           Tab(text: l10n.tabPlacesInTrip),
                           Tab(text: l10n.tabExpenses),
                           Tab(text: l10n.tabJournal),
+                          Tab(text: l10n.tabPacking),
                         ],
                       ),
                     ),
@@ -235,6 +238,7 @@ class TripDetailScreen extends ConsumerWidget {
                     TripPlacesTab(trip: trip),
                     TripExpensesTab(trip: trip),
                     TripJournalTab(trip: trip),
+                    TripPackingTab(trip: trip),
                   ],
                 ),
               ),
