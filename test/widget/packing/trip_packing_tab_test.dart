@@ -128,6 +128,78 @@ void main() {
     );
   });
 
+  testWidgets("tapping a non-clothing item's label opens the edit sheet "
+      'pre-filled, and saving renames the row', (tester) async {
+    final repo = FakePackingRepository(
+      tripItems: [
+        _item(id: 'a', category: PackingCategory.documents, label: 'Passport'),
+      ],
+    );
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Passport'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit item'), findsOneWidget);
+    // Pre-filled with the current label, not blank.
+    expect(
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Passport')).
+          controller!.text,
+      'Passport',
+    );
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Item'),
+      'EU passport',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('EU passport'), findsOneWidget);
+    expect(find.text('Passport'), findsNothing);
+    expect(
+      (await repo.watchTripItems('t1').first).single.label,
+      'EU passport',
+    );
+  });
+
+  testWidgets(
+      "a clothing item has its own edit affordance — the card's tap is "
+      'spoken for by the status picker', (tester) async {
+    final repo = FakePackingRepository(
+      tripItems: [
+        _item(
+          id: 'a',
+          category: PackingCategory.clothing,
+          label: 'Black shirt',
+          status: PackingItemStatus.worn,
+        ),
+      ],
+    );
+    await tester.pumpWidget(_app(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit item'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Black shirt')).
+          controller!.text,
+      'Black shirt',
+    );
+
+    await tester.enterText(find.widgetWithText(TextField, 'Item'), 'Grey shirt');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Grey shirt'), findsOneWidget);
+    final updated = (await repo.watchTripItems('t1').first).single;
+    expect(updated.label, 'Grey shirt');
+    expect(updated.status, PackingItemStatus.worn); // status untouched
+  });
+
   testWidgets('deleting an item asks for confirmation first', (tester) async {
     final repo = FakePackingRepository(
       tripItems: [_item(id: 'a', label: 'Charger')],
@@ -208,7 +280,7 @@ void main() {
     await tester.pumpWidget(_app(FakePackingRepository()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Apply template…'));
     await tester.pumpAndSettle();
@@ -233,7 +305,7 @@ void main() {
     await tester.pumpWidget(_app(repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Apply template…'));
     await tester.pumpAndSettle();

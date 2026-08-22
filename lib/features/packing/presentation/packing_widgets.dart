@@ -31,9 +31,11 @@ String packingStatusLabel(AppLocalizations l10n, PackingItemStatus status) =>
       PackingItemStatus.clean => l10n.packingStatusClean,
     };
 
-/// The clothing-only status readout — a small non-interactive chip, kept
-/// visually inside the same [PillChip] language the rest of the app uses.
-/// Tapping the row (not the chip itself) opens the 5-option menu.
+/// The clothing-only status readout — a small display-only chip (it carries
+/// no `onTap` of its own), kept visually inside the same [PillChip] language
+/// the rest of the app uses. It doesn't absorb taps, so tapping it hits the
+/// enclosing row and opens the same 5-option status menu the rest of the
+/// card does.
 class PackingStatusChip extends StatelessWidget {
   const PackingStatusChip({super.key, required this.status});
 

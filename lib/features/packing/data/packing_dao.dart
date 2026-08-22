@@ -72,6 +72,16 @@ class PackingDao extends DatabaseAccessor<AppDatabase> with _$PackingDaoMixin {
   Future<void> insertTripItem(TripPackingItemRow row) =>
       into(tripPackingItems).insert(row);
 
+  /// All-or-nothing insert — applying a template must not be able to leave a
+  /// half-copied list behind if one row fails partway through.
+  Future<void> insertTripItems(List<TripPackingItemRow> rows) {
+    return transaction(() async {
+      for (final row in rows) {
+        await into(tripPackingItems).insert(row);
+      }
+    });
+  }
+
   Future<void> updateTripItem(TripPackingItemRow row) =>
       update(tripPackingItems).replace(row);
 

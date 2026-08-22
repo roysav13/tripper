@@ -8,6 +8,10 @@ import 'package:tripper/core/location/location_service.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/features/expenses/presentation/expense_providers.dart';
+import 'package:tripper/features/packing/domain/packing_category.dart';
+import 'package:tripper/features/packing/domain/packing_item_status.dart';
+import 'package:tripper/features/packing/domain/trip_packing_item.dart';
+import 'package:tripper/features/packing/presentation/packing_providers.dart';
 import 'package:tripper/features/places/domain/place.dart';
 import 'package:tripper/features/places/presentation/place_collection_providers.dart';
 import 'package:tripper/features/places/presentation/place_providers.dart';
@@ -20,6 +24,7 @@ import 'package:tripper/features/vault/presentation/document_providers.dart';
 import '../helpers/fake_document_repository.dart';
 import '../helpers/fake_expense_repository.dart';
 import '../helpers/fake_location_service.dart';
+import '../helpers/fake_packing_repository.dart';
 import '../helpers/fake_place_collection_repository.dart';
 import '../helpers/fake_place_repository.dart';
 import '../helpers/fake_trip_repository.dart';
@@ -86,6 +91,31 @@ Future<Widget> _populatedApp({
         // Without this the M5.5b conversion wiring reaches the real Drift
         // database (via expensesDao), opening a second AppDatabase.
         expenseRepositoryProvider.overrideWithValue(FakeExpenseRepository()),
+        // Same reason for the Packing tab (via packingDao). Seeded with one
+        // item of each kind so the tab's populated list — clothing status
+        // chip included — is what the sweeps below actually inspect.
+        packingRepositoryProvider.overrideWithValue(
+          FakePackingRepository(
+            tripItems: const [
+              TripPackingItem(
+                id: 'pk1',
+                tripId: 't1',
+                category: PackingCategory.clothing,
+                label: 'Black shirt',
+                status: PackingItemStatus.worn,
+                sortOrder: 0,
+              ),
+              TripPackingItem(
+                id: 'pk2',
+                tripId: 't1',
+                category: PackingCategory.documents,
+                label: 'Boarding pass',
+                status: PackingItemStatus.toPack,
+                sortOrder: 0,
+              ),
+            ],
+          ),
+        ),
         // PlacesScreen now watches the Locations lists providers.
         placeCollectionRepositoryProvider.overrideWithValue(
           FakePlaceCollectionRepository([]),
@@ -192,8 +222,8 @@ void main() {
   });
 
   testWidgets(
-      'trip detail (hero, glass topbar/tabbar, Documents/Places/Expenses '
-      'tabs, and the places filter sheet) meets contrast guidelines',
+      'trip detail (hero, glass topbar/tabbar, Documents/Places/Expenses/'
+      'Packing tabs, and the places filter sheet) meets contrast guidelines',
       (tester) async {
     final handle = tester.ensureSemantics();
     await tester.pumpWidget(await _populatedApp());
@@ -226,6 +256,14 @@ void main() {
     await tester.tap(tabs.at(2)); // Expenses
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(tabs.at(4)); // Packing
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    // TripPackingTab hosts its own Scaffold + AppBar inside the TabBarView.
+    // With automaticallyImplyLeading left at its default that AppBar would
+    // synthesise a second BackButton on top of TripDetailScreen's own one.
+    expect(find.byType(BackButton), findsOneWidget);
 
     handle.dispose();
   });
@@ -264,6 +302,11 @@ void main() {
     await tester.tap(tabs.at(2)); // Expenses
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(textContrastGuideline));
+
+    await tester.tap(tabs.at(4)); // Packing
+    await tester.pumpAndSettle();
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    expect(find.byType(BackButton), findsOneWidget);
 
     handle.dispose();
   });
@@ -349,6 +392,16 @@ void main() {
     await tester.tap(tabs.at(2)); // Expenses
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+
+    await tester.tap(tabs.at(4)); // Packing
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    // TripPackingTab is the only tab with its own Scaffold + AppBar nested
+    // in the TabBarView. Left at AppBar's default automaticallyImplyLeading
+    // it synthesises a second BackButton over TripDetailScreen's own glass
+    // topbar one — and the `find.byType(BackButton)` tap just below would
+    // then hit an ambiguous finder rather than navigating.
+    expect(find.byType(BackButton), findsOneWidget);
 
     // Back to the Trips list before continuing the existing sweep below.
     await tester.tap(find.byType(BackButton));

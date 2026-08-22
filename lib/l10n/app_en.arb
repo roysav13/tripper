@@ -491,6 +491,7 @@
       "name": { "type": "String" }
     }
   },
+  "packingApplyTemplateFailed": "Couldn't apply this template. Try again.",
   "packingTemplatesTitle": "Packing templates",
   "packingTemplatesEmptyTitle": "No templates yet",
   "packingTemplatesEmptyBody": "Build a reusable list once, then apply it to any trip.",
@@ -501,5 +502,11 @@
   "errTemplateNameRequired": "Enter a name for this template",
   "deleteTemplateTitle": "Delete this template?",
   "deleteTemplateBody": "This only removes the template — trips that already used it keep their packing list.",
-  "templateDeleted": "Template deleted."
+  "templateDeleted": "Template deleted.",
+  "templateItemCount": "{count, plural, one{1 item} other{{count} items}}",
+  "@templateItemCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

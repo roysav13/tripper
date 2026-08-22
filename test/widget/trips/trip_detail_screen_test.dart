@@ -147,6 +147,10 @@ void main() {
 
     await tester.tap(find.text('Documents'));
     await tester.pumpAndSettle();
+    // The Documents tab's actual empty-state content (no docs are wired
+    // into _app's fixtures), not just "no exception was thrown" — that
+    // vacuous check would still pass even if the tap missed the tab bar
+    // entirely and the view never switched.
     expectTabShowing('No documents linked');
 
     for (final tab in ['Places', 'Journal', 'Packing']) {

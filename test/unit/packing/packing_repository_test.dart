@@ -177,4 +177,124 @@ void main() {
     await repo.deleteTripItem(id);
     expect(await repo.watchTripItems(tripId).first, isEmpty);
   });
+
+  test('updateTripItemLabel renames in place and changes nothing else',
+      () async {
+    final tripId = await createTrip();
+    final id = await repo.addTripItem(
+      tripId: tripId,
+      category: PackingCategory.clothing,
+      label: 'Shirt',
+    );
+    await repo.updateTripItemStatus(id, PackingItemStatus.worn);
+    final before = (await repo.watchTripItems(tripId).first).single;
+
+    await repo.updateTripItemLabel(id, 'Black shirt');
+
+    final after = (await repo.watchTripItems(tripId).first).single;
+    expect(after.label, 'Black shirt');
+    expect(after.id, before.id);
+    expect(after.tripId, before.tripId);
+    expect(after.category, before.category);
+    expect(after.status, before.status); // still worn, not reset
+    expect(after.sortOrder, before.sortOrder);
+  });
+
+  test('updateTemplateItem preserves the item\'s sortOrder', () async {
+    final templateId = await repo.createTemplate(name: 'Beach trip');
+    await repo.addTemplateItem(
+      templateId: templateId,
+      category: PackingCategory.clothing,
+      label: 'Shirt',
+    );
+    final secondId = await repo.addTemplateItem(
+      templateId: templateId,
+      category: PackingCategory.clothing,
+      label: 'Shorts',
+    );
+
+    final second = (await repo.watchTemplateItems(templateId).first)
+        .firstWhere((i) => i.id == secondId);
+    expect(second.sortOrder, 1); // sanity: the two differ
+
+    await repo.updateTemplateItem(second.copyWith(label: 'Swim shorts'));
+
+    final updated = (await repo.watchTemplateItems(templateId).first)
+        .firstWhere((i) => i.id == secondId);
+    expect(updated.label, 'Swim shorts');
+    expect(updated.sortOrder, 1); // not reset to 0 or some default
+  });
+
+  test('deleting a template item removes it', () async {
+    final templateId = await repo.createTemplate(name: 'Beach trip');
+    final id = await repo.addTemplateItem(
+      templateId: templateId,
+      category: PackingCategory.clothing,
+      label: 'Swimsuit',
+    );
+    await repo.deleteTemplateItem(id);
+    expect(await repo.watchTemplateItems(templateId).first, isEmpty);
+  });
+
+  test(
+      'applying a template into an already-populated category appends with '
+      'distinct, ordered sortOrders', () async {
+    final tripId = await createTrip();
+    await repo.addTripItem(
+      tripId: tripId,
+      category: PackingCategory.clothing,
+      label: 'Shirt',
+    );
+
+    final templateId = await repo.createTemplate(name: 'Beach trip');
+    await repo.addTemplateItem(
+      templateId: templateId,
+      category: PackingCategory.clothing,
+      label: 'Swimsuit',
+    );
+    await repo.addTemplateItem(
+      templateId: templateId,
+      category: PackingCategory.clothing,
+      label: 'Sandals',
+    );
+
+    await repo.applyTemplate(tripId: tripId, templateId: templateId);
+
+    final clothing = (await repo.watchTripItems(tripId).first)
+        .where((i) => i.category == PackingCategory.clothing)
+        .toList();
+    expect(clothing, hasLength(3));
+    // watchTripItems orders by sortOrder, so this is both the values and
+    // the resulting on-screen order.
+    expect(clothing.map((i) => i.sortOrder), [0, 1, 2]);
+    expect(clothing.map((i) => i.label), ['Shirt', 'Swimsuit', 'Sandals']);
+  });
+
+  test(
+      'deleting from the middle of a category does not hand the next insert '
+      'a sortOrder that is already in use', () async {
+    final tripId = await createTrip();
+    final first = await repo.addTripItem(
+      tripId: tripId,
+      category: PackingCategory.clothing,
+      label: 'Shirt',
+    );
+    await repo.addTripItem(
+      tripId: tripId,
+      category: PackingCategory.clothing,
+      label: 'Shorts',
+    );
+    await repo.deleteTripItem(first); // frees sortOrder 0, leaves 1 in use
+
+    await repo.addTripItem(
+      tripId: tripId,
+      category: PackingCategory.clothing,
+      label: 'Hat',
+    );
+
+    final sortOrders =
+        (await repo.watchTripItems(tripId).first).map((i) => i.sortOrder);
+    expect(sortOrders.toSet(), hasLength(sortOrders.length));
+    expect(sortOrders, [1, 2]); // max + 1, not a re-used count
+  });
 }

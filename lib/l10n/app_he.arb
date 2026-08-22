@@ -491,6 +491,7 @@
       "name": { "type": "String" }
     }
   },
+  "packingApplyTemplateFailed": "לא הצלחנו להחיל את התבנית הזו. נסה שוב.",
   "packingTemplatesTitle": "תבניות אריזה",
   "packingTemplatesEmptyTitle": "עדיין אין תבניות",
   "packingTemplatesEmptyBody": "בנה רשימה לשימוש חוזר פעם אחת, והחל אותה על כל טיול.",
@@ -501,5 +502,11 @@
   "errTemplateNameRequired": "תן שם לתבנית הזו",
   "deleteTemplateTitle": "למחוק את התבנית הזו?",
   "deleteTemplateBody": "פעולה זו רק תמחק את התבנית — טיולים שכבר השתמשו בה ישמרו את רשימת האריזה שלהם.",
-  "templateDeleted": "התבנית נמחקה."
+  "templateDeleted": "התבנית נמחקה.",
+  "templateItemCount": "{count, plural, one{פריט אחד} two{שני פריטים} many{{count} פריטים} other{{count} פריטים}}",
+  "@templateItemCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

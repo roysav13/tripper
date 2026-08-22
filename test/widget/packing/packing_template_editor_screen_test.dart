@@ -59,7 +59,7 @@ void main() {
     expect(find.text('Passport'), findsOneWidget);
   });
 
-  testWidgets('deleting an item removes it', (tester) async {
+  testWidgets('deleting an item asks for confirmation first', (tester) async {
     final repo = FakePackingRepository();
     final templateId = await repo.createTemplate(name: 'Beach trip');
     await repo.addTemplateItem(
@@ -71,6 +71,18 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    // Confirm dialog is up; nothing deleted yet.
+    expect(find.text('Delete this item?'), findsOneWidget);
+    expect(find.text('Swimsuit'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Swimsuit'), findsOneWidget); // cancelling keeps it
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     expect(find.text('Swimsuit'), findsNothing);

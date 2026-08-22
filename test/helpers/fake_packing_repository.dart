@@ -28,6 +28,14 @@ class FakePackingRepository implements PackingRepository {
       StreamController<List<TripPackingItem>>.broadcast();
   var _idCounter = 0;
 
+  /// Mirrors `DriftPackingRepository._nextSortOrder`: max + 1, never a
+  /// count — a delete from the middle of a category must not hand the next
+  /// insert a `sortOrder` that is already in use.
+  static int _nextSortOrder(Iterable<int> existingSortOrdersInCategory) {
+    if (existingSortOrdersInCategory.isEmpty) return 0;
+    return existingSortOrdersInCategory.reduce((a, b) => a > b ? a : b) + 1;
+  }
+
   void emitTripItemsError(Object error) => _tripItemsController.addError(error);
 
   @override
@@ -81,9 +89,11 @@ class FakePackingRepository implements PackingRepository {
       templateId: templateId,
       category: category,
       label: label,
-      sortOrder: _templateItems
-          .where((i) => i.templateId == templateId && i.category == category)
-          .length,
+      sortOrder: _nextSortOrder(
+        _templateItems
+            .where((i) => i.templateId == templateId && i.category == category)
+            .map((i) => i.sortOrder),
+      ),
     );
     _templateItems.add(item);
     _templateItemsController.add(List.of(_templateItems));
@@ -123,9 +133,11 @@ class FakePackingRepository implements PackingRepository {
       category: category,
       label: label,
       status: PackingItemStatus.toPack,
-      sortOrder: _tripItems
-          .where((i) => i.tripId == tripId && i.category == category)
-          .length,
+      sortOrder: _nextSortOrder(
+        _tripItems
+            .where((i) => i.tripId == tripId && i.category == category)
+            .map((i) => i.sortOrder),
+      ),
     );
     _tripItems.add(item);
     _tripItemsController.add(List.of(_tripItems));
@@ -171,9 +183,11 @@ class FakePackingRepository implements PackingRepository {
           category: item.category,
           label: item.label,
           status: PackingItemStatus.toPack,
-          sortOrder: _tripItems
-              .where((i) => i.tripId == tripId && i.category == item.category)
-              .length,
+          sortOrder: _nextSortOrder(
+            _tripItems
+                .where((i) => i.tripId == tripId && i.category == item.category)
+                .map((i) => i.sortOrder),
+          ),
         ),
       );
     }

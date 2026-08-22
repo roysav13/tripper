@@ -2246,6 +2246,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Added 1 item from {name}} other{Added {count} items from {name}}}'**
   String packingApplyTemplateApplied(int count, String name);
 
+  /// No description provided for @packingApplyTemplateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t apply this template. Try again.'**
+  String get packingApplyTemplateFailed;
+
   /// No description provided for @packingTemplatesTitle.
   ///
   /// In en, this message translates to:
@@ -2311,6 +2317,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Template deleted.'**
   String get templateDeleted;
+
+  /// No description provided for @templateItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 item} other{{count} items}}'**
+  String templateItemCount(int count);
 }
 
 class _AppLocalizationsDelegate

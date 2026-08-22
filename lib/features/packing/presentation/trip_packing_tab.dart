@@ -17,6 +17,8 @@ import 'packing_providers.dart';
 import 'packing_template_manager_screen.dart';
 import 'packing_widgets.dart';
 
+enum _PackingMenuAction { apply, manage }
+
 class TripPackingTab extends ConsumerStatefulWidget {
   const TripPackingTab({super.key, required this.trip});
 
@@ -41,13 +43,18 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // This tab sits inside TripDetailScreen's pushed route, which already
+        // draws its own BackButton in its glass topbar. Without this, Flutter
+        // synthesises a second one here and two back arrows stack up on this
+        // one tab only.
+        automaticallyImplyLeading: false,
         actions: [
-          PopupMenuButton<String>(
+          PopupMenuButton<_PackingMenuAction>(
             onSelected: (action) {
               switch (action) {
-                case 'apply':
+                case _PackingMenuAction.apply:
                   showApplyTemplateSheet(context, tripId: widget.trip.id);
-                case 'manage':
+                case _PackingMenuAction.manage:
                   Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute<void>(
                       builder: (context) =>
@@ -58,11 +65,11 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
             },
             itemBuilder: (context) => [
               PopupMenuItem(
-                value: 'apply',
+                value: _PackingMenuAction.apply,
                 child: Text(l10n.packingApplyTemplateAction),
               ),
               PopupMenuItem(
-                value: 'manage',
+                value: _PackingMenuAction.manage,
                 child: Text(l10n.packingManageTemplatesAction),
               ),
             ],
@@ -135,6 +142,7 @@ class _ItemRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isClothing = item.category == PackingCategory.clothing;
 
     return PaperCard(
@@ -166,9 +174,26 @@ class _ItemRow extends ConsumerWidget {
                     child: Text(item.label, overflow: TextOverflow.ellipsis),
                   ),
           ),
-          if (isClothing) PackingStatusChip(status: item.status),
+          if (isClothing) ...[
+            PackingStatusChip(status: item.status),
+            // A clothing row's whole-card tap is spoken for by the status
+            // picker, so without this its label could never be edited —
+            // only deleted and re-created.
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: l10n.menuEdit,
+              onPressed: () => showPackingItemFormSheet(
+                context,
+                tripId: item.tripId,
+                existingId: item.id,
+                existingLabel: item.label,
+                existingCategory: item.category,
+              ),
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.close),
+            tooltip: l10n.menuDelete,
             onPressed: () => _delete(context, ref),
           ),
         ],

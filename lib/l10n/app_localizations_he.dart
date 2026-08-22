@@ -1260,6 +1260,10 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get packingApplyTemplateFailed =>
+      'לא הצלחנו להחיל את התבנית הזו. נסה שוב.';
+
+  @override
   String get packingTemplatesTitle => 'תבניות אריזה';
 
   @override
@@ -1293,4 +1297,17 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get templateDeleted => 'התבנית נמחקה.';
+
+  @override
+  String templateItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count פריטים',
+      many: '$count פריטים',
+      two: 'שני פריטים',
+      one: 'פריט אחד',
+    );
+    return '$_temp0';
+  }
 }

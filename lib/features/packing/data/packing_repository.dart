@@ -81,9 +81,11 @@ class DriftPackingRepository implements PackingRepository {
     required String label,
   }) async {
     final id = _idGen();
-    final sortOrder = await _nextSortOrder(
-      await _dao.getTemplateItems(templateId),
-      category,
+    final existing = await _dao.getTemplateItems(templateId);
+    final sortOrder = _nextSortOrder(
+      existing
+          .where((i) => i.category == category.index)
+          .map((i) => i.sortOrder),
     );
     await _dao.insertTemplateItem(
       PackingTemplateItemRow(
@@ -124,8 +126,12 @@ class DriftPackingRepository implements PackingRepository {
     required String label,
   }) async {
     final id = _idGen();
-    final sortOrder =
-        await _nextSortOrder(await _dao.getTripItems(tripId), category);
+    final existing = await _dao.getTripItems(tripId);
+    final sortOrder = _nextSortOrder(
+      existing
+          .where((i) => i.category == category.index)
+          .map((i) => i.sortOrder),
+    );
     await _dao.insertTripItem(
       TripPackingItemRow(
         id: id,
@@ -168,14 +174,19 @@ class DriftPackingRepository implements PackingRepository {
     final existingTripItems = await _dao.getTripItems(tripId);
     final nextSortOrder = <int, int>{
       for (final category in PackingCategory.values)
-        category.index: existingTripItems
-            .where((i) => i.category == category.index)
-            .length,
+        category.index: _nextSortOrder(
+          existingTripItems
+              .where((i) => i.category == category.index)
+              .map((i) => i.sortOrder),
+        ),
     };
+    final rows = <TripPackingItemRow>[];
     for (final item in templateItems) {
-      final sortOrder = nextSortOrder[item.category]!;
+      // A category index from a newer schema falls outside the map built
+      // above — same defensive stance as _categoryFromIndex.
+      final sortOrder = nextSortOrder[item.category] ?? 0;
       nextSortOrder[item.category] = sortOrder + 1;
-      await _dao.insertTripItem(
+      rows.add(
         TripPackingItemRow(
           id: _idGen(),
           tripId: tripId,
@@ -186,17 +197,17 @@ class DriftPackingRepository implements PackingRepository {
         ),
       );
     }
+    await _dao.insertTripItems(rows);
   }
 
-  /// Appends to the end of [category]'s section among [existingRows] —
-  /// same "count = next index" scheme for both template and trip items.
-  Future<int> _nextSortOrder(List<dynamic> existingRows, PackingCategory category) async {
-    var count = 0;
-    for (final row in existingRows) {
-      final rowCategory = row.category as int;
-      if (rowCategory == category.index) count++;
-    }
-    return count;
+  /// The next free `sortOrder` at the end of one category's section:
+  /// `max(existing) + 1`, or 0 when the category is empty. Deliberately not
+  /// a count — deleting from the middle of a category would otherwise hand
+  /// the next insert a `sortOrder` that is already in use, making the
+  /// relative order of the two non-deterministic.
+  int _nextSortOrder(Iterable<int> existingSortOrdersInCategory) {
+    if (existingSortOrdersInCategory.isEmpty) return 0;
+    return existingSortOrdersInCategory.reduce((a, b) => a > b ? a : b) + 1;
   }
 
   PackingTemplate _templateToDomain(PackingTemplateRow row) =>
