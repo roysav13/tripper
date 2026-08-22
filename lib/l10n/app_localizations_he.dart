@@ -163,7 +163,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get menuEdit => 'עריכה';
 
   @override
-  String get menuRename => 'Rename';
+  String get menuRename => 'שינוי שם';
 
   @override
   String get menuArchive => 'העבר לארכיון';
@@ -191,7 +191,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get tabExpenses => 'הוצאות';
 
   @override
-  String get tabPacking => 'Packing';
+  String get tabPacking => 'אריזה';
 
   @override
   String get expensesEmptyTitle => 'עקוב אחרי העלות של הטיול';
@@ -1173,122 +1173,124 @@ class AppLocalizationsHe extends AppLocalizations {
   String get journalNewLocation => 'מיקום חדש';
 
   @override
-  String get packingEmptyTitle => 'Nothing packed yet';
+  String get packingEmptyTitle => 'עדיין לא ארזת כלום';
 
   @override
   String get packingEmptyBody =>
-      'Add items yourself, or apply a saved template to get started.';
+      'הוסף פריטים בעצמך, או החל תבנית שמורה כדי להתחיל.';
 
   @override
-  String get packingEmptyCta => 'Add an item';
+  String get packingEmptyCta => 'הוסף פריט';
 
   @override
-  String get packingCatClothing => 'Clothing';
+  String get packingCatClothing => 'ביגוד';
 
   @override
-  String get packingCatDocuments => 'Documents';
+  String get packingCatDocuments => 'מסמכים';
 
   @override
-  String get packingCatElectronics => 'Electronics';
+  String get packingCatElectronics => 'אלקטרוניקה';
 
   @override
-  String get packingCatToiletries => 'Toiletries';
+  String get packingCatToiletries => 'טואלטיקה';
 
   @override
-  String get packingCatOther => 'Other';
+  String get packingCatOther => 'אחר';
 
   @override
-  String get packingStatusToPack => 'To pack';
+  String get packingStatusToPack => 'לארוז';
 
   @override
-  String get packingStatusPacked => 'Packed';
+  String get packingStatusPacked => 'ארוז';
 
   @override
-  String get packingStatusWorn => 'Worn';
+  String get packingStatusWorn => 'לבוש';
 
   @override
-  String get packingStatusInWash => 'In wash';
+  String get packingStatusInWash => 'בכביסה';
 
   @override
-  String get packingStatusClean => 'Clean';
+  String get packingStatusClean => 'נקי';
 
   @override
-  String get deletePackingItemTitle => 'Delete this item?';
+  String get deletePackingItemTitle => 'למחוק את הפריט הזה?';
 
   @override
-  String get deletePackingItemBody => 'This removes it from the packing list.';
+  String get deletePackingItemBody => 'הפריט יוסר מרשימת האריזה.';
 
   @override
-  String get packingItemDeleted => 'Item deleted.';
+  String get packingItemDeleted => 'הפריט נמחק.';
 
   @override
-  String get packingItemFormAddTitle => 'Add item';
+  String get packingItemFormAddTitle => 'הוספת פריט';
 
   @override
-  String get packingItemFormEditTitle => 'Edit item';
+  String get packingItemFormEditTitle => 'עריכת פריט';
 
   @override
-  String get packingItemFormLabel => 'Item';
+  String get packingItemFormLabel => 'פריט';
 
   @override
-  String get packingItemFormCategory => 'Category';
+  String get packingItemFormCategory => 'קטגוריה';
 
   @override
-  String get errPackingLabelRequired => 'Enter a name for this item';
+  String get errPackingLabelRequired => 'תן שם לפריט הזה';
 
   @override
-  String get packingApplyTemplateAction => 'Apply template…';
+  String get packingApplyTemplateAction => 'החל תבנית…';
 
   @override
-  String get packingManageTemplatesAction => 'Manage templates…';
+  String get packingManageTemplatesAction => 'ניהול תבניות…';
 
   @override
   String get packingApplyTemplateEmpty =>
-      'No saved templates yet — create one from Manage templates.';
+      'עדיין אין תבניות שמורות — צור אחת מתוך ניהול תבניות.';
 
   @override
   String packingApplyTemplateApplied(int count, String name) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Added $count items from $name',
-      one: 'Added 1 item from $name',
+      other: 'נוספו $count פריטים מתוך $name',
+      many: 'נוספו $count פריטים מתוך $name',
+      two: 'נוספו שני פריטים מתוך $name',
+      one: 'נוסף פריט אחד מתוך $name',
     );
     return '$_temp0';
   }
 
   @override
-  String get packingTemplatesTitle => 'Packing templates';
+  String get packingTemplatesTitle => 'תבניות אריזה';
 
   @override
-  String get packingTemplatesEmptyTitle => 'No templates yet';
+  String get packingTemplatesEmptyTitle => 'עדיין אין תבניות';
 
   @override
   String get packingTemplatesEmptyBody =>
-      'Build a reusable list once, then apply it to any trip.';
+      'בנה רשימה לשימוש חוזר פעם אחת, והחל אותה על כל טיול.';
 
   @override
-  String get packingTemplatesEmptyCta => 'New template';
+  String get packingTemplatesEmptyCta => 'תבנית חדשה';
 
   @override
-  String get newTemplateDialogTitle => 'New template';
+  String get newTemplateDialogTitle => 'תבנית חדשה';
 
   @override
-  String get renameTemplateDialogTitle => 'Rename template';
+  String get renameTemplateDialogTitle => 'שינוי שם תבנית';
 
   @override
-  String get templateNameLabel => 'Template name';
+  String get templateNameLabel => 'שם התבנית';
 
   @override
-  String get errTemplateNameRequired => 'Enter a name for this template';
+  String get errTemplateNameRequired => 'תן שם לתבנית הזו';
 
   @override
-  String get deleteTemplateTitle => 'Delete this template?';
+  String get deleteTemplateTitle => 'למחוק את התבנית הזו?';
 
   @override
   String get deleteTemplateBody =>
-      'This only removes the template — trips that already used it keep their packing list.';
+      'פעולה זו רק תמחק את התבנית — טיולים שכבר השתמשו בה ישמרו את רשימת האריזה שלהם.';
 
   @override
-  String get templateDeleted => 'Template deleted.';
+  String get templateDeleted => 'התבנית נמחקה.';
 }
