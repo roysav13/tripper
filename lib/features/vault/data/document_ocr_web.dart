@@ -17,8 +17,12 @@ class UnavailablePdfPageRasterizer implements PdfPageRasterizer {
   const UnavailablePdfPageRasterizer();
 
   @override
-  Future<List<String>> rasterize(String pdfPath, {required int maxPages}) async
-      => const [];
+  Future<List<String>> rasterize(
+    String pdfPath, {
+    required int maxPages,
+  }) async {
+    return const [];
+  }
 }
 
 DocumentTextRecognizer createTextRecognizer() =>

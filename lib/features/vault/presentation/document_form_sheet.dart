@@ -56,6 +56,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
   DocumentCategory _category = DocumentCategory.other;
   DateTime? _expiry;
   DateTime? _departureTime;
+
   /// Handle for the attached file: a path on Android, a `blob:` URL in
   /// the browser. Only ever handed to code that knows how to read one.
   String? _pickedPath;

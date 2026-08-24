@@ -79,14 +79,16 @@ class TikTokCoverCaptureScreenState
       if (mounted) setState(() => _stage = _Stage.fetchFailed);
       return;
     }
-    final thumbnailPath =
-        await ref.read(tiktokThumbnailDownloaderProvider).download(thumbnailUrl);
+    final thumbnailPath = await ref
+        .read(tiktokThumbnailDownloaderProvider)
+        .download(thumbnailUrl);
     if (thumbnailPath == null) {
       if (mounted) setState(() => _stage = _Stage.fetchFailed);
       return;
     }
-    final ocrText =
-        await ref.read(documentTextRecognizerProvider).extractText(thumbnailPath);
+    final ocrText = await ref
+        .read(documentTextRecognizerProvider)
+        .extractText(thumbnailPath);
     if (!mounted) return;
     // The cover frame is a best-effort OCR target — it's the video's first
     // frame, which may or may not carry the on-screen text a mid-video
@@ -94,7 +96,8 @@ class TikTokCoverCaptureScreenState
     // (real example seen on-device: "...East Java turned out to be one of
     // those places...#eastjava"), so it's a reasonable fallback rather
     // than leaving the field empty when OCR finds nothing.
-    final prefill = ocrText.trim().isNotEmpty ? ocrText : (oembed?.caption ?? '');
+    final prefill =
+        ocrText.trim().isNotEmpty ? ocrText : (oembed?.caption ?? '');
     _textController.text = prefill;
     setState(() {
       _thumbnailPath = thumbnailPath;

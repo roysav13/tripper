@@ -8,7 +8,6 @@ import 'vault_lock.dart';
 /// gives for an Android device with no lock screen configured — and
 /// `kSupportsBiometricLock` lets Settings say so instead of offering a
 /// toggle that would do nothing.
-BiometricAuthenticator createBiometricAuthenticator() =>
-    (reason) async => true;
+BiometricAuthenticator createBiometricAuthenticator() => (reason) async => true;
 
 const kSupportsBiometricLock = false;

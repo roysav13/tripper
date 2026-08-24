@@ -124,10 +124,9 @@ class _JournalMapViewState extends ConsumerState<JournalMapView> {
     }
     for (final entry in _located) {
       if (!entry.hasPhotos || _photoMarkers.containsKey(entry.id)) continue;
-      final bytes =
-          await ref.read(fileVaultServiceProvider).read(
-                entry.photos.first.filePath,
-              );
+      final bytes = await ref.read(fileVaultServiceProvider).read(
+            entry.photos.first.filePath,
+          );
       if (bytes == null) continue;
       try {
         final bitmap = await _photoMarkerBitmap(

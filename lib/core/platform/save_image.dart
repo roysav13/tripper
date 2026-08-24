@@ -3,6 +3,5 @@
 /// browser download on the web.
 library;
 
-export 'save_image_io.dart'
-    if (dart.library.js_interop) 'save_image_web.dart'
+export 'save_image_io.dart' if (dart.library.js_interop) 'save_image_web.dart'
     show saveImageToDevice;

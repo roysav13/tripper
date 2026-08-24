@@ -126,8 +126,7 @@ void main() {
     expect(find.text('Saved to Photos'), findsOneWidget);
   });
 
-  testWidgets(
-      'download icon shows a failure snackbar when saving fails',
+  testWidgets('download icon shows a failure snackbar when saving fails',
       (tester) async {
     final (_, photos) = await _setUpPhotos(tester);
 

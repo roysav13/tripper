@@ -79,7 +79,8 @@ class _JournalPhotoViewerState extends ConsumerState<_JournalPhotoViewer> {
     final messenger = ScaffoldMessenger.of(context);
     final path = widget.photos[_currentIndex].filePath;
     final save = widget.saveToGallery ??
-        (String key) => saveImageToDevice(key, ref.read(fileVaultServiceProvider));
+        (String key) =>
+            saveImageToDevice(key, ref.read(fileVaultServiceProvider));
     try {
       await save(path);
       messenger.showSnackBar(SnackBar(content: Text(l10n.journalPhotoSaved)));

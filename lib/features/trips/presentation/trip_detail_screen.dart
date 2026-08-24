@@ -296,4 +296,3 @@ class TripDetailScreen extends ConsumerWidget {
     }
   }
 }
-
