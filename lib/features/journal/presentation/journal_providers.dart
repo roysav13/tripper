@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/database/database_provider.dart';
-import '../../../core/files/file_vault_service.dart';
+import '../../../core/files/local_file_store.dart';
 import '../../places/domain/place.dart';
 import '../../places/presentation/place_providers.dart';
 import '../data/journal_dao.dart';

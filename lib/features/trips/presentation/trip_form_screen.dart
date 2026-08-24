@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,9 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/database/database_provider.dart';
-import '../../../core/files/file_vault_service.dart';
+import '../../../core/files/local_file_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/trip.dart';
@@ -389,19 +389,20 @@ class _DateField extends StatelessWidget {
   }
 }
 
-class _CoverPhotoField extends StatelessWidget {
+class _CoverPhotoField extends ConsumerWidget {
   const _CoverPhotoField({
     required this.path,
     required this.onPick,
     required this.onClear,
   });
 
+  /// Always a cover-store key: a pick is imported before it lands here.
   final String? path;
   final VoidCallback onPick;
   final VoidCallback onClear;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     return GestureDetector(
       onTap: onPick,
@@ -415,8 +416,11 @@ class _CoverPhotoField extends StatelessWidget {
             children: [
               path == null
                   ? _placeholder(colors)
-                  : Image.file(
-                      File(path!),
+                  : Image(
+                      image: LocalFileImage(
+                        path!,
+                        ref.watch(coverPhotoFileServiceProvider),
+                      ),
                       fit: BoxFit.cover,
                       // No trip/gradient context here (this is a raw file
                       // picker preview, not tied to a Trip) — fall back to

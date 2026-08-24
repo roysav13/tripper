@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    Replaced by the value of `flutter build web --base-href`. Must start and
+    end with a slash. Set it when serving Tripper from a subpath (a GitHub
+    Pages project site, say) — otherwise the service worker and the wasm
+    assets below resolve against the wrong root and the app boots offline
+    into a blank page.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Trips, documents, and places — kept on your device.">
+
+  <!--
+    No <meta name="viewport"> here on purpose. The engine installs its own
+    (width=device-width, non-scalable) and logs a warning if it has to
+    replace ours — and notably it does *not* set `viewport-fit=cover`,
+    which is the behaviour we want: Flutter web ignores
+    `env(safe-area-inset-*)`, so covering the display would draw the app
+    under an iPhone's notch and home indicator with nothing padding it.
+  -->
+
+  <!-- Home-screen install. Both spellings: iOS only honoured the
+       `apple-` prefixed one before 15.4. -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tripper">
+  <!--
+    `default`, not `black-translucent`: translucent puts the page under the
+    status bar and forces white glyphs, which vanish against the light
+    "paper" background the trip list uses. `default` lets iOS tint the bar
+    from theme-color below and pick readable glyphs for each scheme.
+  -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+
+  <!-- AppColors.light.paper / AppColors.dark.paper -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAF3EC">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#12141C">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Tripper</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Painted before Flutter's first frame so a cold start on the home
+       screen doesn't flash white. */
+    html, body { margin: 0; padding: 0; background-color: #FAF3EC; }
+    @media (prefers-color-scheme: dark) {
+      html, body { background-color: #12141C; }
+    }
+    /* An installed PWA should not rubber-band or offer text selection —
+       both read as "this is a web page", and the overscroll bounce fights
+       Flutter's own scroll physics. */
+    body {
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    pdf.js, used by pdfx to render boarding-pass PDFs. Served from our own
+    origin rather than the CDN that `pdfx:install_web` wires up by default:
+    a CDN fetch would break the moment the user is offline at a gate, which
+    is exactly when this screen matters (SPEC §3.1.2 — bundled, never
+    fetched at runtime). Update these files together with the pdfx version;
+    see web/pdfjs/LICENSE for provenance.
+  -->
+  <script src="pdfjs/build/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    var { pdfjsLib } = globalThis;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/build/pdf.worker.min.mjs';
+
+    var pdfRenderOptions = {
+      cMapUrl: 'pdfjs/cmaps/',
+      cMapPacked: true,
+    }
+  </script>
+
+  <!--
+    Google Maps JavaScript API. The key is not committed: copy
+    web/config.sample.js to web/config.js (gitignored) and put your key
+    there, or let the build script write it. With no key the maps simply
+    don't load and the app falls back to its list views, the same way it
+    degrades on Android without MAPS_API_KEY.
+  -->
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      var key = window.tripperConfig && window.tripperConfig.mapsApiKey;
+      if (!key) return;
+      var s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key);
+      s.async = true;
+      document.head.appendChild(s);
+    })();
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

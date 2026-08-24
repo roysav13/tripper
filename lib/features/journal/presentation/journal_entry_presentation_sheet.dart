@@ -1,14 +1,15 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/files/local_file_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/auto_direction_text.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/journal_entry.dart';
@@ -281,7 +282,7 @@ class _JournalEntryPresentationViewState
   }
 }
 
-class _JournalEntryPresentationPage extends StatefulWidget {
+class _JournalEntryPresentationPage extends ConsumerStatefulWidget {
   const _JournalEntryPresentationPage({
     required this.entry,
     required this.onOverscrollNext,
@@ -300,12 +301,12 @@ class _JournalEntryPresentationPage extends StatefulWidget {
   final VoidCallback onOverscrollPrevious;
 
   @override
-  State<_JournalEntryPresentationPage> createState() =>
+  ConsumerState<_JournalEntryPresentationPage> createState() =>
       _JournalEntryPresentationPageState();
 }
 
 class _JournalEntryPresentationPageState
-    extends State<_JournalEntryPresentationPage> {
+    extends ConsumerState<_JournalEntryPresentationPage> {
   late final PageController _photoController;
   int _currentPhoto = 0;
 
@@ -440,8 +441,11 @@ class _JournalEntryPresentationPageState
                           }
                         },
                       ),
-                      child: Image.file(
-                        File(photos[i].filePath),
+                      child: Image(
+                        image: LocalFileImage(
+                          photos[i].filePath,
+                          ref.watch(fileVaultServiceProvider),
+                        ),
                         width: double.infinity,
                         height: height,
                         fit: BoxFit.cover,

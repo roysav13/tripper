@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
+import 'package:tripper/core/widgets/local_images.dart';
 import 'package:tripper/core/widgets/paper_card.dart';
 import 'package:tripper/features/journal/domain/journal_entry.dart';
 import 'package:tripper/features/journal/domain/journal_photo.dart';
@@ -24,16 +26,20 @@ JournalEntry _e(
       photos: photos,
     );
 
-Widget _wrap(Widget child, {double height = 200}) => MaterialApp(
-      theme: AppTheme.light(),
-      home: Scaffold(body: SizedBox(height: height, child: child)),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
+/// ProviderScope because the cards resolve photos through
+/// `fileVaultServiceProvider` rather than `Image.file`.
+Widget _wrap(Widget child, {double height = 200}) => ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: SizedBox(height: height, child: child)),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
     );
 
 void main() {
@@ -154,8 +160,8 @@ void main() {
     await tester.pumpAndSettle();
 
     final image = tester.widget<Image>(find.byType(Image));
-    final fileImage = image.image as FileImage;
-    expect(fileImage.file.path, '/tmp/b.jpg');
+    final localImage = image.image as LocalFileImage;
+    expect(localImage.storageKey, '/tmp/b.jpg');
   });
 
   testWidgets('entries on different days each get their own dot and card',

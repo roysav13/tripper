@@ -20,10 +20,10 @@ final _today = DateTime(2026, 7, 19);
 /// A [FileVaultService] whose `delete` records every call instead of
 /// touching disk, and can optionally throw to simulate a locked file. This
 /// screen's tests exist to verify UI + state wiring, not real
-/// file-deletion mechanics (already covered, with no `Image.file`
+/// file-deletion mechanics (already covered, with no image decoding
 /// involved, by `file_vault_service_test.dart`) — using the real,
 /// disk-backed service here made these tests dependent on Windows
-/// file-lock timing after `Image.file` decodes a photo, which proved
+/// file-lock timing after the cover photo decodes, which proved
 /// unreliable across multiple attempts to fix. `import`/`exists`/
 /// `sweepOrphans` stay inherited from the real implementation; they're
 /// unexercised by these tests. Pointed at the test's own [tempDir] (even

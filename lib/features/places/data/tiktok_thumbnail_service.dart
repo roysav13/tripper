@@ -1,12 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
-/// Downloads a TikTok oEmbed cover-image URL to a temp file for OCR. Seam
+import '../../../core/platform/scratch_file.dart';
+
+/// Downloads a TikTok oEmbed cover-image URL to scratch storage for OCR. Seam
 /// for testability, same pattern as `DocumentTextRecognizer`/
 /// `PdfPageRasterizer` (`lib/features/vault/data/document_ocr_service.dart`)
 /// — nothing outside this file touches `http` for the thumbnail bytes.
@@ -16,8 +14,9 @@ import 'package:path_provider/path_provider.dart';
 /// fetching and take a plain request with no special headers — confirmed
 /// on-device.
 abstract interface class TikTokThumbnailDownloader {
-  /// Temp file path, or null on any failure (offline, non-200, a non-image
-  /// body, timeout). Caller owns cleanup of the returned file.
+  /// Scratch handle (see `core/platform/scratch_file.dart`), or null on
+  /// any failure (offline, non-200, a non-image body, timeout). Caller
+  /// owns cleanup via `deleteScratchFile`.
   Future<String?> download(String thumbnailUrl);
 }
 
@@ -51,15 +50,11 @@ class HttpTikTokThumbnailDownloader implements TikTokThumbnailDownloader {
         }
         return null;
       }
-      final tempDir = await getTemporaryDirectory();
-      final file = File(
-        p.join(
-          tempDir.path,
-          'tripper_thumb_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        ),
+      return writeScratchFile(
+        response.bodyBytes,
+        extension: '.jpg',
+        prefix: 'tripper_thumb_',
       );
-      await file.writeAsBytes(response.bodyBytes);
-      return file.path;
     } catch (e) {
       if (kDebugMode) debugPrint('[tiktok] thumbnail download failed: $e');
       return null;

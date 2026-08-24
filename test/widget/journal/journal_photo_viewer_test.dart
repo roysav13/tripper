@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:tripper/core/theme/app_theme.dart';
@@ -11,47 +11,24 @@ import 'package:tripper/features/journal/domain/journal_photo.dart';
 import 'package:tripper/features/journal/presentation/journal_photo_viewer.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.light(),
-      home: child,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
-    );
+import '../../helpers/warm_image_cache.dart';
 
-/// Decodes [file] and seats it in the global [imageCache] via a real
-/// event-loop turn. `flutter test`'s default binding runs widget code
-/// inside a fake-async zone, so a disk-backed [FileImage] never finishes
-/// decoding through plain [WidgetTester.pump]/[pumpAndSettle] alone —
-/// photo_view's default loading state is an indeterminate
-/// [CircularProgressIndicator], whose repeating animation then keeps
-/// `pumpAndSettle` from ever settling. Warming the cache here (inside
-/// [WidgetTester.runAsync], which briefly runs in the real zone) means
-/// the widget's own later `resolve()` call is a cache hit that completes
-/// synchronously within the same build pass, before `build()` reads the
-/// loading flag.
-Future<void> _warmImageCache(File file) {
-  final provider = FileImage(file);
-  final stream = provider.resolve(ImageConfiguration.empty);
-  final completer = Completer<void>();
-  late final ImageStreamListener listener;
-  listener = ImageStreamListener(
-    (info, synchronousCall) {
-      stream.removeListener(listener);
-      completer.complete();
-    },
-    onError: (error, stackTrace) {
-      stream.removeListener(listener);
-      completer.completeError(error, stackTrace);
-    },
-  );
-  stream.addListener(listener);
-  return completer.future;
-}
+/// ProviderScope because the viewer reads photos through
+/// `fileVaultServiceProvider`. The default (real, filesystem-backed) store
+/// is what these tests want: the keys below are absolute temp-file paths.
+Widget _wrap(Widget child) => ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: child,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
+    );
 
 /// Two on-disk PNGs plus a [JournalPhoto] list pointing at them, warmed
 /// into [imageCache] so photo_view resolves them synchronously in tests.
@@ -75,8 +52,8 @@ Future<(Directory dir, List<JournalPhoto> photos)> _setUpPhotos(
     JournalPhoto(id: 'p2', filePath: photoB.path),
   ];
   await tester.runAsync(() async {
-    await _warmImageCache(photoA);
-    await _warmImageCache(photoB);
+    await warmLocalImageCache(photoA.path);
+    await warmLocalImageCache(photoB.path);
   });
   return (dir, photos);
 }

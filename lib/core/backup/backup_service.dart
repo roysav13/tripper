@@ -2,31 +2,23 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../database/app_database.dart';
-import '../database/database_provider.dart';
+import 'backup_format.dart';
 
-/// Bumped only when the archive layout itself changes.
-const kBackupFormatVersion = 1;
+export 'backup_format.dart';
 
 const _manifestName = 'manifest.json';
 const _dbName = 'tripper.db';
 const _vaultDir = 'vault';
 
-class BackupException implements Exception {
-  const BackupException(this.reason);
-
-  final BackupFailure reason;
-}
-
-enum BackupFailure { corruptArchive, newerFormat, newerSchema }
-
 /// Local-first means uninstall = data loss. This is the insurance policy
 /// until cloud sync (SPEC Phase 3): one zip with the DB snapshot, every
 /// vault file, and a manifest.
+///
+/// Android/desktop only — reachable through `backup_actions.dart`, which
+/// stubs the whole feature out on the web (see `backup_actions_web.dart`).
 class BackupService {
   BackupService(this._db, this._baseDir, this._clock);
 
@@ -146,11 +138,3 @@ class BackupService {
         .writeAsBytes(dbEntry.content as List<int>);
   }
 }
-
-final backupServiceProvider = Provider<BackupService>(
-  (ref) => BackupService(
-    ref.watch(databaseProvider),
-    getApplicationDocumentsDirectory,
-    ref.watch(clockProvider),
-  ),
-);

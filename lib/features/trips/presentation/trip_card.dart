@@ -1,17 +1,15 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/generated_cover_gradient.dart';
 import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/trip.dart';
+import 'trip_cover_background.dart';
 
 /// All date formatting for trips goes through here (locale = one-file change).
 abstract final class TripDateFormatter {
@@ -89,7 +87,7 @@ class TripCard extends StatelessWidget {
                   // Hero being the descendant of another Hero.
                   Hero(
                     tag: 'trip-cover-${trip.id}',
-                    child: _CoverBackground(trip: trip, colors: colors),
+                    child: TripCoverBackground(trip: trip, colors: colors),
                   ),
                   // Text-on-photo scrim (component rule 6: every
                   // text-on-photo moment gets a scrim strong enough to
@@ -170,33 +168,3 @@ class TripCard extends StatelessWidget {
   }
 }
 
-/// The cover image if the trip has one, else the deterministic gradient
-/// fallback (component rule 2: gradients scoped to hero/cover art only —
-/// this is that art).
-class _CoverBackground extends StatelessWidget {
-  const _CoverBackground({required this.trip, required this.colors});
-
-  final Trip trip;
-  final AppColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final path = trip.coverPhotoPath;
-    if (path != null) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: generatedCoverGradient(trip.id, colors),
-          ),
-        ),
-      );
-    }
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: generatedCoverGradient(trip.id, colors),
-      ),
-    );
-  }
-}

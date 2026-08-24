@@ -1,12 +1,13 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/files/local_file_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/auto_direction_text.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/paper_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -17,7 +18,7 @@ import '../domain/journal_entry_queries.dart';
 /// photo on top, a single-line date + place caption below. Tapping
 /// opens the read-only presentation view (never edits directly), so the
 /// card carries no summary text or delete action.
-class JournalGalleryCard extends StatelessWidget {
+class JournalGalleryCard extends ConsumerWidget {
   const JournalGalleryCard({
     super.key,
     required this.entry,
@@ -37,11 +38,12 @@ class JournalGalleryCard extends StatelessWidget {
   static const photoHeight = 130.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
     final placeName = entry.placeName;
     final hasPhoto = entry.hasPhotos;
+    final files = ref.watch(fileVaultServiceProvider);
 
     // The card has a natural (photo) size. Scaling it down to fit
     // whatever height the gallery strip actually gives it (e.g. a
@@ -80,8 +82,11 @@ class JournalGalleryCard extends StatelessWidget {
                     child: Stack(
                       children: [
                         hasPhoto
-                            ? Image.file(
-                                File(entry.photos.first.filePath),
+                            ? Image(
+                                image: LocalFileImage(
+                                  entry.photos.first.filePath,
+                                  files,
+                                ),
                                 width: width,
                                 height: photoHeight,
                                 fit: BoxFit.cover,
@@ -417,7 +422,7 @@ class _DaySlot extends StatelessWidget {
   }
 }
 
-class _GroupedGalleryCard extends StatelessWidget {
+class _GroupedGalleryCard extends ConsumerWidget {
   const _GroupedGalleryCard({
     required this.day,
     required this.onTap,
@@ -429,9 +434,10 @@ class _GroupedGalleryCard extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
+    final files = ref.watch(fileVaultServiceProvider);
     final first = day.first;
     // The cover is the day's LATEST entry with a photo, not just the
     // first-with-photo in list order — day isn't guaranteed to be sorted
@@ -482,8 +488,11 @@ class _GroupedGalleryCard extends StatelessWidget {
                     child: Stack(
                       children: [
                         hasPhoto
-                            ? Image.file(
-                                File(photoEntry.photos.first.filePath),
+                            ? Image(
+                                image: LocalFileImage(
+                                  photoEntry.photos.first.filePath,
+                                  files,
+                                ),
                                 width: JournalGalleryCard.width,
                                 height: JournalGalleryCard.photoHeight,
                                 fit: BoxFit.cover,

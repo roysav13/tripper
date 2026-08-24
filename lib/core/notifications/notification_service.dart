@@ -1,9 +1,10 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
-import 'package:timezone/timezone.dart' as tz;
 
 import '../database/database_provider.dart';
+
+export 'notification_bootstrap_io.dart'
+    if (dart.library.js_interop) 'notification_bootstrap_web.dart'
+    show createNotificationScheduler, kSupportsScheduledNotifications;
 
 /// The three reminder types SPEC §3.2.1 groups under "one scheduling
 /// subsystem" (document-expiry warnings, trip-countdown nudges,
@@ -72,76 +73,6 @@ abstract class NotificationScheduler {
   Future<void> zonedSchedule(PendingNotification notification);
   Future<void> cancel(int id);
   Future<void> cancelAll();
-}
-
-class PluginNotificationScheduler implements NotificationScheduler {
-  PluginNotificationScheduler(this._plugin);
-
-  final FlutterLocalNotificationsPlugin _plugin;
-
-  static const _androidDetails = AndroidNotificationDetails(
-    'tripper_reminders',
-    'Trip reminders',
-    channelDescription:
-        'Document expiry, trip countdown, and check-in reminders',
-    importance: Importance.defaultImportance,
-    priority: Priority.defaultPriority,
-  );
-
-  @override
-  Future<bool> requestPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    if (android == null) return true;
-    return await android.requestNotificationsPermission() ?? false;
-  }
-
-  @override
-  Future<void> zonedSchedule(PendingNotification notification) {
-    return _plugin.zonedSchedule(
-      notification.id,
-      notification.title,
-      notification.body,
-      tz.TZDateTime.from(notification.at, tz.local),
-      const NotificationDetails(android: _androidDetails),
-      // Day-scale reminders, not minute-precision alarms — inexact
-      // scheduling avoids requesting SCHEDULE_EXACT_ALARM entirely (see
-      // AndroidManifest.xml comment).
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      // Required by this plugin version's signature; Android ignores it
-      // (iOS-only concept — whether a fired notification's displayed time
-      // is wall-clock or relative). absoluteTime is the correct choice on
-      // every platform we ship since [notification.at] is already a real
-      // wall-clock instant, not a relative offset.
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
-
-  @override
-  Future<void> cancel(int id) => _plugin.cancel(id);
-
-  @override
-  Future<void> cancelAll() => _plugin.cancelAll();
-}
-
-/// Call once at app startup, before scheduling anything. Never throws —
-/// notification setup failing (missing OS component, odd OEM build) must
-/// never block the app from starting, same "degrade, don't block" spirit
-/// as CLAUDE.md hard rule 4 applied to a device capability instead of a
-/// network call.
-Future<void> initializeNotificationPlugin(
-  FlutterLocalNotificationsPlugin plugin,
-) async {
-  try {
-    tz_data.initializeTimeZones();
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    await plugin.initialize(
-      const InitializationSettings(android: androidInit),
-    );
-  } catch (_) {
-    // Swallowed deliberately — see doc comment above.
-  }
 }
 
 /// Does nothing, never throws. This is the default [notificationSchedulerProvider]

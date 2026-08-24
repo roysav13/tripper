@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/files/local_file_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
@@ -217,9 +218,15 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
+              // Already-saved photos come out of the file store; the ones
+              // just picked are still wherever the picker left them, so
+              // they need the platform's picked-file preview instead.
               for (final photo in _keptPhotos)
                 _PhotoThumb(
-                  filePath: photo.filePath,
+                  image: LocalFileImage(
+                    photo.filePath,
+                    ref.watch(fileVaultServiceProvider),
+                  ),
                   colors: colors,
                   onRemove: () => setState(() {
                     _keptPhotos.remove(photo);
@@ -228,7 +235,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
                 ),
               for (final path in _newPhotoPaths)
                 _PhotoThumb(
-                  filePath: path,
+                  image: pickedFileImage(path),
                   colors: colors,
                   onRemove: () => setState(() => _newPhotoPaths.remove(path)),
                 ),
@@ -478,12 +485,12 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
 
 class _PhotoThumb extends StatelessWidget {
   const _PhotoThumb({
-    required this.filePath,
+    required this.image,
     required this.colors,
     required this.onRemove,
   });
 
-  final String filePath;
+  final ImageProvider image;
   final AppColors colors;
   final VoidCallback onRemove;
 
@@ -501,8 +508,8 @@ class _PhotoThumb extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border.all(color: colors.hairline, width: 0.5),
               ),
-              child: Image.file(
-                File(filePath),
+              child: Image(
+                image: image,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => ColoredBox(
                   color: colors.paper,

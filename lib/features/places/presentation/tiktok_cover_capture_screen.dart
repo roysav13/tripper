@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/platform/scratch_file.dart';
 import '../../../core/sharing/tiktok_oembed_service.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../vault/data/document_ocr_service.dart';
 import '../data/tiktok_thumbnail_service.dart';
@@ -66,14 +67,8 @@ class TikTokCoverCaptureScreenState
     // dispose() can't await, so this is fire-and-forget — best-effort,
     // same contract as document_ocr_service.dart's per-page cleanup.
     final thumbnailPath = _thumbnailPath;
-    if (thumbnailPath != null) unawaited(_deleteQuietly(thumbnailPath));
+    if (thumbnailPath != null) unawaited(deleteScratchFile(thumbnailPath));
     super.dispose();
-  }
-
-  Future<void> _deleteQuietly(String path) async {
-    try {
-      await File(path).delete();
-    } catch (_) {}
   }
 
   Future<void> _fetch() async {
@@ -158,8 +153,8 @@ class TikTokCoverCaptureScreenState
                 if (_thumbnailPath != null)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      File(_thumbnailPath!),
+                    child: Image(
+                      image: pickedFileImage(_thumbnailPath!),
                       height: 200,
                       fit: BoxFit.cover,
                     ),

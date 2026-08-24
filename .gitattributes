@@ -1,0 +1,7 @@
+# Vendored web artifacts are checked out byte-for-byte on every platform.
+# They are prebuilt outputs of pinned package versions, not source we edit,
+# and CRLF translation on a Windows clone would make them differ from the
+# releases they were downloaded from for no reason.
+web/sqlite3.wasm      binary
+web/drift_worker.js   -text
+web/pdfjs/**          -text

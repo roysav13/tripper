@@ -42,6 +42,10 @@ dependencies:
   geolocator: ^13.0.2
   gal: ^2.3.3
   exif: ^3.3.0
+  # Both are transitive already (image_picker, file_picker, the Flutter web
+  # engine); declared because the web platform seams use them directly.
+  cross_file: ^0.3.4+2
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_test:

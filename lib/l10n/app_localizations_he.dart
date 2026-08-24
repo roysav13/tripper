@@ -928,6 +928,22 @@ class AppLocalizationsHe extends AppLocalizations {
       'הכול שמור רק במכשיר הזה. ייצא גיבוי שתוכל לשחזר אחרי התקנה מחדש או במכשיר חדש.';
 
   @override
+  String get settingsBackupUnavailableWeb =>
+      'לא ניתן ליצור קובצי גיבוי בדפדפן. השתמש באפליקציית האנדרואיד כדי לייצא, או שמור על העותק שבמכשיר הזה כעותק היחיד.';
+
+  @override
+  String get settingsVaultLockUnavailableWeb =>
+      'דפדפן לא יכול לבדוק טביעת אצבע או זיהוי פנים, ולכן המסמכים נפתחים כאן בלי אימות.';
+
+  @override
+  String get settingsNotificationsUnavailableWeb =>
+      'תזכורות דורשות את אפליקציית האנדרואיד — דפדפן לא יכול להתריע כש-Tripper סגור.';
+
+  @override
+  String get storageNotPersistentWarning =>
+      'הדפדפן הזה לא שומר את הנתונים של Tripper. כל מה שתוסיף ייעלם כשתסגור את הלשונית.';
+
+  @override
   String get settingsExport => 'ייצוא גיבוי';
 
   @override

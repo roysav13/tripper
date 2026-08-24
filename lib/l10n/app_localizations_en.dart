@@ -933,6 +933,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Everything lives on this device only. Export a backup you can restore after a reinstall or on a new phone.';
 
   @override
+  String get settingsBackupUnavailableWeb =>
+      'Backup files can\'t be created in a browser. Use the Android app to export, or keep this device\'s copy as your only one.';
+
+  @override
+  String get settingsVaultLockUnavailableWeb =>
+      'A browser can\'t check your fingerprint or face, so documents open without a prompt here.';
+
+  @override
+  String get settingsNotificationsUnavailableWeb =>
+      'Reminders need the Android app — a browser can\'t alert you while Tripper is closed.';
+
+  @override
+  String get storageNotPersistentWarning =>
+      'This browser isn\'t saving Tripper\'s data. Anything you add will disappear when you close the tab.';
+
+  @override
   String get settingsExport => 'Export backup';
 
   @override

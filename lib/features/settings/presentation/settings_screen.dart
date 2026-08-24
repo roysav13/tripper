@@ -1,11 +1,12 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
-import '../../../core/backup/backup_service.dart';
+import '../../../core/backup/backup_actions.dart';
+import '../../../core/backup/backup_format.dart';
+import '../../../core/database/database_provider.dart';
+import '../../../core/notifications/notification_service.dart'
+    show kSupportsScheduledNotifications;
 import '../../../core/security/vault_lock.dart';
 import '../../../core/settings/settings_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -130,42 +131,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.settingsVaultLock),
             subtitle: Text(
-              l10n.settingsVaultLockHint,
+              kSupportsBiometricLock
+                  ? l10n.settingsVaultLockHint
+                  : l10n.settingsVaultLockUnavailableWeb,
               style: TextStyle(fontSize: 12, color: colors.inkMuted),
             ),
-            value: lockEnabled,
+            value: kSupportsBiometricLock && lockEnabled,
             activeTrackColor: colors.accent,
-            onChanged: (value) =>
-                ref.read(vaultLockEnabledProvider.notifier).set(enabled: value),
+            // Disabled rather than hidden: the setting still exists on the
+            // user's Android install, and a greyed-out row with the reason
+            // under it explains the difference better than a missing one.
+            onChanged: !kSupportsBiometricLock
+                ? null
+                : (value) => ref
+                    .read(vaultLockEnabledProvider.notifier)
+                    .set(enabled: value),
           ),
           const SizedBox(height: AppSpacing.xl),
           SectionLabel(l10n.settingsNotifications),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            l10n.settingsExpiryNoticeHint,
+            kSupportsScheduledNotifications
+                ? l10n.settingsExpiryNoticeHint
+                : l10n.settingsNotificationsUnavailableWeb,
             style: TextStyle(fontSize: 13, color: colors.inkSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
-          SegmentedButton<int>(
-            segments: [
-              for (final days in _kNoticeDayPresets)
-                ButtonSegment(
-                  value: days,
-                  // Plain Text with the mono style (not MonoText) — MonoText
-                  // hardcodes its own foreground color, which would fight
-                  // SegmentedButton's selected/unselected color styling.
-                  label: Text(
-                    days == 0 ? l10n.settingsExpiryNoticeOff : '${days}D',
-                    style: AppTextStyles.mono,
+          if (kSupportsScheduledNotifications)
+            SegmentedButton<int>(
+              segments: [
+                for (final days in _kNoticeDayPresets)
+                  ButtonSegment(
+                    value: days,
+                    // Plain Text with the mono style (not MonoText) —
+                    // MonoText hardcodes its own foreground color, which
+                    // would fight SegmentedButton's selected/unselected
+                    // color styling.
+                    label: Text(
+                      days == 0 ? l10n.settingsExpiryNoticeOff : '${days}D',
+                      style: AppTextStyles.mono,
+                    ),
                   ),
-                ),
-            ],
-            selected: {noticeDays},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) => ref
-                .read(documentExpiryNoticeDaysProvider.notifier)
-                .set(selection.first),
-          ),
+              ],
+              selected: {noticeDays},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) => ref
+                  .read(documentExpiryNoticeDaysProvider.notifier)
+                  .set(selection.first),
+            ),
           const SizedBox(height: AppSpacing.xl),
           SectionLabel(l10n.settingsNearbyPlaces),
           const SizedBox(height: AppSpacing.sm),
@@ -215,21 +228,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SectionLabel(l10n.settingsBackup),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            l10n.settingsBackupHint,
+            kSupportsBackupArchive
+                ? l10n.settingsBackupHint
+                : l10n.settingsBackupUnavailableWeb,
             style: TextStyle(fontSize: 13, color: colors.inkSecondary),
           ),
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.archive_outlined, size: 16),
-            label: Text(l10n.settingsExport),
-            onPressed: _busy ? null : _export,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.settings_backup_restore, size: 16),
-            label: Text(l10n.settingsImport),
-            onPressed: _busy ? null : _import,
-          ),
+          if (kSupportsBackupArchive) ...[
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.archive_outlined, size: 16),
+              label: Text(l10n.settingsExport),
+              onPressed: _busy ? null : _export,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.settings_backup_restore, size: 16),
+              label: Text(l10n.settingsImport),
+              onPressed: _busy ? null : _import,
+            ),
+          ],
           if (_busy) ...[
             const SizedBox(height: AppSpacing.lg),
             const Center(child: CircularProgressIndicator()),
@@ -243,20 +260,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _busy = true);
     try {
-      final service = ref.read(backupServiceProvider);
-      final tempDir = await getTemporaryDirectory();
-      final target = p.join(tempDir.path, service.suggestedFileName());
-      final file = await service.export(target);
+      final handle = await writeBackupArchive(
+        ref.read(databaseProvider),
+        ref.read(clockProvider),
+      );
       // Marked as soon as the archive exists, not after the share sheet
       // resolves — the export itself is the safety net; where the user
       // sends the file afterward doesn't change that.
       await ref.read(hasExportedProvider.notifier).markExported();
       if (!mounted) return;
-      // System share sheet — user picks Drive, email, local storage…
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: l10n.settingsExportShareText,
-      );
+      await shareBackupArchive(handle, text: l10n.settingsExportShareText);
     } catch (_) {
       if (mounted) _snack(l10n.settingsExportFailed);
     } finally {
@@ -294,7 +307,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _busy = true);
     try {
-      await ref.read(backupServiceProvider).import(path);
+      await restoreBackupArchive(
+        ref.read(databaseProvider),
+        ref.read(clockProvider),
+        path,
+      );
       if (mounted) _snack(l10n.settingsImportDone);
     } on BackupException catch (e) {
       if (mounted) {

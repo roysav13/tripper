@@ -1,11 +1,12 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/platform/scratch_file.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
@@ -55,7 +56,14 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
   DocumentCategory _category = DocumentCategory.other;
   DateTime? _expiry;
   DateTime? _departureTime;
+  /// Handle for the attached file: a path on Android, a `blob:` URL in
+  /// the browser. Only ever handed to code that knows how to read one.
   String? _pickedPath;
+
+  /// The file's real name. Tracked separately because a `blob:` URL has
+  /// neither a basename to show nor an extension to derive the MIME type
+  /// from.
+  String? _pickedName;
   bool _isGlobal = false;
   bool _titleError = false;
   bool _saving = false;
@@ -66,13 +74,14 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
     final shared = widget.initialFilePath;
     if (shared != null) {
       _pickedPath = shared;
+      _pickedName = p.basename(shared);
       _title.text = p.basenameWithoutExtension(shared);
       // OCR prefill for shared-in photos too — originally only the
       // "Attach file" path ran it, so sharing a passport photo into the
       // app silently skipped prefill (found on-device 2026-07-23).
       // Post-frame: prefill shows a snackbar, which needs a built context.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _tryOcrPrefill(shared);
+        if (mounted) _tryOcrPrefill(shared, fileName: p.basename(shared));
       });
     }
   }
@@ -164,9 +173,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.attach_file, size: 16),
                 label: Text(
-                  _pickedPath == null
-                      ? l10n.docFormAttachFile
-                      : p.basename(_pickedPath!),
+                  _pickedName ?? l10n.docFormAttachFile,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -231,16 +238,34 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'html', 'htm'],
+      // Browsers never expose a filesystem path, so ask for the bytes
+      // there and park them in scratch storage to get a readable handle.
+      withData: kIsWeb,
     );
-    final path = result?.files.single.path;
-    if (path == null) return;
+    final picked = result?.files.singleOrNull;
+    if (picked == null) return;
+    final name = picked.name;
+
+    var handle = picked.path;
+    if (handle == null) {
+      final bytes = picked.bytes;
+      if (bytes == null) return;
+      handle = await writeScratchFile(
+        bytes,
+        extension: p.extension(name),
+        prefix: 'tripper_pick_',
+      );
+      if (handle == null) return;
+    }
+
     setState(() {
-      _pickedPath = path;
+      _pickedPath = handle;
+      _pickedName = name;
       if (_title.text.trim().isEmpty) {
-        _title.text = p.basenameWithoutExtension(path);
+        _title.text = p.basenameWithoutExtension(name);
       }
     });
-    await _tryOcrPrefill(path);
+    await _tryOcrPrefill(handle, fileName: name);
   }
 
   /// M5.4: passport-MRZ OCR prefill. The what-to-fill rules live in
@@ -249,8 +274,11 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
   /// and PDFs (first pages rasterized via `DocumentTextExtractor`). Any
   /// OCR failure or non-passport file silently prefills nothing
   /// (enhancement, not a gate).
-  Future<void> _tryOcrPrefill(String path) async {
-    final text = await ref.read(documentTextExtractorProvider).extract(path);
+  Future<void> _tryOcrPrefill(String handle, {String? fileName}) async {
+    final path = fileName ?? handle;
+    final text = await ref
+        .read(documentTextExtractorProvider)
+        .extract(handle, fileName: fileName);
     if (text.isEmpty) {
       _ocrLog('no text extracted (unsupported type, plugin failure, or '
           'blank/unreadable file)');
@@ -389,9 +417,9 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
       if (_category == DocumentCategory.flight && _departureTime != null)
         kDepartureTimeDetailKey: _departureTime!.toIso8601String(),
     };
-    final ext = _pickedPath == null
+    final ext = _pickedName == null
         ? null
-        : p.extension(_pickedPath!).replaceFirst('.', '').toLowerCase();
+        : p.extension(_pickedName!).replaceFirst('.', '').toLowerCase();
     await ref.read(documentRepositoryProvider).createDocument(
       title: _title.text,
       category: _category,

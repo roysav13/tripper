@@ -1,13 +1,15 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdfx/pdfx.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../../core/files/local_file_store.dart';
+import '../../../core/platform/open_file.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/document.dart';
 
@@ -15,7 +17,7 @@ import '../domain/document.dart';
 /// brightness forced to max, screen kept awake. Boarding passes are usually
 /// PDFs — the first page is rendered inline. Always light — scanners and
 /// gate agents don't care about dark mode.
-class ShowCodeScreen extends StatefulWidget {
+class ShowCodeScreen extends ConsumerStatefulWidget {
   const ShowCodeScreen({super.key, required this.doc});
 
   final Document doc;
@@ -42,10 +44,10 @@ class ShowCodeScreen extends StatefulWidget {
   }
 
   @override
-  State<ShowCodeScreen> createState() => _ShowCodeScreenState();
+  ConsumerState<ShowCodeScreen> createState() => _ShowCodeScreenState();
 }
 
-class _ShowCodeScreenState extends State<ShowCodeScreen> {
+class _ShowCodeScreenState extends ConsumerState<ShowCodeScreen> {
   Future<Uint8List?>? _pdfPage;
 
   @override
@@ -77,11 +79,17 @@ class _ShowCodeScreenState extends State<ShowCodeScreen> {
   }
 
   /// Render at 3x for crisp barcode edges — scanners need contrast.
-  Future<Uint8List?> _renderPdfFirstPage(String path) async {
+  ///
+  /// Loaded from bytes rather than `PdfDocument.openFile`, which pdfx
+  /// only implements on native: the vault file may be an IndexedDB record
+  /// with no path at all.
+  Future<Uint8List?> _renderPdfFirstPage(String storageKey) async {
     PdfDocument? doc;
     PdfPage? page;
     try {
-      doc = await PdfDocument.openFile(path);
+      final bytes = await ref.read(fileVaultServiceProvider).read(storageKey);
+      if (bytes == null) return null;
+      doc = await PdfDocument.openData(bytes);
       page = await doc.getPage(1);
       final image = await page.render(
         width: page.width * 3,
@@ -134,8 +142,11 @@ class _ShowCodeScreenState extends State<ShowCodeScreen> {
                 },
               )
             : _viewer(
-                Image.file(
-                  File(widget.doc.filePath!),
+                Image(
+                  image: LocalFileImage(
+                    widget.doc.filePath!,
+                    ref.watch(fileVaultServiceProvider),
+                  ),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stack) => Padding(
                     padding: const EdgeInsets.all(32),
@@ -165,7 +176,11 @@ class _ShowCodeScreenState extends State<ShowCodeScreen> {
             ),
             const SizedBox(height: 16),
             OutlinedButton(
-              onPressed: () => OpenFilex.open(widget.doc.filePath!),
+              onPressed: () => openStoredFile(
+                widget.doc.filePath!,
+                ref.read(fileVaultServiceProvider),
+                fileName: widget.doc.title,
+              ),
               child: Text(
                 l10n.docActionOpen,
                 style: const TextStyle(color: Colors.black87),

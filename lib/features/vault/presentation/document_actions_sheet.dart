@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:open_filex/open_filex.dart';
 
+import '../../../core/files/local_file_store.dart';
+import '../../../core/platform/open_file.dart';
 import '../../../core/security/vault_lock.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
@@ -68,8 +69,13 @@ class _DocumentActions extends ConsumerWidget {
                 leading: const Icon(Icons.open_in_new),
                 title: Text(l10n.docActionOpen),
                 onTap: () async {
+                  final files = ref.read(fileVaultServiceProvider);
                   Navigator.of(context).pop();
-                  await OpenFilex.open(doc.filePath!);
+                  await openStoredFile(
+                    doc.filePath!,
+                    files,
+                    fileName: doc.title,
+                  );
                 },
               ),
             ListTile(

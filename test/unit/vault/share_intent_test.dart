@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:tripper/core/sharing/share_intent_service.dart';
+import 'package:tripper/core/sharing/share_intent_source_io.dart';
 
 SharedMediaFile _media(String path, SharedMediaType type) =>
     SharedMediaFile(path: path, type: type);

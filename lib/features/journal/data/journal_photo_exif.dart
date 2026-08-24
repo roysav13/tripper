@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
 import 'package:exif/exif.dart';
 import 'package:flutter/foundation.dart';
 
@@ -23,7 +22,9 @@ class PhotoExifData {
 /// to the journal entry form, not something it can depend on.
 Future<PhotoExifData?> readPhotoExifData(String filePath) async {
   try {
-    final bytes = await File(filePath).readAsBytes();
+    // XFile, not File: [filePath] is a picker handle, which is a `blob:`
+    // URL rather than a filesystem path in the browser.
+    final bytes = await XFile(filePath).readAsBytes();
     final tags = await readExifFromBytes(bytes);
     final coords = extractGpsCoordinates(tags);
     final takenAt = extractPhotoTakenAt(tags);

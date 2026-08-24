@@ -1724,6 +1724,30 @@ abstract class AppLocalizations {
   /// **'Everything lives on this device only. Export a backup you can restore after a reinstall or on a new phone.'**
   String get settingsBackupHint;
 
+  /// No description provided for @settingsBackupUnavailableWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup files can\'t be created in a browser. Use the Android app to export, or keep this device\'s copy as your only one.'**
+  String get settingsBackupUnavailableWeb;
+
+  /// No description provided for @settingsVaultLockUnavailableWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'A browser can\'t check your fingerprint or face, so documents open without a prompt here.'**
+  String get settingsVaultLockUnavailableWeb;
+
+  /// No description provided for @settingsNotificationsUnavailableWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders need the Android app — a browser can\'t alert you while Tripper is closed.'**
+  String get settingsNotificationsUnavailableWeb;
+
+  /// No description provided for @storageNotPersistentWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This browser isn\'t saving Tripper\'s data. Anything you add will disappear when you close the tab.'**
+  String get storageNotPersistentWarning;
+
   /// No description provided for @settingsExport.
   ///
   /// In en, this message translates to:

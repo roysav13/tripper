@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -46,6 +48,37 @@ void main() {
       () => service.import(src.path),
       throwsA(isA<FileTooLargeException>()),
     );
+  });
+
+  test('importBytes writes a uuid-named file with the given extension',
+      () async {
+    final key = await service.importBytes(
+      Uint8List.fromList(utf8.encode('inline')),
+      extension: '.png',
+    );
+
+    expect(p.extension(key), '.png');
+    expect(p.dirname(key), p.join(tempDir.path, 'vault'));
+    expect(await File(key).readAsString(), 'inline');
+  });
+
+  test('importBytes rejects oversized payloads', () async {
+    expect(
+      () => service.importBytes(Uint8List(kMaxVaultFileBytes + 1)),
+      throwsA(isA<FileTooLargeException>()),
+    );
+  });
+
+  test('read returns the stored bytes, and null for a key that is gone',
+      () async {
+    final src = await sourceFile('a.pdf', 'contents');
+    final key = await service.import(src.path);
+
+    expect(utf8.decode((await service.read(key))!), 'contents');
+
+    await service.delete(key);
+    expect(await service.read(key), isNull);
+    expect(await service.read('/nonexistent/x.pdf'), isNull);
   });
 
   test('delete removes the file; deleting twice is safe', () async {

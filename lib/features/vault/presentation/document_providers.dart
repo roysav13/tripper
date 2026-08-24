@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/database/database_provider.dart';
-import '../../../core/files/file_vault_service.dart';
+import '../../../core/files/local_file_store.dart';
 import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/filtering/sort_spec.dart';
 import '../data/document_repository.dart';

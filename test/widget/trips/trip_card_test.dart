@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tripper/core/theme/app_theme.dart';
 import 'package:tripper/features/trips/domain/trip.dart';
@@ -10,16 +11,20 @@ import 'package:tripper/l10n/app_localizations.dart';
 
 final _today = DateTime(2026, 7, 19);
 
-Widget _app(Widget child) => MaterialApp(
-      theme: AppTheme.light(),
-      home: Scaffold(body: child),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
+/// ProviderScope because the cover resolves through
+/// `coverPhotoFileServiceProvider` rather than `Image.file`.
+Widget _app(Widget child) => ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: child),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
     );
 
 void main() {

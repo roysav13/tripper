@@ -1,9 +1,13 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:local_auth/local_auth.dart';
 
 import '../database/database_provider.dart';
 import '../settings/settings_service.dart';
+import 'biometric_authenticator_io.dart'
+    if (dart.library.js_interop) 'biometric_authenticator_web.dart';
+
+export 'biometric_authenticator_io.dart'
+    if (dart.library.js_interop) 'biometric_authenticator_web.dart'
+    show kSupportsBiometricLock;
 
 /// Unlock session length — re-auth after this much time (SPEC M2).
 const kVaultUnlockSession = Duration(minutes: 2);
@@ -11,20 +15,11 @@ const kVaultUnlockSession = Duration(minutes: 2);
 /// Returns true when the user passed (or the device has no lock configured).
 typedef BiometricAuthenticator = Future<bool> Function(String reason);
 
-/// Production authenticator: biometric with device-PIN fallback.
-/// Devices without any lock screen open freely (documented SPEC decision).
-final biometricAuthenticatorProvider = Provider<BiometricAuthenticator>((ref) {
-  final auth = LocalAuthentication();
-  return (reason) async {
-    try {
-      final supported = await auth.isDeviceSupported();
-      if (!supported) return true;
-      return await auth.authenticate(localizedReason: reason);
-    } on PlatformException {
-      return false;
-    }
-  };
-});
+/// Production authenticator for whichever platform this is — see
+/// `biometric_authenticator_io.dart` / `_web.dart`.
+final biometricAuthenticatorProvider = Provider<BiometricAuthenticator>(
+  (ref) => createBiometricAuthenticator(),
+);
 
 /// State = unlocked right now. Session expiry is checked lazily on each
 /// ensureUnlocked call against the injected clock.

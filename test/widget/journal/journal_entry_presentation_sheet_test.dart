@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -16,6 +15,7 @@ import 'package:tripper/features/journal/presentation/journal_providers.dart';
 import 'package:tripper/l10n/app_localizations.dart';
 
 import '../../helpers/fake_journal_repository.dart';
+import '../../helpers/warm_image_cache.dart';
 
 /// 1x1 PNG. Sync file IO below: real IO never completes inside the
 /// fake-async test zone, so `tester.runAsync` is used to let the real
@@ -476,13 +476,12 @@ void main() {
     final photo = File('${dir.path}/a.png')..writeAsBytesSync(_pngBytes);
 
     // Warm the cache BEFORE any pump — both the carousel's own Image and
-    // the full-screen viewer's PhotoView key off the same FileImage, and
-    // PhotoView's default loading state is an indeterminate
+    // the full-screen viewer's PhotoView key off the same LocalFileImage,
+    // and PhotoView's default loading state is an indeterminate
     // CircularProgressIndicator whose repeating animation would otherwise
     // keep pumpAndSettle from ever settling under flutter test's
-    // fake-async zone (same reasoning as
-    // journal_photo_viewer_test.dart's _warmImageCache).
-    await tester.runAsync(() => _warmImageCache(photo));
+    // fake-async zone.
+    await tester.runAsync(() => warmLocalImageCache(photo.path));
 
     await _open<void>(
       tester,
@@ -502,26 +501,4 @@ void main() {
 
     expect(find.byType(PhotoViewGallery), findsOneWidget);
   });
-}
-
-/// Decodes [file] and seats it in the global [imageCache] via a real
-/// event-loop turn — see journal_photo_viewer_test.dart's identical helper
-/// for the full explanation.
-Future<void> _warmImageCache(File file) {
-  final provider = FileImage(file);
-  final stream = provider.resolve(ImageConfiguration.empty);
-  final completer = Completer<void>();
-  late final ImageStreamListener listener;
-  listener = ImageStreamListener(
-    (info, synchronousCall) {
-      stream.removeListener(listener);
-      completer.complete();
-    },
-    onError: (error, stackTrace) {
-      stream.removeListener(listener);
-      completer.completeError(error, stackTrace);
-    },
-  );
-  stream.addListener(listener);
-  return completer.future;
 }

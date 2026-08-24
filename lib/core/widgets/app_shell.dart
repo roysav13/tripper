@@ -10,6 +10,7 @@ import '../../features/vault/presentation/document_form_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../sharing/maps_link.dart';
 import '../sharing/share_intent_service.dart';
+import '../platform/storage_durability.dart';
 import '../sharing/tiktok_link.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -87,7 +88,12 @@ class AppShell extends ConsumerWidget {
       );
     });
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          const _EphemeralStorageBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(
@@ -119,6 +125,57 @@ class AppShell extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Shown only when the platform told us writes won't survive a restart —
+/// today that means a browser that refused persistent storage. Silence
+/// here would mean a user typing up a week of journal entries and losing
+/// them on close, so this is the one condition that earns permanent
+/// screen space rather than a Settings line.
+class _EphemeralStorageBanner extends StatelessWidget {
+  const _EphemeralStorageBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<StorageDurability>(
+      valueListenable: storageDurability,
+      builder: (context, durability, _) {
+        if (durability != StorageDurability.ephemeral) {
+          return const SizedBox.shrink();
+        }
+        final colors = context.colors;
+        final l10n = AppLocalizations.of(context)!;
+        return Material(
+          color: colors.warning,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: colors.paper,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.storageNotPersistentWarning,
+                      style: TextStyle(fontSize: 12, color: colors.paper),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

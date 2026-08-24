@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 
 import '../../../core/database/app_database.dart';
-import '../../../core/files/file_vault_service.dart';
+import '../../../core/files/local_file_store.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_photo.dart';
 import 'journal_dao.dart';
@@ -44,7 +44,7 @@ class DriftJournalRepository implements JournalRepository {
   DriftJournalRepository(this._dao, this._files, this._clock, this._idGen);
 
   final JournalDao _dao;
-  final FileVaultService _files;
+  final LocalFileStore _files;
   final DateTime Function() _clock;
   final String Function() _idGen;
 

@@ -1,10 +1,11 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/files/local_file_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../l10n/app_localizations.dart';
@@ -51,7 +52,7 @@ const _photoCanvasSize = 128.0;
 /// plain dot shows in the meantime). Located entries are connected with a
 /// [Polyline] in chronological (loggedAt ascending) order to show trip
 /// progression.
-class JournalMapView extends StatefulWidget {
+class JournalMapView extends ConsumerStatefulWidget {
   const JournalMapView({
     super.key,
     required this.entries,
@@ -62,10 +63,10 @@ class JournalMapView extends StatefulWidget {
   final bool renderMap;
 
   @override
-  State<JournalMapView> createState() => _JournalMapViewState();
+  ConsumerState<JournalMapView> createState() => _JournalMapViewState();
 }
 
-class _JournalMapViewState extends State<JournalMapView> {
+class _JournalMapViewState extends ConsumerState<JournalMapView> {
   GoogleMapController? _controller;
 
   /// Keyed by entry id, populated asynchronously as photos decode.
@@ -123,12 +124,14 @@ class _JournalMapViewState extends State<JournalMapView> {
     }
     for (final entry in _located) {
       if (!entry.hasPhotos || _photoMarkers.containsKey(entry.id)) continue;
-      final path = entry.photos.first.filePath;
-      final file = File(path);
-      if (!await file.exists()) continue;
+      final bytes =
+          await ref.read(fileVaultServiceProvider).read(
+                entry.photos.first.filePath,
+              );
+      if (bytes == null) continue;
       try {
         final bitmap = await _photoMarkerBitmap(
-          await file.readAsBytes(),
+          bytes,
           accentColor: colors.accent,
           paperColor: colors.surface,
           shadowColor: colors.inkPrimary,

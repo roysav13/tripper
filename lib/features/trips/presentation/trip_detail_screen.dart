@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +7,6 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/generated_cover_gradient.dart';
 import '../../../core/widgets/auto_direction_text.dart';
 import '../../../core/widgets/glass_chrome.dart';
 import '../../../core/widgets/mono_text.dart';
@@ -21,6 +18,7 @@ import '../../places/presentation/trip_places_tab.dart';
 import '../../vault/presentation/trip_documents_tab.dart';
 import '../domain/trip.dart';
 import 'trip_card.dart';
+import 'trip_cover_background.dart';
 import 'trip_providers.dart';
 
 /// Tab order is Documents, Places, Spend, Journal, Packing — keep these
@@ -95,7 +93,7 @@ class TripDetailScreen extends ConsumerWidget {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          _CoverBackground(trip: trip, colors: colors),
+                          TripCoverBackground(trip: trip, colors: colors),
                           DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -299,30 +297,3 @@ class TripDetailScreen extends ConsumerWidget {
   }
 }
 
-class _CoverBackground extends StatelessWidget {
-  const _CoverBackground({required this.trip, required this.colors});
-
-  final Trip trip;
-  final AppColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final path = trip.coverPhotoPath;
-    if (path != null) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: generatedCoverGradient(trip.id, colors),
-          ),
-        ),
-      );
-    }
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: generatedCoverGradient(trip.id, colors),
-      ),
-    );
-  }
-}

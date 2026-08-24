@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 
 import '../../../core/database/app_database.dart';
-import '../../../core/files/file_vault_service.dart';
+import '../../../core/files/local_file_store.dart';
 import '../domain/document.dart';
 import 'documents_dao.dart';
 
@@ -45,7 +45,7 @@ class DriftDocumentRepository implements DocumentRepository {
   DriftDocumentRepository(this._dao, this._files, this._clock, this._idGen);
 
   final DocumentsDao _dao;
-  final FileVaultService _files;
+  final LocalFileStore _files;
   final DateTime Function() _clock;
   final String Function() _idGen;
 

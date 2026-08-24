@@ -1,11 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:gal/gal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
+import '../../../core/files/local_file_store.dart';
+import '../../../core/platform/save_image.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/local_images.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/journal_photo.dart';
 
@@ -14,6 +15,10 @@ import '../domain/journal_photo.dart';
 /// matches whichever photo was showing there). Swiping here reports the
 /// new index via [onPageChanged] so the carousel resumes on the same
 /// photo after this viewer is dismissed.
+///
+/// [saveToGallery] defaults to the platform's own "save this photo"
+/// route — the system gallery on Android, a download on the web — and is
+/// injectable so tests never touch either.
 Future<void> showJournalPhotoViewer(
   BuildContext context, {
   required List<JournalPhoto> photos,
@@ -31,13 +36,13 @@ Future<void> showJournalPhotoViewer(
         photos: photos,
         initialIndex: initialIndex,
         onPageChanged: onPageChanged,
-        saveToGallery: saveToGallery ?? Gal.putImage,
+        saveToGallery: saveToGallery,
       ),
     ),
   );
 }
 
-class _JournalPhotoViewer extends StatefulWidget {
+class _JournalPhotoViewer extends ConsumerStatefulWidget {
   const _JournalPhotoViewer({
     required this.photos,
     required this.initialIndex,
@@ -48,13 +53,17 @@ class _JournalPhotoViewer extends StatefulWidget {
   final List<JournalPhoto> photos;
   final int initialIndex;
   final void Function(int index) onPageChanged;
-  final Future<void> Function(String filePath) saveToGallery;
+
+  /// Null means "use the platform default" — resolved in the State,
+  /// where a `ref` is available to reach the file store.
+  final Future<void> Function(String filePath)? saveToGallery;
 
   @override
-  State<_JournalPhotoViewer> createState() => _JournalPhotoViewerState();
+  ConsumerState<_JournalPhotoViewer> createState() =>
+      _JournalPhotoViewerState();
 }
 
-class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
+class _JournalPhotoViewerState extends ConsumerState<_JournalPhotoViewer> {
   late final PageController _controller =
       PageController(initialPage: widget.initialIndex);
   late int _currentIndex = widget.initialIndex;
@@ -69,8 +78,10 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final path = widget.photos[_currentIndex].filePath;
+    final save = widget.saveToGallery ??
+        (String key) => saveImageToDevice(key, ref.read(fileVaultServiceProvider));
     try {
-      await widget.saveToGallery(path);
+      await save(path);
       messenger.showSnackBar(SnackBar(content: Text(l10n.journalPhotoSaved)));
     } catch (_) {
       messenger
@@ -94,7 +105,10 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
             },
             backgroundDecoration: BoxDecoration(color: colors.inkPrimary),
             builder: (context, index) => PhotoViewGalleryPageOptions(
-              imageProvider: FileImage(File(widget.photos[index].filePath)),
+              imageProvider: LocalFileImage(
+                widget.photos[index].filePath,
+                ref.watch(fileVaultServiceProvider),
+              ),
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2,
             ),
