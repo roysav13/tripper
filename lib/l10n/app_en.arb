@@ -381,6 +381,15 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "settingsNearbyPlacesNoKey": "Requires a Maps API key to be configured",
+  "settingsApiUsage": "API usage",
+  "settingsApiUsageHint": "Autocomplete, place details, reverse geocoding, and nearby searches all draw from the same monthly Google Places quota.",
+  "settingsApiUsageCallCount": "{count, plural, one{1 of {limit} calls this month} other{{count} of {limit} calls this month}}",
+  "@settingsApiUsageCallCount": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
   "docExpiryNotificationTitle": "{title} expires soon",
   "@docExpiryNotificationTitle": {
     "placeholders": { "title": { "type": "String" } }
@@ -460,6 +469,8 @@
   "journalPickYesterday": "Yesterday",
   "journalTripLocations": "This trip's locations",
   "journalNewLocation": "New location",
+  "journalPhotoSaved": "Saved to Photos",
+  "journalPhotoSaveFailed": "Couldn't save photo",
   "packingEmptyTitle": "Nothing packed yet",
   "packingEmptyBody": "Add items yourself, or apply a saved template to get started.",
   "packingEmptyCta": "Add an item",

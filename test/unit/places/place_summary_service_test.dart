@@ -363,6 +363,57 @@ void main() {
     expect(await fetcher.fetchSummary(name: 'Anywhere'), isNull);
   });
 
+  group('WikipediaPlaceSummaryFetcher.nearestArticleTitle', () {
+    test('returns the closest geosearch title, no name to match against',
+        () async {
+      final client = MockClient((request) async {
+        expect(request.url.path, '/w/api.php');
+        expect(request.url.queryParameters['list'], 'geosearch');
+        expect(request.url.queryParameters['gscoord'], '8.0119|98.8378');
+        return http.Response(
+          '{"query": {"geosearch": ['
+          '{"title": "Railay Beach"}, {"title": "Ao Nang"}'
+          ']}}',
+          200,
+        );
+      });
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      final result = await fetcher.nearestArticleTitle(8.0119, 98.8378);
+
+      expect(result, 'Railay Beach');
+    });
+
+    test('no nearby articles yields null', () async {
+      final client = MockClient(
+        (request) async => http.Response('{"query": {"geosearch": []}}', 200),
+      );
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.nearestArticleTitle(0, 0), isNull);
+    });
+
+    test('non-200 response degrades to null, never throws', () async {
+      final client = MockClient((request) async => http.Response('nope', 500));
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.nearestArticleTitle(8.0, 98.8), isNull);
+    });
+
+    test('transport failure degrades to null, never throws', () async {
+      final client = MockClient((request) async => throw Exception('down'));
+      final fetcher = WikipediaPlaceSummaryFetcher(client);
+
+      expect(await fetcher.nearestArticleTitle(8.0, 98.8), isNull);
+    });
+  });
+
+  test('NoopPlaceSummaryFetcher.nearestArticleTitle always returns null',
+      () async {
+    const fetcher = NoopPlaceSummaryFetcher();
+    expect(await fetcher.nearestArticleTitle(8.0, 98.8), isNull);
+  });
+
   group('fetchAndStorePlaceSummary', () {
     test('stores the fetched text', () async {
       final repo = FakePlaceRepository([

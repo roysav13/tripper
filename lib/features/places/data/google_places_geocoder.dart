@@ -24,11 +24,16 @@ final mapsApiKeyConfiguredProvider =
 /// session however many characters were typed. Combined with the 500ms
 /// debounce, a personal app stays deep inside the free tier.
 class GooglePlacesGeocoder implements Geocoder {
-  GooglePlacesGeocoder(this._client, {required String apiKey})
-      : _apiKey = apiKey;
+  GooglePlacesGeocoder(
+    this._client, {
+    required String apiKey,
+    Future<void> Function()? onRealFetch,
+  })  : _apiKey = apiKey,
+        _onRealFetch = onRealFetch ?? (() async {});
 
   final http.Client _client;
   final String _apiKey;
+  final Future<void> Function() _onRealFetch;
   final _uuid = const Uuid();
 
   String? _sessionToken;
@@ -65,6 +70,7 @@ class GooglePlacesGeocoder implements Geocoder {
           '${_truncateBody(response.body)}',
         );
       }
+      await _onRealFetch();
       return parseGooglePredictions(response.body);
     } on GeocodingException {
       rethrow;
@@ -99,6 +105,7 @@ class GooglePlacesGeocoder implements Geocoder {
           '${_truncateBody(response.body)}',
         );
       }
+      await _onRealFetch();
       return parseGooglePlaceDetails(response.body);
     } on GeocodingException {
       rethrow;
@@ -127,6 +134,7 @@ class GooglePlacesGeocoder implements Geocoder {
           '${_truncateBody(response.body)}',
         );
       }
+      await _onRealFetch();
       return parseGoogleReverse(response.body);
     } on GeocodingException {
       rethrow;

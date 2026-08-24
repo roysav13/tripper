@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 
-Future<ProviderContainer> containerWith(Map<String, Object> values) async {
+Future<ProviderContainer> containerWith(
+  Map<String, Object> values, {
+  DateTime? now,
+}) async {
   SharedPreferences.setMockInitialValues(values);
   final prefs = await SharedPreferences.getInstance();
   final container = ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      if (now != null) clockProvider.overrideWithValue(() => now),
+    ],
   );
   addTearDown(container.dispose);
   return container;
@@ -132,5 +139,62 @@ void main() {
   test('stored nearby API call count is restored', () async {
     final container = await containerWith({'nearby_api_call_count': 7});
     expect(container.read(nearbyApiCallCountProvider), 7);
+  });
+
+  group('placesApiCallCountProvider (monthly quota counter)', () {
+    test('defaults to zero and persists increments', () async {
+      final container = await containerWith(
+        {},
+        now: DateTime(2026, 8, 22),
+      );
+      expect(container.read(placesApiCallCountProvider), 0);
+
+      await container.read(placesApiCallCountProvider.notifier).increment();
+      await container.read(placesApiCallCountProvider.notifier).increment();
+
+      expect(container.read(placesApiCallCountProvider), 2);
+      final prefs = container.read(sharedPreferencesProvider);
+      expect(prefs.getInt('places_api_call_count'), 2);
+      expect(prefs.getString('places_api_call_period'), '2026-08');
+    });
+
+    test('a count from the current month is restored', () async {
+      final container = await containerWith(
+        {
+          'places_api_call_count': 42,
+          'places_api_call_period': '2026-08',
+        },
+        now: DateTime(2026, 8, 22),
+      );
+      expect(container.read(placesApiCallCountProvider), 42);
+    });
+
+    test('a count from a previous month reads as zero', () async {
+      final container = await containerWith(
+        {
+          'places_api_call_count': 4999,
+          'places_api_call_period': '2026-07',
+        },
+        now: DateTime(2026, 8, 1),
+      );
+      expect(container.read(placesApiCallCountProvider), 0);
+    });
+
+    test('incrementing after a month rollover restarts from 1', () async {
+      final container = await containerWith(
+        {
+          'places_api_call_count': 4999,
+          'places_api_call_period': '2026-07',
+        },
+        now: DateTime(2026, 8, 1),
+      );
+
+      await container.read(placesApiCallCountProvider.notifier).increment();
+
+      expect(container.read(placesApiCallCountProvider), 1);
+      final prefs = container.read(sharedPreferencesProvider);
+      expect(prefs.getInt('places_api_call_count'), 1);
+      expect(prefs.getString('places_api_call_period'), '2026-08');
+    });
   });
 }

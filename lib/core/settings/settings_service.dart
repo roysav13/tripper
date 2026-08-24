@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../database/database_provider.dart' show clockProvider;
+
 const _kThemeMode = 'theme_mode';
 const _kVaultLock = 'vault_lock_enabled';
 const _kHasExported = 'has_exported_backup';
@@ -14,6 +16,8 @@ const _kHomeCurrency = 'home_currency';
 const _kAppLocale = 'app_locale';
 const _kNearbyPlacesEnabled = 'nearby_places_enabled';
 const _kNearbyApiCallCount = 'nearby_api_call_count';
+const _kPlacesApiCallCount = 'places_api_call_count';
+const _kPlacesApiCallPeriod = 'places_api_call_period';
 
 /// Overridden at startup with the real instance (main.dart).
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -290,4 +294,45 @@ class NearbyApiCallCountController extends Notifier<int> {
 final nearbyApiCallCountProvider =
     NotifierProvider<NearbyApiCallCountController, int>(
   NearbyApiCallCountController.new,
+);
+
+/// Google's free monthly allowance this app is built to stay inside — the
+/// number displayed alongside [placesApiCallCountProvider] in Settings.
+const kPlacesApiMonthlyLimit = 5000;
+
+/// Count of real Google Places-related HTTP calls (autocomplete search,
+/// place details, reverse geocode, nearby search) made *this calendar
+/// month* — every one of them shares the same Google Maps Platform quota,
+/// so this is the number that actually matters against
+/// [kPlacesApiMonthlyLimit]. Stored alongside a "YYYY-MM" period key: a
+/// stored count from a previous month is stale and reads as 0 rather than
+/// carrying over, and the next real call re-persists both the fresh period
+/// and a count of 1.
+class PlacesApiCallCountController extends Notifier<int> {
+  @override
+  int build() {
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (prefs.getString(_kPlacesApiCallPeriod) != _currentPeriod()) return 0;
+    return prefs.getInt(_kPlacesApiCallCount) ?? 0;
+  }
+
+  String _currentPeriod() {
+    final now = ref.read(clockProvider)();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> increment() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final period = _currentPeriod();
+    final current =
+        prefs.getString(_kPlacesApiCallPeriod) == period ? state : 0;
+    state = current + 1;
+    await prefs.setString(_kPlacesApiCallPeriod, period);
+    await prefs.setInt(_kPlacesApiCallCount, state);
+  }
+}
+
+final placesApiCallCountProvider =
+    NotifierProvider<PlacesApiCallCountController, int>(
+  PlacesApiCallCountController.new,
 );

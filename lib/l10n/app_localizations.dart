@@ -1820,6 +1820,24 @@ abstract class AppLocalizations {
   /// **'Requires a Maps API key to be configured'**
   String get settingsNearbyPlacesNoKey;
 
+  /// No description provided for @settingsApiUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'API usage'**
+  String get settingsApiUsage;
+
+  /// No description provided for @settingsApiUsageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Autocomplete, place details, reverse geocoding, and nearby searches all draw from the same monthly Google Places quota.'**
+  String get settingsApiUsageHint;
+
+  /// No description provided for @settingsApiUsageCallCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 of {limit} calls this month} other{{count} of {limit} calls this month}}'**
+  String settingsApiUsageCallCount(int count, int limit);
+
   /// No description provided for @docExpiryNotificationTitle.
   ///
   /// In en, this message translates to:
@@ -2095,6 +2113,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New location'**
   String get journalNewLocation;
+
+  /// No description provided for @journalPhotoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Photos'**
+  String get journalPhotoSaved;
+
+  /// No description provided for @journalPhotoSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save photo'**
+  String get journalPhotoSaveFailed;
 
   /// No description provided for @packingEmptyTitle.
   ///

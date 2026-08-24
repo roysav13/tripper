@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/journal_photo.dart';
 
 /// Full-screen, pinch-zoomable gallery for one entry's photos — opened by
@@ -17,6 +19,7 @@ Future<void> showJournalPhotoViewer(
   required List<JournalPhoto> photos,
   required int initialIndex,
   required void Function(int index) onPageChanged,
+  Future<void> Function(String filePath)? saveToGallery,
 }) {
   return Navigator.of(context).push(
     PageRouteBuilder<void>(
@@ -28,6 +31,7 @@ Future<void> showJournalPhotoViewer(
         photos: photos,
         initialIndex: initialIndex,
         onPageChanged: onPageChanged,
+        saveToGallery: saveToGallery ?? Gal.putImage,
       ),
     ),
   );
@@ -38,11 +42,13 @@ class _JournalPhotoViewer extends StatefulWidget {
     required this.photos,
     required this.initialIndex,
     required this.onPageChanged,
+    required this.saveToGallery,
   });
 
   final List<JournalPhoto> photos;
   final int initialIndex;
   final void Function(int index) onPageChanged;
+  final Future<void> Function(String filePath) saveToGallery;
 
   @override
   State<_JournalPhotoViewer> createState() => _JournalPhotoViewerState();
@@ -51,11 +57,25 @@ class _JournalPhotoViewer extends StatefulWidget {
 class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
   late final PageController _controller =
       PageController(initialPage: widget.initialIndex);
+  late int _currentIndex = widget.initialIndex;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleDownload() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final path = widget.photos[_currentIndex].filePath;
+    try {
+      await widget.saveToGallery(path);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.journalPhotoSaved)));
+    } catch (_) {
+      messenger
+          .showSnackBar(SnackBar(content: Text(l10n.journalPhotoSaveFailed)));
+    }
   }
 
   @override
@@ -68,7 +88,10 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
           PhotoViewGallery.builder(
             pageController: _controller,
             itemCount: widget.photos.length,
-            onPageChanged: widget.onPageChanged,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+              widget.onPageChanged(index);
+            },
             backgroundDecoration: BoxDecoration(color: colors.inkPrimary),
             builder: (context, index) => PhotoViewGalleryPageOptions(
               imageProvider: FileImage(File(widget.photos[index].filePath)),
@@ -80,19 +103,42 @@ class _JournalPhotoViewerState extends State<_JournalPhotoViewer> {
             top: 8,
             start: 8,
             child: SafeArea(
-              child: IconButton(
-                icon: Icon(Icons.close, color: colors.surface, size: 20),
+              child: _circleButton(
+                colors,
+                icon: Icons.close,
                 onPressed: () => Navigator.of(context).pop(),
-                style: IconButton.styleFrom(
-                  backgroundColor: colors.inkPrimary.withValues(alpha: 0.32),
-                  shape: const CircleBorder(),
-                  minimumSize: const Size(36, 36),
-                  padding: EdgeInsets.zero,
-                ),
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            top: 8,
+            end: 8,
+            child: SafeArea(
+              child: _circleButton(
+                colors,
+                icon: Icons.download,
+                onPressed: _handleDownload,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _circleButton(
+    AppColors colors, {
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      icon: Icon(icon, color: colors.surface, size: 20),
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: colors.inkPrimary.withValues(alpha: 0.32),
+        shape: const CircleBorder(),
+        minimumSize: const Size(36, 36),
+        padding: EdgeInsets.zero,
       ),
     );
   }

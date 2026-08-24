@@ -85,6 +85,68 @@ void main() {
       expect(results.single.placeId, 'abc');
     });
   });
+
+  group('GooglePlacesGeocoder reports real fetches', () {
+    test('a successful search fires onRealFetch once', () async {
+      var fetchCount = 0;
+      final client = MockClient((request) async {
+        return http.Response('{"suggestions": []}', 200);
+      });
+      final geocoder = GooglePlacesGeocoder(
+        client,
+        apiKey: 'test-key',
+        onRealFetch: () async => fetchCount++,
+      );
+
+      await geocoder.search('Rome');
+
+      expect(fetchCount, 1);
+    });
+
+    test('a failed search does not fire onRealFetch', () async {
+      var fetchCount = 0;
+      final client = MockClient((request) async {
+        return http.Response('server error', 500);
+      });
+      final geocoder = GooglePlacesGeocoder(
+        client,
+        apiKey: 'test-key',
+        onRealFetch: () async => fetchCount++,
+      );
+
+      await expectLater(() => geocoder.search('Rome'), throwsA(anything));
+
+      expect(fetchCount, 0);
+    });
+
+    test('details and reverse each fire onRealFetch on success', () async {
+      var fetchCount = 0;
+      final client = MockClient((request) async {
+        if (request.url.path.contains('/geocode/')) {
+          return http.Response(
+            '{"results": [{"formatted_address": "Rome, Italy", '
+            '"geometry": {"location": {"lat": 41.9, "lng": 12.5}}}]}',
+            200,
+          );
+        }
+        return http.Response(
+          '{"id": "abc", "displayName": {"text": "Rome"}, '
+          '"location": {"latitude": 41.9, "longitude": 12.5}}',
+          200,
+        );
+      });
+      final geocoder = GooglePlacesGeocoder(
+        client,
+        apiKey: 'test-key',
+        onRealFetch: () async => fetchCount++,
+      );
+
+      await geocoder.details('abc');
+      await geocoder.reverse(41.9, 12.5);
+
+      expect(fetchCount, 2);
+    });
+  });
 }
 
 /// Stand-in for dart:io's SocketException so this test has no platform

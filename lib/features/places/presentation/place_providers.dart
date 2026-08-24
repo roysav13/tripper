@@ -5,7 +5,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/filtering/filter_sort_controller.dart';
 import '../../../core/filtering/sort_spec.dart';
 import '../../../core/settings/settings_service.dart'
-    show nearbyApiCallCountProvider;
+    show nearbyApiCallCountProvider, placesApiCallCountProvider;
 import '../data/google_places_geocoder.dart' show kGoogleMapsApiKey;
 import '../data/nearby_places_cache.dart';
 import '../data/nearby_places_service.dart';
@@ -38,6 +38,13 @@ final placeSummaryFetcherProvider = Provider<PlaceSummaryFetcher>(
 /// See design spec §5.6.
 final placeLocationSummaryFetcherProvider =
     Provider<PlaceLocationSummaryFetcher>(
+  (ref) => WikipediaPlaceSummaryFetcher(http.Client()),
+);
+
+/// Same reasoning as [placeLocationSummaryFetcherProvider] — a separate
+/// instance so overriding one interface in a test never silently affects
+/// another. Backs the journal entry form's photo-EXIF location lookup.
+final nearbyArticleFetcherProvider = Provider<NearbyArticleFetcher>(
   (ref) => WikipediaPlaceSummaryFetcher(http.Client()),
 );
 
@@ -97,6 +104,9 @@ final nearbyPlacesServiceProvider = Provider<NearbyPlacesService>(
     ref.watch(nearbyPlacesFetcherProvider),
     ref.watch(nearbyPlacesCacheProvider),
     ref.watch(clockProvider),
-    () => ref.read(nearbyApiCallCountProvider.notifier).increment(),
+    () async {
+      await ref.read(nearbyApiCallCountProvider.notifier).increment();
+      await ref.read(placesApiCallCountProvider.notifier).increment();
+    },
   ),
 );

@@ -20,6 +20,11 @@
          of a boot receiver (simpler, works the same across OEMs that clear
          exact alarms differently on reboot). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Saving a journal photo to the device's Photos app (gal package).
+         Only needed on API <= 29 — scoped storage (API 29+ targetSdk)
+         handles MediaStore inserts without it. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"/>
     <application
         android:label="tripper"
         android:name="${applicationName}"

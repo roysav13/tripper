@@ -996,6 +996,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Requires a Maps API key to be configured';
 
   @override
+  String get settingsApiUsage => 'API usage';
+
+  @override
+  String get settingsApiUsageHint =>
+      'Autocomplete, place details, reverse geocoding, and nearby searches all draw from the same monthly Google Places quota.';
+
+  @override
+  String settingsApiUsageCallCount(int count, int limit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of $limit calls this month',
+      one: '1 of $limit calls this month',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String docExpiryNotificationTitle(String title) {
     return '$title expires soon';
   }
@@ -1174,6 +1192,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalNewLocation => 'New location';
+
+  @override
+  String get journalPhotoSaved => 'Saved to Photos';
+
+  @override
+  String get journalPhotoSaveFailed => 'Couldn\'t save photo';
 
   @override
   String get packingEmptyTitle => 'Nothing packed yet';

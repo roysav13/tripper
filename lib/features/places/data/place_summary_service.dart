@@ -49,12 +49,29 @@ abstract interface class PlaceLocationSummaryFetcher {
   });
 }
 
+/// A third, additive interface — same reasoning as
+/// [PlaceLocationSummaryFetcher]'s own doc comment: given only coordinates
+/// and no candidate name to match against (a journal photo's EXIF GPS tag
+/// is just a pin, not a name), this finds whatever Wikipedia article is
+/// nearest rather than picking among candidates by name agreement.
+abstract interface class NearbyArticleFetcher {
+  /// Best-effort — never throws. Null means no article was found near this
+  /// point, or the geosearch itself failed/timed out.
+  Future<String?> nearestArticleTitle(double lat, double lng);
+}
+
 /// Always yields nothing — the default in tests (network stays off by
 /// default, CLAUDE.md hard rule 5) so a `placeSummaryFetcherProvider`
 /// left un-overridden never reaches out to the real Wikipedia API.
 class NoopPlaceSummaryFetcher
-    implements PlaceSummaryFetcher, PlaceLocationSummaryFetcher {
+    implements
+        PlaceSummaryFetcher,
+        PlaceLocationSummaryFetcher,
+        NearbyArticleFetcher {
   const NoopPlaceSummaryFetcher();
+
+  @override
+  Future<String?> nearestArticleTitle(double lat, double lng) async => null;
 
   @override
   Future<String?> fetchSummary({
@@ -99,7 +116,10 @@ const _userAgent = 'tripper/0.1 (dev.roysav.tripper)';
 ///     may refer to...") are rejected rather than shown as if they were a
 ///     real summary.
 class WikipediaPlaceSummaryFetcher
-    implements PlaceSummaryFetcher, PlaceLocationSummaryFetcher {
+    implements
+        PlaceSummaryFetcher,
+        PlaceLocationSummaryFetcher,
+        NearbyArticleFetcher {
   WikipediaPlaceSummaryFetcher(this._client);
 
   final http.Client _client;
@@ -239,6 +259,17 @@ class WikipediaPlaceSummaryFetcher
       );
     } catch (e) {
       debugPrint('[places] wikipedia lookup failed: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<String?> nearestArticleTitle(double lat, double lng) async {
+    try {
+      final candidates = await _geosearch(lat, lng);
+      return candidates.isEmpty ? null : candidates.first;
+    } catch (e) {
+      debugPrint('[places] wikipedia nearest-article lookup failed: $e');
       return null;
     }
   }

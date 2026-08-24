@@ -60,6 +60,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final noticeDays = ref.watch(documentExpiryNoticeDaysProvider);
     final nearbyEnabled = ref.watch(nearbyPlacesEnabledProvider);
     final nearbyCallCount = ref.watch(nearbyApiCallCountProvider);
+    final apiCallCount = ref.watch(placesApiCallCountProvider);
     final mapsKeyConfigured = ref.watch(mapsApiKeyConfiguredProvider);
 
     if (!ref.watch(vaultLockProvider)) {
@@ -190,6 +191,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     .read(nearbyPlacesEnabledProvider.notifier)
                     .set(enabled: value),
           ),
+          if (mapsKeyConfigured) ...[
+            const SizedBox(height: AppSpacing.xl),
+            SectionLabel(l10n.settingsApiUsage),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.settingsApiUsageHint,
+              style: TextStyle(fontSize: 13, color: colors.inkSecondary),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _ApiUsageMeter(colors: colors, count: apiCallCount),
+          ],
           const SizedBox(height: AppSpacing.xl),
           SectionLabel(l10n.settingsHomeCurrency),
           const SizedBox(height: AppSpacing.sm),
@@ -304,6 +316,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _snack(String message) => ScaffoldMessenger.of(context)
       .showSnackBar(SnackBar(content: Text(message)));
+}
+
+/// Progress toward [kPlacesApiMonthlyLimit] — amber only once the quota is
+/// actually close to running out (hard rule 1: amber is danger-adjacent
+/// only, never a second accent), plain ink the rest of the time.
+class _ApiUsageMeter extends StatelessWidget {
+  const _ApiUsageMeter({required this.colors, required this.count});
+
+  final AppColors colors;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final ratio = count / kPlacesApiMonthlyLimit;
+    final nearLimit = ratio >= 0.9;
+    final barColor = nearLimit ? colors.warning : colors.inkMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: ratio.clamp(0, 1).toDouble(),
+            minHeight: 4,
+            backgroundColor: colors.hairline,
+            valueColor: AlwaysStoppedAnimation<Color>(barColor),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          l10n.settingsApiUsageCallCount(count, kPlacesApiMonthlyLimit),
+          style: AppTextStyles.mono.copyWith(color: barColor),
+        ),
+      ],
+    );
+  }
 }
 
 /// Picker, not free text: a typed "NIS" (not an ISO code) or a typo

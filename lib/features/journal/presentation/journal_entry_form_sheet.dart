@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -13,8 +14,13 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/mono_text.dart';
 import '../../../core/widgets/section_label.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../places/data/geocoding_service.dart';
+import '../../places/presentation/place_providers.dart';
+import '../data/journal_photo_exif.dart';
+import '../data/journal_photo_location_resolver.dart';
 import '../domain/journal_entry.dart';
 import '../domain/journal_photo.dart';
+import '../domain/photo_auto_fill_policy.dart';
 import 'journal_location_picker.dart';
 import 'journal_providers.dart';
 
@@ -62,6 +68,12 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
   double? _lng;
   String? _placeName;
   String? _placeId;
+
+  /// New-entry only (`widget.existing == null`): fills the logged time
+  /// and/or location from the first added photo whose EXIF data has
+  /// something to give, and never touches a field the user set by hand.
+  final _photoAutoFill = PhotoAutoFillPolicy();
+  bool _resolvingLocationName = false;
 
   @override
   void initState() {
@@ -166,7 +178,13 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.place_outlined, size: 16),
+                icon: _resolvingLocationName
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.place_outlined, size: 16),
                 label: Text(
                   _placeName ??
                       (_lat != null
@@ -188,6 +206,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
                   _lng = null;
                   _placeName = null;
                   _placeId = null;
+                  _photoAutoFill.locationTouched = true;
                 }),
               ),
           ],
@@ -330,7 +349,10 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
         );
       },
     );
-    if (picked != null && mounted) setState(() => _loggedAt = picked);
+    if (picked != null && mounted) {
+      setState(() => _loggedAt = picked);
+      _photoAutoFill.loggedAtTouched = true;
+    }
   }
 
   Future<void> _pickLocation() async {
@@ -348,6 +370,7 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
       _lng = pick.lng;
       _placeName = pick.placeName;
       _placeId = pick.placeId;
+      _photoAutoFill.locationTouched = true;
     });
   }
 
@@ -377,6 +400,47 @@ class _JournalEntryFormState extends ConsumerState<_JournalEntryForm> {
     final picked = await ImagePicker().pickImage(source: source);
     if (picked == null || !mounted) return;
     setState(() => _newPhotoPaths.add(picked.path));
+    if (widget.existing == null) {
+      unawaited(_tryAutoFillFromPhoto(picked.path));
+    }
+  }
+
+  /// Tries to fill the logged time and/or location from [path]'s EXIF data
+  /// — only for the first added photo that has something to give (see
+  /// [PhotoAutoFillPolicy]), and never overwriting a field the user has
+  /// already set by hand. Best-effort: no EXIF data, an unresolvable
+  /// location name, or the widget having been disposed mid-lookup all
+  /// degrade to doing nothing (CLAUDE.md hard rule 4).
+  Future<void> _tryAutoFillFromPhoto(String path) async {
+    if (_photoAutoFill.done) return;
+    final exif = await readPhotoExifData(path);
+    if (exif == null || !mounted) return;
+
+    final result = _photoAutoFill.consider(exif);
+    if (result == null) return;
+
+    setState(() {
+      if (result.loggedAt != null) _loggedAt = result.loggedAt;
+      if (result.lat != null) {
+        _lat = result.lat;
+        _lng = result.lng;
+        _placeName = null;
+      }
+    });
+
+    if (result.lat == null) return;
+    setState(() => _resolvingLocationName = true);
+    final name = await resolveJournalPhotoLocationName(
+      lat: result.lat!,
+      lng: result.lng!,
+      wikipedia: ref.read(nearbyArticleFetcherProvider),
+      geocoder: ref.read(geocoderProvider),
+    );
+    if (!mounted) return;
+    setState(() {
+      _resolvingLocationName = false;
+      if (!_photoAutoFill.locationTouched) _placeName = name;
+    });
   }
 
   Future<void> _save() async {

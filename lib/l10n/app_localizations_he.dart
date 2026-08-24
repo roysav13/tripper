@@ -989,6 +989,24 @@ class AppLocalizationsHe extends AppLocalizations {
   String get settingsNearbyPlacesNoKey => 'דורש הגדרת מפתח Maps API';
 
   @override
+  String get settingsApiUsage => 'שימוש ב-API';
+
+  @override
+  String get settingsApiUsageHint =>
+      'השלמה אוטומטית, פרטי מקום, גיאוקוד הפוך וחיפושי מקומות בקרבת מקום שואבים כולם מאותה מכסת Google Places חודשית.';
+
+  @override
+  String settingsApiUsageCallCount(int count, int limit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count מתוך $limit קריאות החודש',
+      one: '1 מתוך $limit קריאות החודש',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String docExpiryNotificationTitle(String title) {
     return 'המסמך $title עומד לפוג בקרוב';
   }
@@ -1171,6 +1189,12 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get journalNewLocation => 'מיקום חדש';
+
+  @override
+  String get journalPhotoSaved => 'נשמר בתמונות';
+
+  @override
+  String get journalPhotoSaveFailed => 'לא ניתן היה לשמור את התמונה';
 
   @override
   String get packingEmptyTitle => 'עדיין לא ארזת כלום';

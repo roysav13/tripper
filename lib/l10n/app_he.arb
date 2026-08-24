@@ -381,6 +381,15 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "settingsNearbyPlacesNoKey": "דורש הגדרת מפתח Maps API",
+  "settingsApiUsage": "שימוש ב-API",
+  "settingsApiUsageHint": "השלמה אוטומטית, פרטי מקום, גיאוקוד הפוך וחיפושי מקומות בקרבת מקום שואבים כולם מאותה מכסת Google Places חודשית.",
+  "settingsApiUsageCallCount": "{count, plural, one{1 מתוך {limit} קריאות החודש} other{{count} מתוך {limit} קריאות החודש}}",
+  "@settingsApiUsageCallCount": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
   "docExpiryNotificationTitle": "המסמך {title} עומד לפוג בקרוב",
   "@docExpiryNotificationTitle": {
     "placeholders": { "title": { "type": "String" } }
@@ -460,6 +469,8 @@
   "journalPickYesterday": "אתמול",
   "journalTripLocations": "המיקומים של הטיול הזה",
   "journalNewLocation": "מיקום חדש",
+  "journalPhotoSaved": "נשמר בתמונות",
+  "journalPhotoSaveFailed": "לא ניתן היה לשמור את התמונה",
   "packingEmptyTitle": "עדיין לא ארזת כלום",
   "packingEmptyBody": "הוסף פריטים בעצמך, או החל תבנית שמורה כדי להתחיל.",
   "packingEmptyCta": "הוסף פריט",

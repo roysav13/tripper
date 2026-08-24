@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/settings/settings_service.dart'
+    show placesApiCallCountProvider;
 import 'google_places_geocoder.dart';
 
 /// One geocoding hit: coordinates plus the fields the place form can prefill.
@@ -275,5 +277,10 @@ Future<SharedPlacePrefill> enrichSharedPlace({
 final geocoderProvider = Provider<Geocoder>((ref) {
   final client = http.Client();
   if (kGoogleMapsApiKey.isEmpty) return NominatimGeocoder(client);
-  return GooglePlacesGeocoder(client, apiKey: kGoogleMapsApiKey);
+  return GooglePlacesGeocoder(
+    client,
+    apiKey: kGoogleMapsApiKey,
+    onRealFetch: () =>
+        ref.read(placesApiCallCountProvider.notifier).increment(),
+  );
 });

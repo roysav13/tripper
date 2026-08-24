@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tripper/core/database/database_provider.dart';
 import 'package:tripper/core/security/vault_lock.dart';
 import 'package:tripper/core/settings/settings_service.dart';
 import 'package:tripper/core/theme/app_theme.dart';
@@ -128,5 +129,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('3 lookups this install'), findsOneWidget);
+  });
+
+  testWidgets('API usage section is hidden without a configured Maps key',
+      (tester) async {
+    await tester.pumpWidget(await _app());
+    await tester.pumpAndSettle();
+
+    expect(find.text('API usage'), findsNothing);
+  });
+
+  testWidgets('API usage section shows the monthly call count',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          await testPreferencesOverride({
+            'places_api_call_count': 12,
+            'places_api_call_period': '2026-08',
+          }),
+          biometricAuthenticatorProvider.overrideWithValue((_) async => true),
+          mapsApiKeyConfiguredProvider.overrideWithValue(true),
+          clockProvider.overrideWithValue(() => DateTime(2026, 8, 22)),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const SettingsScreen(),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('he')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(find.text('API USAGE'), findsOneWidget);
+    expect(find.text('12 of 5000 calls this month'), findsOneWidget);
   });
 }
