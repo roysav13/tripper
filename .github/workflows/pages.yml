@@ -40,15 +40,23 @@ jobs:
       - run: flutter gen-l10n
       - run: dart run build_runner build --delete-conflicting-outputs
 
-      # Maps JS key is a public browser key; provide it as a repo secret to
-      # enable maps, or leave it unset and the app falls back to list views.
+      # The key feeds two independent paths, both of which need it:
+      #  - web/config.js -> the Maps JavaScript API <script> in index.html
+      #  - --dart-define=MAPS_API_KEY -> the Places API (New) HTTP calls the
+      #    search box makes; without it search silently falls back to
+      #    keyless OpenStreetMap/Nominatim, which has different coverage.
+      # It's a public browser key; leave the secret unset and maps degrade
+      # to list views and search to Nominatim.
       - name: Write web/config.js
         run: |
           printf "window.tripperConfig = { mapsApiKey: '%s' };\n" \
             "${{ secrets.MAPS_API_KEY }}" > web/config.js
 
       - name: Build web
-        run: flutter build web --release --no-web-resources-cdn --base-href /tripper/
+        run: |
+          flutter build web --release --no-web-resources-cdn \
+            --base-href /tripper/ \
+            --dart-define=MAPS_API_KEY="${{ secrets.MAPS_API_KEY }}"
 
       - name: Stamp service worker cache id
         run: |
