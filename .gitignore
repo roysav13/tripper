@@ -53,3 +53,6 @@ app.*.map.json
 # Web Maps browser key — public once served, but not ours to commit.
 # Generate from android/local.properties with tool/build_web.ps1.
 /web/config.js
+
+# Local Netlify folder
+.netlify

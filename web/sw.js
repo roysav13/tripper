@@ -12,12 +12,17 @@
 const BUILD_ID = '__BUILD_ID__';
 const CACHE = 'tripper-' + BUILD_ID;
 
-// Everything needed to render the first frame with no network, plus the
-// SQLite engine — without those two the app opens to a blank page or an
-// empty database, which is worse than not opening. The rest (CanvasKit
-// variants, fonts, the globe texture, pdf.js) is cached on first use
-// below: reaching the install prompt already means one online load, and
-// that load fetches them.
+// Everything the app shell needs to reach its first frame with no network.
+//
+// This list has to be exhaustive, not a best guess: on the very first load
+// the worker is not yet controlling the page, so none of the boot requests
+// (the renderer, the Dart bundle, the asset manifests, the fonts) pass
+// through the fetch handler below and none of them get cached that way. If
+// the app is then launched offline — the whole reason the installed build
+// exists — anything missing here is simply absent, and a missing renderer
+// or asset manifest means it doesn't open at all. Genuinely optional
+// things (the globe texture, NOTICES, screenshot-sized images) are left to
+// the runtime cache; boot-critical things are not.
 const PRECACHE = [
   './',
   'index.html',
@@ -31,6 +36,33 @@ const PRECACHE = [
   'icons/apple-touch-icon-180.png',
   'sqlite3.wasm',
   'drift_worker.js',
+  // Renderer. Flutter picks the chromium variant on Blink and the base one
+  // everywhere else (iOS Safari included), and never falls back between
+  // them at runtime — so both have to be here for a cold offline launch to
+  // render on whatever browser installed the app.
+  'canvaskit/canvaskit.js',
+  'canvaskit/canvaskit.wasm',
+  'canvaskit/chromium/canvaskit.js',
+  'canvaskit/chromium/canvaskit.wasm',
+  // Asset resolution. The engine awaits these during init; without them no
+  // bundled asset (fonts, images) resolves and boot stalls.
+  'assets/AssetManifest.bin',
+  'assets/AssetManifest.bin.json',
+  'assets/FontManifest.json',
+  // pdf.js is loaded by index.html itself, so a failed fetch throws in the
+  // shell before Flutter starts.
+  'pdfjs/build/pdf.min.mjs',
+  'pdfjs/build/pdf.worker.min.mjs',
+  // Fonts. Not fatal if missing (text falls back to system glyphs) but the
+  // same first-load timing applies, so precache them too.
+  'assets/fonts/MaterialIcons-Regular.otf',
+  'assets/assets/fonts/Fraunces-Regular.ttf',
+  'assets/assets/fonts/Fraunces-SemiBold.ttf',
+  'assets/assets/fonts/IBMPlexSans-Regular.ttf',
+  'assets/assets/fonts/IBMPlexSans-Medium.ttf',
+  'assets/assets/fonts/IBMPlexSans-SemiBold.ttf',
+  'assets/assets/fonts/IBMPlexMono-Regular.ttf',
+  'assets/assets/fonts/IBMPlexMono-Medium.ttf',
 ];
 
 self.addEventListener('install', (event) => {

@@ -19,6 +19,22 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Ask the browser to keep our storage. Tripper's data lives only in
+// IndexedDB and the OPFS SQLite database, with no cloud copy on web, so a
+// storage eviction is data loss. Without this, iOS clears a plain tab's
+// storage after 7 days idle; granting persistence (automatic once the app
+// is on the home screen) exempts it. Best-effort: never block startup.
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persisted().then(function (already) {
+    if (already) return;
+    return navigator.storage.persist().then(function (granted) {
+      console.log('Persistent storage:', granted ? 'granted' : 'denied');
+    });
+  }).catch(function (error) {
+    console.warn('Persistent storage request failed:', error);
+  });
+}
+
 // No `serviceWorkerSettings` — passing one would register Flutter's
 // deprecated stub alongside ours and log a deprecation warning.
 _flutter.loader.load();

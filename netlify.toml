@@ -1,0 +1,34 @@
+# Static hosting for the installable web build (see web/README.md).
+# Deploy with:  netlify deploy --dir build/web --prod
+# The build itself is produced by tool/build_web.ps1, not Netlify.
+
+[build]
+  publish = "build/web"
+
+# Flutter/go_router deep links resolve to the shell; real files win first.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The worker and shell must never be served stale, or a deploy won't take
+# until the old cache expires.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/flutter_service_worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/flutter_bootstrap.js"
+  [headers.values]
+    Cache-Control = "no-cache"
