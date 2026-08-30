@@ -1,0 +1,70 @@
+name: Deploy web to GitHub Pages
+
+# Serves the installable web build at https://<user>.github.io/tripper/.
+# Mirrors tool/build_web.ps1 (config.js, --no-web-resources-cdn, sw.js
+# cache id) but for a Linux runner and a project-page base href.
+
+on:
+  push:
+    branches: [feat/web-pwa, master]
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "assets/**"
+      - "pubspec.*"
+      - "l10n.yaml"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: dart run build_runner build --delete-conflicting-outputs
+
+      # Maps JS key is a public browser key; provide it as a repo secret to
+      # enable maps, or leave it unset and the app falls back to list views.
+      - name: Write web/config.js
+        run: |
+          printf "window.tripperConfig = { mapsApiKey: '%s' };\n" \
+            "${{ secrets.MAPS_API_KEY }}" > web/config.js
+
+      - name: Build web
+        run: flutter build web --release --no-web-resources-cdn --base-href /tripper/
+
+      - name: Stamp service worker cache id
+        run: |
+          sed -i "s/__BUILD_ID__/$(date -u +%Y%m%d%H%M%S)/" build/web/sw.js
+          touch build/web/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
