@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/platform/scratch_file.dart';
+import '../../../core/platform/web_file_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
@@ -235,21 +238,48 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
     );
   }
 
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'html', 'htm'],
-      // Browsers never expose a filesystem path, so ask for the bytes
-      // there and park them in scratch storage to get a readable handle.
-      withData: kIsWeb,
-    );
-    final picked = result?.files.singleOrNull;
-    if (picked == null) return;
-    final name = picked.name;
+  static const _allowedExtensions = [
+    'pdf',
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'html',
+    'htm',
+  ];
 
-    var handle = picked.path;
+  Future<void> _pickFile() async {
+    String name;
+    String? path;
+    Uint8List? bytes;
+
+    if (kIsWeb) {
+      // `FilePicker.platform` on web guesses a cancelled dialog by racing
+      // a timer against the window regaining focus, and on iOS Safari the
+      // real pick routinely lands after that timer — silently dropping
+      // the file (found on iPhone, 2026-09-01). `pickWebFile` waits on
+      // the real change/cancel events instead.
+      final picked = await pickWebFile(
+        accept: _allowedExtensions.map((e) => '.$e').join(','),
+      );
+      if (picked == null) return;
+      name = picked.name;
+      bytes = picked.bytes;
+    } else {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: _allowedExtensions,
+      );
+      final picked = result?.files.singleOrNull;
+      if (picked == null) return;
+      name = picked.name;
+      path = picked.path;
+    }
+
+    // Browsers never expose a filesystem path, so bytes get parked in
+    // scratch storage to get a readable handle.
+    var handle = path;
     if (handle == null) {
-      final bytes = picked.bytes;
       if (bytes == null) return;
       handle = await writeScratchFile(
         bytes,
