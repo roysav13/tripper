@@ -4,8 +4,7 @@ import 'package:tripper/features/journal/domain/photo_auto_fill_policy.dart';
 
 void main() {
   group('PhotoAutoFillPolicy', () {
-    test('a photo with both time and location fills both, and is done',
-        () {
+    test('a photo with both time and location fills both, and is done', () {
       final policy = PhotoAutoFillPolicy();
 
       final result = policy.consider(
@@ -45,8 +44,7 @@ void main() {
       expect(policy.done, isTrue);
     });
 
-    test('a photo with neither leaves the policy open for the next photo',
-        () {
+    test('a photo with neither leaves the policy open for the next photo', () {
       final policy = PhotoAutoFillPolicy();
 
       final result = policy.consider(const PhotoExifData());

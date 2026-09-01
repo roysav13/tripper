@@ -112,8 +112,14 @@ void main() {
 
     final tripItems = await repo.watchTripItems(tripId).first;
     expect(tripItems, hasLength(2));
-    expect(tripItems.map((i) => i.label), containsAll(['Swimsuit', 'Passport']));
-    expect(tripItems.every((i) => i.status == PackingItemStatus.toPack), isTrue);
+    expect(
+      tripItems.map((i) => i.label),
+      containsAll(['Swimsuit', 'Passport']),
+    );
+    expect(
+      tripItems.every((i) => i.status == PackingItemStatus.toPack),
+      isTrue,
+    );
   });
 
   test(
@@ -139,7 +145,8 @@ void main() {
     expect(templateItemId, isNotEmpty); // sanity: id was actually used
   });
 
-  test('applying the same template twice duplicates its items (append, '
+  test(
+      'applying the same template twice duplicates its items (append, '
       'not replace)', () async {
     final tripId = await createTrip();
     final templateId = await repo.createTemplate(name: 'Beach trip');

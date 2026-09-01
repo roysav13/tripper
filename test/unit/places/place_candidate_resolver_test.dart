@@ -153,8 +153,7 @@ void main() {
       expect(result.city, 'Somewhere');
     });
 
-    test('Google autocomplete result needing details resolves them',
-        () async {
+    test('Google autocomplete result needing details resolves them', () async {
       final wikipedia = _FakeWikipedia(null);
       final geocoder = _FakeGeocoder(
         searchResults: const [
@@ -186,7 +185,8 @@ void main() {
       expect(result.city, 'Krabi');
     });
 
-    test('everything fails: still returns a name-only candidate, never '
+    test(
+        'everything fails: still returns a name-only candidate, never '
         'throws', () async {
       final wikipedia = _FakeWikipedia(null, fail: true);
       final geocoder = _FakeGeocoder(fail: true);
@@ -202,9 +202,9 @@ void main() {
       expect(result.summary, isNull);
     });
 
-    test('Wikipedia has coordinates but Places reverse-geocode fails: '
-        'coordinates and summary survive, city/country stay empty',
-        () async {
+    test(
+        'Wikipedia has coordinates but Places reverse-geocode fails: '
+        'coordinates and summary survive, city/country stay empty', () async {
       final wikipedia = _FakeWikipedia(
         const WikipediaLookup(summary: 'A cove.', lat: 8.0, lng: 98.8),
       );

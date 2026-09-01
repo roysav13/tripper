@@ -77,7 +77,8 @@ TikTokOEmbed? parseTikTokOEmbed(String body) {
     if (decoded is! Map<String, dynamic>) return null;
     final rawCaption = decoded['title']?.toString().trim();
     final rawThumbnail = decoded['thumbnail_url']?.toString().trim();
-    final caption = (rawCaption == null || rawCaption.isEmpty) ? null : rawCaption;
+    final caption =
+        (rawCaption == null || rawCaption.isEmpty) ? null : rawCaption;
     final thumbnailUrl =
         (rawThumbnail == null || rawThumbnail.isEmpty) ? null : rawThumbnail;
     if (caption == null && thumbnailUrl == null) return null;

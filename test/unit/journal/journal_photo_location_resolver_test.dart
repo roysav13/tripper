@@ -37,7 +37,8 @@ class _FakeGeocoder implements Geocoder {
 
 void main() {
   group('resolveJournalPhotoLocationName', () {
-    test('Wikipedia has a nearby article: its title wins, geocoder is never '
+    test(
+        'Wikipedia has a nearby article: its title wins, geocoder is never '
         'called', () async {
       final wikipedia = _FakeNearbyArticleFetcher('Railay Beach');
       final geocoder = _FakeGeocoder(
@@ -87,7 +88,8 @@ void main() {
         () async {
       final wikipedia = _FakeNearbyArticleFetcher(null, fail: true);
       final geocoder = _FakeGeocoder(
-        reverseHit: const GeoResult(name: 'Ao Nang', displayName: '', lat: 8, lon: 98),
+        reverseHit:
+            const GeoResult(name: 'Ao Nang', displayName: '', lat: 8, lon: 98),
       );
 
       final name = await resolveJournalPhotoLocationName(

@@ -19,8 +19,7 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final asyncTemplates = ref.watch(packingTemplatesProvider);
-    final templates =
-        asyncTemplates.valueOrNull ?? const <PackingTemplate>[];
+    final templates = asyncTemplates.valueOrNull ?? const <PackingTemplate>[];
     // "Genuinely empty" is only knowable once the stream has emitted — a
     // still-loading or errored stream must not masquerade as an empty list.
     final isEmpty = asyncTemplates.hasValue && templates.isEmpty;
@@ -46,7 +45,9 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
     bool isEmpty,
   ) {
     if (asyncTemplates.hasError) {
-      return ErrorState(onRetry: () => ref.invalidate(packingTemplatesProvider));
+      return ErrorState(
+        onRetry: () => ref.invalidate(packingTemplatesProvider),
+      );
     }
     if (isEmpty) {
       return EmptyState(
@@ -70,9 +71,11 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
 
   Widget _row(BuildContext context, WidgetRef ref, PackingTemplate template) {
     final l10n = AppLocalizations.of(context)!;
-    final itemCount =
-        ref.watch(packingTemplateItemsProvider(template.id)).valueOrNull?.length ??
-            0;
+    final itemCount = ref
+            .watch(packingTemplateItemsProvider(template.id))
+            .valueOrNull
+            ?.length ??
+        0;
     return ListTile(
       title: Text(template.name),
       subtitle: Text(l10n.templateItemCount(itemCount)),
@@ -129,9 +132,7 @@ class PackingTemplateManagerScreen extends ConsumerWidget {
       initial: template.name,
     );
     if (name == null) return;
-    await ref
-        .read(packingRepositoryProvider)
-        .renameTemplate(template.id, name);
+    await ref.read(packingRepositoryProvider).renameTemplate(template.id, name);
   }
 
   Future<void> _delete(

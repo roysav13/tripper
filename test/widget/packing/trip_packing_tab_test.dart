@@ -128,7 +128,8 @@ void main() {
     );
   });
 
-  testWidgets("tapping a non-clothing item's label opens the edit sheet "
+  testWidgets(
+      "tapping a non-clothing item's label opens the edit sheet "
       'pre-filled, and saving renames the row', (tester) async {
     final repo = FakePackingRepository(
       tripItems: [
@@ -144,8 +145,10 @@ void main() {
     expect(find.text('Edit item'), findsOneWidget);
     // Pre-filled with the current label, not blank.
     expect(
-      tester.widget<TextField>(find.widgetWithText(TextField, 'Passport')).
-          controller!.text,
+      tester
+          .widget<TextField>(find.widgetWithText(TextField, 'Passport'))
+          .controller!
+          .text,
       'Passport',
     );
 
@@ -185,12 +188,17 @@ void main() {
 
     expect(find.text('Edit item'), findsOneWidget);
     expect(
-      tester.widget<TextField>(find.widgetWithText(TextField, 'Black shirt')).
-          controller!.text,
+      tester
+          .widget<TextField>(find.widgetWithText(TextField, 'Black shirt'))
+          .controller!
+          .text,
       'Black shirt',
     );
 
-    await tester.enterText(find.widgetWithText(TextField, 'Item'), 'Grey shirt');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Item'),
+      'Grey shirt',
+    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 

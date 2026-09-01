@@ -77,16 +77,17 @@ Widget _app({
 void main() {
   testWidgets('oEmbed fetch failure (no thumbnail) shows the error state',
       (tester) async {
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(null),
-      downloader: _FakeThumbnailDownloader(null),
-      recognizer: _FakeRecognizer(''),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) => TikTokCoverCaptureScreen.open(
-        context,
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(null),
+        downloader: _FakeThumbnailDownloader(null),
+        recognizer: _FakeRecognizer(''),
         sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) => TikTokCoverCaptureScreen.open(
+          context,
+          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        ),
       ),
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -96,18 +97,19 @@ void main() {
 
   testWidgets('thumbnail download failure shows the error state',
       (tester) async {
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
-      ),
-      downloader: _FakeThumbnailDownloader(null),
-      recognizer: _FakeRecognizer(''),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) => TikTokCoverCaptureScreen.open(
-        context,
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+        ),
+        downloader: _FakeThumbnailDownloader(null),
+        recognizer: _FakeRecognizer(''),
         sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) => TikTokCoverCaptureScreen.open(
+          context,
+          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        ),
       ),
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -117,21 +119,22 @@ void main() {
 
   testWidgets('OCR text pre-fills the editable field when found',
       (tester) async {
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(
-          caption: 'A caption that should be ignored',
-          thumbnailUrl: 'https://example.com/t.jpg',
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(
+            caption: 'A caption that should be ignored',
+            thumbnailUrl: 'https://example.com/t.jpg',
+          ),
+        ),
+        downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
+        recognizer: _FakeRecognizer('Railay Beach'),
+        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) => TikTokCoverCaptureScreen.open(
+          context,
+          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
         ),
       ),
-      downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
-      recognizer: _FakeRecognizer('Railay Beach'),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) => TikTokCoverCaptureScreen.open(
-        context,
-        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      ),
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -141,21 +144,22 @@ void main() {
 
   testWidgets('falls back to the caption when OCR finds nothing',
       (tester) async {
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(
-          caption: 'East Java hidden gems #eastjava',
-          thumbnailUrl: 'https://example.com/t.jpg',
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(
+            caption: 'East Java hidden gems #eastjava',
+            thumbnailUrl: 'https://example.com/t.jpg',
+          ),
+        ),
+        downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
+        recognizer: _FakeRecognizer(''),
+        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) => TikTokCoverCaptureScreen.open(
+          context,
+          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
         ),
       ),
-      downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
-      recognizer: _FakeRecognizer(''),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) => TikTokCoverCaptureScreen.open(
-        context,
-        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      ),
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -169,18 +173,19 @@ void main() {
   testWidgets(
       'no OCR text and no caption shows the empty-text hint, field stays '
       'editable', (tester) async {
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
-      ),
-      downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
-      recognizer: _FakeRecognizer(''),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) => TikTokCoverCaptureScreen.open(
-        context,
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+        ),
+        downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
+        recognizer: _FakeRecognizer(''),
         sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) => TikTokCoverCaptureScreen.open(
+          context,
+          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        ),
       ),
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -194,21 +199,22 @@ void main() {
   testWidgets('tapping "Look up" returns the edited text to the caller',
       (tester) async {
     String? result;
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+        ),
+        downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
+        recognizer: _FakeRecognizer('Railay Beach'),
+        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) async {
+          result = await TikTokCoverCaptureScreen.open(
+            context,
+            sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+          );
+          return result;
+        },
       ),
-      downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
-      recognizer: _FakeRecognizer('Railay Beach'),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) async {
-        result = await TikTokCoverCaptureScreen.open(
-          context,
-          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-        );
-        return result;
-      },
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);
@@ -223,21 +229,22 @@ void main() {
   testWidgets('tapping Cancel on the review screen returns null',
       (tester) async {
     String? result = 'not-yet-set';
-    await tester.pumpWidget(_app(
-      oembed: _FakeOEmbedFetcher(
-        const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+    await tester.pumpWidget(
+      _app(
+        oembed: _FakeOEmbedFetcher(
+          const TikTokOEmbed(thumbnailUrl: 'https://example.com/t.jpg'),
+        ),
+        downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
+        recognizer: _FakeRecognizer('Railay Beach'),
+        sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+        onOpen: (context) async {
+          result = await TikTokCoverCaptureScreen.open(
+            context,
+            sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
+          );
+          return result;
+        },
       ),
-      downloader: _FakeThumbnailDownloader('/tmp/thumb.jpg'),
-      recognizer: _FakeRecognizer('Railay Beach'),
-      sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-      onOpen: (context) async {
-        result = await TikTokCoverCaptureScreen.open(
-          context,
-          sharedText: 'https://vt.tiktok.com/ZS6abcDEF/',
-        );
-        return result;
-      },
-    ),
     );
     await tester.tap(find.text('open'));
     await _pumpUntilFetched(tester);

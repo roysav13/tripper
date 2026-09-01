@@ -16,8 +16,8 @@ void main() {
 
   setUp(() {
     final sw = File('web/sw.js').readAsStringSync();
-    final match = RegExp(r'const PRECACHE = \[(.*?)\];', dotAll: true)
-        .firstMatch(sw);
+    final match =
+        RegExp(r'const PRECACHE = \[(.*?)\];', dotAll: true).firstMatch(sw);
     expect(match, isNotNull, reason: 'PRECACHE array not found in web/sw.js');
     precache = match!.group(1)!;
   });
@@ -58,7 +58,11 @@ void main() {
         .allMatches(pubspec)
         .map((m) => 'assets/${m.group(1)}')
         .toList();
-    expect(declared, isNotEmpty, reason: 'no font assets found in pubspec.yaml');
+    expect(
+      declared,
+      isNotEmpty,
+      reason: 'no font assets found in pubspec.yaml',
+    );
 
     for (final path in declared) {
       expect(

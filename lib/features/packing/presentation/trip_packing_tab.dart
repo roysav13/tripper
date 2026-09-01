@@ -106,8 +106,7 @@ class _TripPackingTabState extends ConsumerState<TripPackingTab> {
         title: l10n.packingEmptyTitle,
         body: l10n.packingEmptyBody,
         ctaLabel: l10n.packingEmptyCta,
-        onCta: () =>
-            showPackingItemFormSheet(context, tripId: widget.trip.id),
+        onCta: () => showPackingItemFormSheet(context, tripId: widget.trip.id),
       );
     }
 

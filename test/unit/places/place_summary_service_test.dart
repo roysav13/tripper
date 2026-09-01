@@ -153,8 +153,7 @@ void main() {
       expect(result.hasCoordinates, isTrue);
     });
 
-    test('summary-only page yields a result with null coordinates',
-        () async {
+    test('summary-only page yields a result with null coordinates', () async {
       final client = MockClient((request) async {
         if (request.url.path == '/w/api.php') {
           return http.Response(

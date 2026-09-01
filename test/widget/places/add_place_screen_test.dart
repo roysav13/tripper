@@ -324,8 +324,7 @@ void main() {
     expect(memberships[saved.id], {collections.single.id});
   });
 
-  testWidgets(
-      'a pre-resolved summary is stored directly, without re-fetching',
+  testWidgets('a pre-resolved summary is stored directly, without re-fetching',
       (tester) async {
     final repo = FakePlaceRepository([]);
     var fetchCalled = false;

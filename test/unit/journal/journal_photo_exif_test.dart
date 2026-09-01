@@ -20,7 +20,8 @@ void main() {
   group('extractGpsCoordinates', () {
     test('reads a northern/eastern hemisphere fix as positive lat/lng', () {
       final tags = {
-        'GPS GPSLatitude': _ratios([Ratio(8, 1), Ratio(0, 1), Ratio(2840, 100)]),
+        'GPS GPSLatitude':
+            _ratios([Ratio(8, 1), Ratio(0, 1), Ratio(2840, 100)]),
         'GPS GPSLatitudeRef': _ascii('N'),
         'GPS GPSLongitude':
             _ratios([Ratio(98, 1), Ratio(50, 1), Ratio(1210, 100)]),
@@ -38,8 +39,7 @@ void main() {
       final tags = {
         'GPS GPSLatitude': _ratios([Ratio(33, 1), Ratio(51, 1), Ratio(0, 1)]),
         'GPS GPSLatitudeRef': _ascii('S'),
-        'GPS GPSLongitude':
-            _ratios([Ratio(151, 1), Ratio(12, 1), Ratio(0, 1)]),
+        'GPS GPSLongitude': _ratios([Ratio(151, 1), Ratio(12, 1), Ratio(0, 1)]),
         'GPS GPSLongitudeRef': _ascii('W'),
       };
 
@@ -70,8 +70,7 @@ void main() {
           values: const IfdInts([1, 2, 3]),
         ),
         'GPS GPSLatitudeRef': _ascii('N'),
-        'GPS GPSLongitude':
-            _ratios([Ratio(98, 1), Ratio(50, 1), Ratio(0, 1)]),
+        'GPS GPSLongitude': _ratios([Ratio(98, 1), Ratio(50, 1), Ratio(0, 1)]),
         'GPS GPSLongitudeRef': _ascii('E'),
       };
       expect(extractGpsCoordinates(tags), isNull);

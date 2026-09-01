@@ -53,7 +53,9 @@ void main() {
     await db.customStatement('DROP TABLE trips');
 
     await expectLater(db.migration.onUpgrade(Migrator(db), 1, 17), completes);
-    await db.customSelect('SELECT COUNT(*) FROM trip_packing_items').getSingle();
+    await db
+        .customSelect('SELECT COUNT(*) FROM trip_packing_items')
+        .getSingle();
   });
 
   test('deleting a trip cascades to its trip_packing_items', () async {

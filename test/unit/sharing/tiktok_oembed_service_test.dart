@@ -70,11 +70,15 @@ void main() {
         return http.Response('', 200);
       });
 
-      expect(await HttpTikTokOEmbedFetcher(client).fetch('no link here'), isNull);
+      expect(
+        await HttpTikTokOEmbedFetcher(client).fetch('no link here'),
+        isNull,
+      );
       expect(called, isFalse);
     });
 
-    test('requests the oembed endpoint with the shared URL and parses the '
+    test(
+        'requests the oembed endpoint with the shared URL and parses the '
         'response', () async {
       Uri? requestedUri;
       final client = MockClient((request) async {

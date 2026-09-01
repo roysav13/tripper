@@ -33,7 +33,8 @@ Future<void> showPackingItemFormSheet(
     isScrollControlled: true,
     useSafeArea: true,
     builder: (context) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: _ItemForm(
         tripId: tripId,
         templateId: templateId,
@@ -96,7 +97,9 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
       padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
       children: [
         Text(
-          _isEdit ? l10n.packingItemFormEditTitle : l10n.packingItemFormAddTitle,
+          _isEdit
+              ? l10n.packingItemFormEditTitle
+              : l10n.packingItemFormAddTitle,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -152,7 +155,8 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
     if (existingId != null && tripId != null) {
       await repo.updateTripItemLabel(existingId, label);
     } else if (existingTemplateItem != null) {
-      await repo.updateTemplateItem(existingTemplateItem.copyWith(label: label));
+      await repo
+          .updateTemplateItem(existingTemplateItem.copyWith(label: label));
     } else if (tripId != null) {
       await repo.addTripItem(tripId: tripId, category: _category, label: label);
     } else {

@@ -139,8 +139,7 @@ void main() {
     expect(find.text('API usage'), findsNothing);
   });
 
-  testWidgets('API usage section shows the monthly call count',
-      (tester) async {
+  testWidgets('API usage section shows the monthly call count', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
